@@ -1,0 +1,21 @@
+<svg width="55" height="50" viewBox="0 0 130 50" xmlns="http://www.w3.org/2000/svg">
+  <!-- Wire left -->
+  <line x1="0" y1="20" x2="20" y2="20" stroke="red" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Resistor zigzag with more peaks -->
+  <polyline 
+    points="20,20 30,10 40,30 50,10 60,30 70,10 80,30 90,10 100,30 110,20" 
+    fill="none" 
+    stroke="red" 
+    stroke-width="4" 
+    stroke-linejoin="miter"
+  />
+  
+  <!-- Wire right -->
+  <line x1="110" y1="20" x2="120" y2="20" stroke="red" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Label below -->
+  <text x="65" y="67" font-size="14" fill="silver" text-anchor="middle" font-family="sans-serif">
+    Resistor
+  </text>
+</svg>
