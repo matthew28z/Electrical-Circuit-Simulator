@@ -19,7 +19,7 @@
 }
 
 .connection {
-    height: 2% !important;
+    height: 2vh !important;
     border: 2px solid silver !important;
     border-radius: 10%;
     background-color: gold;

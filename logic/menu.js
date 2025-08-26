@@ -5,17 +5,19 @@ import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
 import { findAllPaths } from "./paths.js";
 import { drawCurrent } from "./current.js";
+import { addMove, removeMove } from "../camera/move.js";
 
 //function names
-const funcNames = [addVoltage, addWire, addResistor, addConnection, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, remove];
-const handles = [removeVoltage, removeWire, removeResistor, removeConnection, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, remove2];
+const funcNames = [addVoltage, addWire, addResistor, addConnection, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addMove, null, remove];
+const handles = [removeVoltage, removeWire, removeResistor, removeConnection, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeMove, null, remove2];
 
 //icon names
 const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "placeholder2", "placeholder3", "placeholder4", "placeholder5", "placeholder6", "placeholder7", "placeholder8", "placeholder9"];
-const iconNames2 = ["voltage1", "wire1", "voltage2", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "placeholder17", "currentFlow", "delete"];
+const iconNames2 = ["voltage1", "wire1", "voltage2", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
 
 const root = document.documentElement;
 const body = document.body;
+const screen = document.getElementById("screen");
 
 //creates the menu
 const menu = document.createElement("div");

@@ -1,0 +1,27 @@
+<svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="100"
+    height="120"
+    viewBox="0 0 64 80"
+    fill="none"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+>
+  <!-- Camera Body -->
+  <rect x="8" y="20" width="48" height="32" rx="4" ry="4" fill="#ccc" stroke="#000"/>
+  
+  <!-- Lens -->
+  <circle cx="32" cy="36" r="10" fill="#fff" stroke="#000"/>
+  
+  <!-- Lens Inner Circle -->
+  <circle cx="32" cy="36" r="5" fill="#000"/>
+  
+  <!-- Top Flash -->
+  <rect x="48" y="14" width="6" height="6" rx="1" ry="1" fill="#ff0" stroke="#000"/>
+  
+  <!-- Text below the camera -->
+  <text x="32" y="70" font-family="Arial, sans-serif" font-size="8" fill="silver" text-anchor="middle">
+    Camera
+  </text>
+</svg>

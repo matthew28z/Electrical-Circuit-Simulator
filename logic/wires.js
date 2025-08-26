@@ -5,6 +5,7 @@ import { connections } from "./connection.js"
 import { wireG, fakeWireG } from "./management.js"
 
 const body = document.body;
+const screen = document.getElementById("screen");
 const svg = d3.select("#overlay");
 const root = document.documentElement;
 
@@ -596,7 +597,7 @@ const handleMove = (event) => {
         const mousePoint = {x: event.clientX, y: event.clientY}
 
         removeFakeWires()
-        if ((event.target.classList.contains("userCreated") || event.target.classList.contains("wire") || event.target === body)) {           
+        if ((event.target.classList.contains("userCreated") || event.target.classList.contains("wire") || event.target === screen)) {           
             const element = currentClickedElements[currentClickedElements.length - 1]
 
             drawFakeWire(element, mousePoint)
@@ -606,7 +607,7 @@ const handleMove = (event) => {
             document.removeEventListener("mouseleave", handleOut)
         }
     } else {
-        body.removeEventListener("mousemove", handleMove)
+        screen.removeEventListener("mousemove", handleMove)
         unselect()
     }
 }
@@ -622,7 +623,7 @@ const handleClicks = (event) => {
         const clickedElement = event.target
         currentClickedElements.push(clickedElement)
 
-        body.addEventListener("mousemove", handleMove)
+        screen.addEventListener("mousemove", handleMove)
 
         if (clickedElements.findIndex(object => object.element === clickedElement) === -1) { //only adds new elements
             if (clickedElement.classList.contains("connection")) {
@@ -664,7 +665,7 @@ const handleClicks = (event) => {
                 if (closedLoop) {
                     currentClickedElements.length = 0
                     //completely removes the event listener
-                    body.removeEventListener("mousemove", handleMove)
+                    screen.removeEventListener("mousemove", handleMove)
                 }
                 //connectPoints(pastClickedElement, clickedElement)
                 //})
@@ -672,7 +673,7 @@ const handleClicks = (event) => {
         } else { //the user has not clicked on any element yet
             hasClicked = true
 
-            body.addEventListener("mousemove", handleMove)
+            screen.addEventListener("mousemove", handleMove)
         }
         if (clickedElement.classList.contains("connection")) {
             clickedElement.style.setProperty("border-color", closedLoop ? "silver" : "lightBlue", "important")
@@ -681,13 +682,13 @@ const handleClicks = (event) => {
         }
         pastClickedElement = clickedElement //resets
         //hasClicked = !hasClicked 
-    } else if (event.target === body) {
+    } else if (event.target === screen) {
         unselect()
     }
 }
 
 export function addWire() {
-    body.addEventListener("click", handleClicks)
+    screen.addEventListener("click", handleClicks)
 }
 
 export function removeWire() {
@@ -700,7 +701,7 @@ function removeFakeWires() {
 
 //Event Listener for element unselection
 function unselect() {
-    body.removeEventListener("mousemove", handleMove)
+    screen.removeEventListener("mousemove", handleMove)
     removeFakeWires()
 
     const lastElement = currentClickedElements[currentClickedElements.length - 1]

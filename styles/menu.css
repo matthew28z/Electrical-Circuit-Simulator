@@ -1,6 +1,17 @@
 body {
     width: 100vw;
     height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+}
+
+#screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: aliceblue;
     overflow: hidden;
 }
@@ -16,9 +27,9 @@ body {
 }
 
 .menu {
-    position: absolute;
-    width: 100%;
-    height: 30%;
+    position: fixed;
+    width: 100vw;
+    height: 30vh;
     background-color: beige;
     opacity: 0.8;
     display: block;
@@ -112,24 +123,36 @@ body {
 .subTab {
     position: absolute;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 2px;
+    margin-top: 5px;
     width: 100%;
+    border-top: 2px solid gainsboro;
+    border-bottom: 2px solid gainsboro;
 }
 
 .subTab p {
     margin: 0;
     margin-left: 4px;
     width: max-content;
+    display: flex;
+    align-items: center;
     height: 100%;
 }
 
 .subTab input {
-    width: 10%;
-    height: 100%;
+    flex: 1;
+    min-width: 0;
+    height: max-content;
     border: none;
     text-align: center;
     background-color: white;
     border-radius: 4px;
+    margin: 0;
+    margin-right: 4px;
+}
+
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
     margin: 0;
 }

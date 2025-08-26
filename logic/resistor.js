@@ -2,6 +2,7 @@ import { handleAllClicks, removeAllClicks, userCreatedTab } from "./commonFuncti
 import { allObject } from "./management.js"
 
 const body = document.body;
+const screen = document.getElementById("screen");
 
 const resistors = allObject.resistors;
 
@@ -11,7 +12,7 @@ const handleClick = (event) => {
     if (goodClick) {
         const resistor = resistors[resistors.length - 1]
 
-        resistors[resistors.length - 1] = {element: resistor, resistance: null}
+        resistors[resistors.length - 1] = {element: resistor, resistance: {value: null, UM: "(Ω)"}, hasTab: false}
 
         resistor.addEventListener("mousedown", (event) => {
             if (event.button === 2) {
@@ -22,7 +23,7 @@ const handleClick = (event) => {
 }
 
 export const addResistor = () => {
-    body.addEventListener("click", handleClick)
+    screen.addEventListener("click", handleClick)
 }
 
 export function removeResistor() {

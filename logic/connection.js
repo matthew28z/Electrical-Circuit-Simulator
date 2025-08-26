@@ -2,17 +2,14 @@ import { handleAllClicks, removeAllClicks } from "./commonFunctions.js";
 import { allObject } from "./management.js"
 
 const body = document.body;
+const screen = document.getElementById("screen");
 
 export const connections = allObject.connections;
 
 const handleClick = (event) => {
-    const oldLength = connections.length
+    const goodClick = handleAllClicks("connection", connections, event, body.clientHeight * 0.02)
 
-    handleAllClicks("connection", connections, event, body.clientHeight * 0.02)
-
-    const newLength = connections.length
-
-    if (newLength > oldLength) { //new element was added
+    if (goodClick) { //new element was added
         connections[connections.length - 1] = {element: connections[connections.length - 1], state: "socket", resistance: 0}
         //The function above adds the newest element to the connections array
         const connection = connections[connections.length - 1].element
@@ -22,7 +19,7 @@ const handleClick = (event) => {
 }
 
 export function addConnection() {
-    body.addEventListener("click", handleClick)
+    screen.addEventListener("click", handleClick)
 }
 
 

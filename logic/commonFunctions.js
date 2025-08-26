@@ -1,18 +1,20 @@
-import { updateAllElements as update } from "./paths.js"
+import { updateAllElements as update } from "./paths.js";
+import { minimumValues } from "./management.js";
 
 const body = document.body;
+const screen = document.getElementById("screen");
 
 export function handleAllClicks(elementID_Class, array, event, height = body.clientHeight * 0.1) {
     const button = document.getElementById(elementID_Class);
     const styles = window.getComputedStyle(button);
 
-    if (event.target === body && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
+    if (event.target === screen && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
         
         const left = event.clientX - height / 2 - 2 //adjusts to center the element
-        const top = event.clientY - height / 2  - 2 //since elements are squares with sides of 10% the body's height + 2
+        const top = event.clientY - height / 2 - 2 //since elements are squares with sides of 10% the body's height + 2
 
         const createdElement = document.createElement("div")
-        body.appendChild(createdElement)
+        screen.appendChild(createdElement)
         createdElement.classList.add(elementID_Class, "userCreated")
 
         createdElement.style.left = left + "px"
@@ -29,7 +31,7 @@ export function handleAllClicks(elementID_Class, array, event, height = body.cli
 }
 
 export function removeAllClicks(func) {
-    body.removeEventListener("click", func)
+    screen.removeEventListener("click", func)
 }
 
 export function calculateDistance(a, b) {
@@ -181,15 +183,22 @@ export function getRandomInt(min, max) {
 }
 
 export function userCreatedTab(element, array) {
-    const popUp = positionAndSizeTab(element, array)
+    const object = array.find(object => object.element === element)
+    const hasTab = object.hasTab
 
-    const rect = popUp.getBoundingClientRect()
+    if (!hasTab) {
+        const popUp = positionAndSizeTab(element, array)
 
-    shapeTab(popUp, rect)
+        const rect = popUp.getBoundingClientRect()
 
-    const close = addCloseButton(popUp, rect)
+        shapeTab(popUp, rect)
 
-    fillTab(popUp, rect, close, element, array)
+        const close = addCloseButton(popUp, rect, object)
+
+        fillTab(popUp, rect, close, element, array)
+
+        object.hasTab = true
+    } 
 }
 
 function positionAndSizeTab(element, array) {
@@ -199,9 +208,9 @@ function positionAndSizeTab(element, array) {
     const top = rect.top
 
     const popUp = document.createElement("div")
-    body.appendChild(popUp)
+    screen.appendChild(popUp)
     popUp.classList.add("popUp")
-    popUp.style.height = 8 * (Object.keys(array[0]).length) + "%"
+    popUp.style.height = 9 * (Object.keys(array[0]).length) + "%"
 
     const tabRect = popUp.getBoundingClientRect()
     
@@ -219,14 +228,20 @@ function shapeTab(tab, rect) {
     .attr("height", rect.height)
 
     svg.append("polygon") 
-    .attr("points", `0,0 ${rect.width},0 ${rect.width},${rect.height * 0.8} ${rect.width * 0.2},${rect.height * 0.8} 0,${rect.height}`)
+    .attr("points", `0,0 
+                    ${rect.width},0 
+                    ${rect.width},${rect.height * 0.8} 
+                    ${rect.width * 0.3},${rect.height * 0.8} 
+                    0,${rect.height} 
+                    ${rect.width * 0.1},${rect.height * 0.8} 
+                    0,${rect.height * 0.8}`)
     .attr("fill", "whitesmoke")
     .attr("stroke", "gainsboro")
     .attr("stroke-width", 4)
     .attr("stroke-linejoin", "round");
 }
 
-function addCloseButton(tab, rect) {
+function addCloseButton(tab, rect, object) {
     //Adds a close button
     const close = document.createElement("button")
     tab.appendChild(close)
@@ -236,6 +251,8 @@ function addCloseButton(tab, rect) {
     close.style.left = rect.width - closeRect.width - 4 + "px"
 
     close.addEventListener("click", () => {
+        object.hasTab = false 
+
         tab.remove()
     })
 
@@ -245,11 +262,12 @@ function addCloseButton(tab, rect) {
 function fillTab(tab, rect, closeButton, element, array) {
     const entries = Object.entries(array.find(object => object.element === element))
     entries.shift()
+    entries.pop()
     console.log(entries)
 
     const xRect = closeButton.getBoundingClientRect()
 
-    const height = (rect.height * 0.7 - xRect.height) / (entries.length)
+    const height = (rect.height * 0.4 - xRect.height) / (entries.length)
     
     entries.forEach((entry, index) => {
         const div = document.createElement("div")
@@ -258,10 +276,14 @@ function fillTab(tab, rect, closeButton, element, array) {
         div.style.height = height + "px"
         div.style.top = height * index + xRect.height + "px"
 
+        if (index !== 0) {
+            div.style.borderTop = "none"
+        }
+
         const p = document.createElement("p")
         div.appendChild(p)
 
-        p.innerHTML = entry[0] + ":" 
+        p.innerHTML = entry[0] + entry[1].UM + ":" 
 
         const pRect = p.getBoundingClientRect()
         
@@ -269,9 +291,23 @@ function fillTab(tab, rect, closeButton, element, array) {
         div.appendChild(input)
         input.width = rect.width - 8 - pRect.width + "px"
 
-        const value = entry[1]
+        const value = entry[1].value
 
         input.value = value ? value : 0
-        
+        input.type = "number"
+
+        const min = minimumValues[entry[0]]
+        input.min = min
+
+        input.addEventListener("input", (event) => {
+            const value = Number(event.target.value)
+
+            if (value >= min) {
+                object[entry[0]].value = value
+            } else {
+                event.target.value = min
+                object[entry[0]].value = min
+            }
+        })
     })
 }

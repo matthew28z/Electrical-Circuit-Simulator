@@ -4,6 +4,12 @@ export const allObject = {
     connections: []
 };
 
+export const minimumValues = {
+    voltage: -Infinity,
+    resistance: 0,
+    current: -Infinity
+}
+
 const svg = d3.select("#overlay");
 export const bridgeG = svg.append("g");
 export const cBridgeG = svg.append("g");

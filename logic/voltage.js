@@ -1,19 +1,30 @@
-import { handleAllClicks, removeAllClicks } from "./commonFunctions.js"
-import { allObject } from "./management.js"
+import { handleAllClicks, removeAllClicks, userCreatedTab } from "./commonFunctions.js"
+import { allObject } from "./management.js";
+
 const body = document.body;
+const screen = document.getElementById("screen");
 
 export const voltageSources = [];
 
 const handleClick = (event) => {
-    handleAllClicks("voltageSource", voltageSources, event)
+    const goodClick = handleAllClicks("voltageSource", voltageSources, event)
 
-    const element = voltageSources[voltageSources.length - 1]
+    if (goodClick) {
+        const element = voltageSources[voltageSources.length - 1]
 
-    voltageSources[voltageSources.length - 1] = {element: element, voltage: null, resistance: 0}
+        voltageSources[voltageSources.length - 1] = {element: element, voltage: {value: null, UM: "(V)"}, resistance: {value: 0, UM: "(Ω)"}, hasTab: false}
+    
+
+        element.addEventListener("mousedown", (event) => {
+            if (event.button === 2) {
+                userCreatedTab(element, voltageSources)
+            }
+        })
+    }
 }
 
 export const addVoltage = () => {
-    body.addEventListener("click", handleClick)
+    screen.addEventListener("click", handleClick)
 }
 
 export function removeVoltage() {
