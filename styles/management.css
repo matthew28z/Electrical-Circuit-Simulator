@@ -8,6 +8,7 @@
     border: 3px solid transparent;
     border-radius: 100px;
     border-style: dotted;
+    transition: transform 1s;
 }
 
 .userCreated:hover {

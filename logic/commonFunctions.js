@@ -1,5 +1,6 @@
 import { updateAllElements as update } from "./paths.js";
 import { minimumValues } from "./management.js";
+import { transform } from "../camera/move.js";
 
 const body = document.body;
 const screen = document.getElementById("screen");
@@ -153,18 +154,18 @@ export function findAbsCotangent(start, end) {
 function getCenter(element) {
     const rect = element.getBoundingClientRect()
 
-    const left = rect.left + rect.width / 2 + window.scrollX
-    const top = rect.top + rect.height / 2 + window.scrollY
+    const left = rect.left + rect.width / 2 + window.scrollX + transform.x
+    const top = rect.top + rect.height / 2 + window.scrollY + transform.y
     return { x: left, y: top }
 }
 
 export function getPoints(element) {
     const rect = element.getBoundingClientRect()
 
-    const x1 = rect.left + window.scrollX
-    const x2 = rect.left + window.scrollX + rect.width
-    const y1 = rect.top + window.scrollY + rect.width / 2
-    const y2 = rect.top + window.scrollY + rect.width / 2
+    const x1 = rect.left + window.scrollX + transform.x
+    const x2 = rect.left + window.scrollX + rect.width + transform.x
+    const y1 = rect.top + window.scrollY + rect.width / 2 + transform.y
+    const y2 = rect.top + window.scrollY + rect.width / 2 + transform.y
 
     let x3 = null
     let y3 = null
@@ -195,10 +196,14 @@ export function userCreatedTab(element, array) {
 
         const close = addCloseButton(popUp, rect, object)
 
-        fillTab(popUp, rect, close, element, array)
+        fillTab(popUp, rect, close, element, array, object)
 
         object.hasTab = true
+
+        return popUp
     } 
+
+    return null
 }
 
 function positionAndSizeTab(element, array) {
@@ -259,8 +264,8 @@ function addCloseButton(tab, rect, object) {
     return close
 }
 
-function fillTab(tab, rect, closeButton, element, array) {
-    const entries = Object.entries(array.find(object => object.element === element))
+function fillTab(tab, rect, closeButton, element, array, object) {
+    const entries = Object.entries(object)
     entries.shift()
     entries.pop()
     console.log(entries)

@@ -10,6 +10,8 @@ screen.style.height = rect.height + "px";
 let start;
 let end; 
 
+export const transform = {x: 0, y: 0};
+
 const move = (event) => {
     start = {x: event.clientX, y: event.clientY}
 
@@ -43,19 +45,46 @@ function calculateOffset(start, end) {
 function adjustScreen(offsets) {
     const rect = screen.getBoundingClientRect()
 
-    const currentTop = parseInt(screen.style.top || 0)
-    const currentLeft = parseInt(screen.style.left || 0)
+    const elements = screen.querySelectorAll("*")
 
+    transform.x += offsets.horizontalOffset
+    transform.y += offsets.verticalOffset
+
+    elements.forEach(element => {
+        element.style.transform = `translate(${transform.x}px, ${transform.y}px)`
+    });
+
+
+    /*
     //adjusts the width/height
     screen.style.width = screen.clientWidth + Math.abs(offsets.horizontalOffset) + "px"
     screen.style.height = screen.clientHeight + Math.abs(offsets.verticalOffset) + "px"
 
     //moves the screen
+    const transform = window.getComputedStyle(screen).transform
+
+    if (transform !== "none") {
+        const values = transform.match(/matrix\((.+)\)/)[1].split(", ");
+        values.splice(0, values.length - 2)
+        
+        const currentX = parseInt(values[0])
+        const currentY = parseInt(values[1])
+
+        const x = currentX + offsets.horizontalOffset
+        const y = currentY + offsets.verticalOffset
+
+        screen.style.transform = `translate(${x}px, ${y}px)`
+        
+        console.log(currentX, currentY)
+    } else { //First time moving the screen
+        screen.style.transform = `translate(${offsets.horizontalOffset}px, ${offsets.verticalOffset}px)`
+    }*/
+    /*    
     if (offsets.verticalOffset < 0) {
         screen.style.top = currentTop + offsets.verticalOffset + "px"
     } 
 
     if (offsets.horizontalOffset < 0) {
         screen.style.left = currentLeft + offsets.horizontalOffset + "px"
-    }
+    }*/
 }
