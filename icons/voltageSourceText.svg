@@ -1,0 +1,14 @@
+<svg width="100" height="75" viewBox="0 0 60 75" xmlns="http://www.w3.org/2000/svg">
+  <!-- Positive terminal (left, longer line) -->
+  <line x1="25" y1="10" x2="25" y2="50" stroke="silver" stroke-width="2"/>
+  <text x="21" y="35" font-size="14" text-anchor="end" fill="gold">+</text>
+
+  <!-- Negative terminal (right, shorter line) -->
+  <line x1="35" y1="20" x2="35" y2="40" stroke="silver" stroke-width="2"/>
+  <text x="39" y="35" font-size="14" fill="gold">−</text>
+  
+  <!-- Label text smaller and closer -->
+  <text x="30" y="65" font-size="8" text-anchor="middle" fill="silver" font-family="Arial, sans-serif">
+    Voltage Source
+  </text>
+</svg>

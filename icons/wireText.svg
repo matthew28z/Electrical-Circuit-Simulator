@@ -1,0 +1,25 @@
+<svg width="65" height="40" viewBox="0 0 65 40" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c0c0c0"/>
+      <stop offset="50%" stop-color="#e0e0e0"/>
+      <stop offset="100%" stop-color="#a0a0a0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Silver wire from top-left to bottom-right, adjusted to smaller text -->
+  <path
+    d="M5 5
+       C 20 12, 30 15, 60 20"
+    stroke="url(#silverGradient)"
+    stroke-width="3"
+    fill="none"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Label with font size 6 -->
+  <text x="32.5" y="35" font-size="4" fill="silver" text-anchor="middle" font-family="sans-serif">
+    Electrical Wire
+  </text>
+</svg>

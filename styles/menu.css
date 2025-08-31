@@ -1,0 +1,158 @@
+body {
+    width: 100vw;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background-color: black;
+}
+
+#screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: aliceblue;
+    overflow: hidden;
+}
+
+#overlay {
+    pointer-events: none;
+    position: absolute; /* or fixed */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+}
+
+.menu {
+    position: fixed;
+    width: 100vw;
+    height: 30vh;
+    background-color: beige;
+    opacity: 0.8;
+    display: block;
+    bottom: 0;
+    left: 0;
+    transition: height 0.5s ease;
+    padding-bottom: 2px;
+}
+
+.topPart {
+    position: relative;
+    display: inline-flex;
+    width: 100%;
+    height: fit-content;
+}
+
+.topPart p {
+    margin: 0;
+    position: relative;
+    display: flex;
+    text-align: center;
+    align-items: center;
+}
+
+.showMenu {
+    position: relative;
+    width: fit-content;
+    height: fit-content;
+    margin-left: 0;
+    margin-top: 0;
+    border: none;
+    padding: 0;
+    font-size: larger;
+    background-color: transparent;
+}
+
+.subMenu {
+    display: inline-flex;
+    width: 100%;
+    background-color: aqua;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.subMenu button {
+    height: 95%;
+    aspect-ratio: 1 / 1;
+    border: 3px dashed;
+    border-color: black;
+    background-color: black;
+    background-image: none;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    transition: transform 0.3s ease-in-out;
+}
+
+.subMenu button:hover {
+    transform: scale(105%);
+}
+
+.popUp {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    aspect-ratio: 9 / 10;
+    z-index: 900;
+    cursor: pointer;
+
+}
+
+.Xbutton {
+    position: absolute;
+    cursor: inherit;
+    top: 4px;
+    height: 10%;
+    aspect-ratio: 1 / 1;
+    border: none;
+    background-color: transparent;
+    background-image: url("../icons/X.svg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.Xbutton:hover {
+    transform: scale(1.3);
+}
+
+.subTab {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 5px;
+    width: 100%;
+    border-top: 2px solid gainsboro;
+    border-bottom: 2px solid gainsboro;
+}
+
+.subTab p {
+    margin: 0;
+    margin-left: 4px;
+    width: max-content;
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.subTab input {
+    flex: 1;
+    min-width: 0;
+    height: max-content;
+    border: none;
+    text-align: center;
+    background-color: white;
+    border-radius: 4px;
+    margin: 0;
+    margin-right: 4px;
+}
+
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}

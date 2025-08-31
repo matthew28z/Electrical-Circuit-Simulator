@@ -1,0 +1,28 @@
+.userCreated {
+    position: absolute;
+    height: 10vh;
+    aspect-ratio: 1 / 1;
+    background-repeat: no-repeat;
+    background-position: center;
+    opacity: 1;
+    border: 3px solid transparent;
+    border-radius: 100px;
+    border-style: dotted;
+    transition: transform 1s;
+}
+
+.userCreated:hover {
+    border-color: silver;
+}
+
+.wire {
+    pointer-events: visibleStroke;
+}
+
+.fakeWire {
+    pointer-events: none !important;
+}
+
+.highlighted {
+    stroke: rgba(238, 222, 130, 0.689);
+}

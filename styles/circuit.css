@@ -1,0 +1,44 @@
+:root {
+    --current-flow: -20
+}
+
+.wire {
+    position: absolute;
+    opacity: 1;
+    background-color: silver;
+}
+
+.voltageSource {
+    background-image: url("../icons/voltageSource.svg");
+    background-size: cover;
+}
+
+.resistor {
+    background-image: url("../icons/resistor.svg");
+    background-size: contain;
+}
+
+.connection {
+    height: 2vh !important;
+    border: 2px solid silver !important;
+    border-radius: 10%;
+    background-color: gold;
+    z-index: 10;
+}
+
+.connection:hover {
+    border-color: red !important;
+}
+
+.current {
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 10,10; /* dash length, gap length */
+    animation: dashMove 1s linear infinite;
+}
+/*We don't use from to, to avoid the animation starting from the same point*/
+@keyframes dashMove {
+    to {
+      stroke-dashoffset: var(--current-flow, -20); /* negative value to move dashes */
+    }
+}
