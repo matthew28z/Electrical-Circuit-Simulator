@@ -1,5 +1,1 @@
-export const data = {
-    resistance: [],
-    voltage: [],
-    current: []
-}
+export const data = [];

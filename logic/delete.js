@@ -1,10 +1,9 @@
 import { removeAllClicks } from "./commonFunctions.js";
 import { wires, clickedElements } from "./wires.js";
 import { allElements } from "./paths.js";
-import { allObject } from "./management.js";
+import { allObject, screen } from "./management.js";
 
 const body = document.body;
-const screen = document.getElementById("screen");
 
 const handleClick = (event) => {
     if (event.target.classList.contains("userCreated") || event.target.classList.contains("wire")) {
@@ -183,7 +182,7 @@ function loopWireGroup(wireGroupNumber, deletedElement) {
 window.addEventListener("keydown", deleteAll)
 
 export const removeElement = () => {
-    screen.addEventListener("click", handleClick)
+    body.addEventListener("click", handleClick)
 }
 
 export function removeDelete() {

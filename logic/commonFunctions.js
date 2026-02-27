@@ -1,25 +1,36 @@
-import { updateAllElements as update } from "./paths.js";
-import { minimumValues } from "./management.js";
+import { updateAllElements as update, allElements } from "./paths.js";
+import { minimumValues, screen, allG } from "./management.js";
 import { transform } from "../camera/move.js";
 
 const body = document.body;
-const screen = document.getElementById("screen");
 
 export function handleAllClicks(elementID_Class, array, event, height = body.clientHeight * 0.1) {
     const button = document.getElementById(elementID_Class);
     const styles = window.getComputedStyle(button);
 
-    if (event.target === screen && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
+    if (event.target.classList.contains("screen") && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
         
-        const left = event.clientX - height / 2 - 2 //adjusts to center the element
-        const top = event.clientY - height / 2 - 2 //since elements are squares with sides of 10% the body's height + 2
+        const c = d3.pointer(event, allG.node())
 
-        const createdElement = document.createElement("div")
-        screen.appendChild(createdElement)
+        const left = c[0] - height / 2 - 2 //adjusts to center the element
+        const top = c[1] - height / 2 - 2 //since elements are squares with sides of 10% the body's height + 2
+
+        const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        foreignObject.setAttribute("x", left);
+        foreignObject.setAttribute("y", top);
+        foreignObject.setAttribute("width", height + 16);
+        foreignObject.setAttribute("height", height + 16);
+
+        const createdElement = document.createElement("div");
         createdElement.classList.add(elementID_Class, "userCreated")
 
+        foreignObject.appendChild(createdElement)
+        allG.node().appendChild(foreignObject)
+
+
+        /*
         createdElement.style.left = left + "px"
-        createdElement.style.top = top + "px"
+        createdElement.style.top = top + "px"*/
 
         array.push(createdElement)
 
@@ -32,7 +43,7 @@ export function handleAllClicks(elementID_Class, array, event, height = body.cli
 }
 
 export function removeAllClicks(func) {
-    screen.removeEventListener("click", func)
+    body.removeEventListener("click", func)
 }
 
 export function calculateDistance(a, b) {
@@ -45,6 +56,8 @@ export function calculateDistance(a, b) {
 }
 
 export function getTopElements(start, end) {
+    const currentTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
+
     const elements = [];
 
     const step = 4
@@ -54,12 +67,14 @@ export function getTopElements(start, end) {
 
     const points = [];
 
-    let x1 = start.x
-    let y1 = start.y
+    const c1 = currentTransform.invert([start.x, start.y])
+    const c2 = currentTransform.invert([end.x, end.y]) //change back to world coordinates (camera -> world)
 
-    let x2 = end.x
-    let y2 = end.y
+    let x1 = start.x//c1[0]
+    let y1 = start.y//c1[1]
 
+    let x2 = end.x//c2[0]
+    let y2 = end.y//c2[1]
     const dx = x2 - x1
     const dy = y2 - y1
 
@@ -104,7 +119,7 @@ export function getTopElements(start, end) {
             y += failSafe / cotangent * fix //keeps the points on the starting line
 
             for (x; x < Math.max(x1, x2) - failSafe; x += step) {
-                points.push({x: Math.round(x) , y: Math.round(y)})
+                points.push({x: Math.round(x), y: Math.round(y)})
                 y += step / cotangent * fix
             }
         }
@@ -125,14 +140,25 @@ export function getTopElements(start, end) {
         }
     }
 
+    /*for (let i = 0; i < points.length; i++) {
+        const pointWorldCoords = points[i]
+        const pointMapCoords = currentTransform.apply([pointWorldCoords.x, pointWorldCoords.y]) 
+        points[i] = {x: Math.round(pointMapCoords[0]), y: Math.round(pointMapCoords[1])}
+   
+        const foundElement = document.elementsFromPoint(pointWorldCoords.x, pointWorldCoords.y)[0]
+        
+        elements.push(foundElement)
+    }*/
+
     points.forEach(point => {
-        const foundElement = document.elementsFromPoint(point.x, point.y)[0]
+        const c = currentTransform.apply([point.x, point.y]) //world -> camera -> screen
+        
+        const foundElement = document.elementsFromPoint(c[0], c[1])[0]
         
         elements.push(foundElement)
     })
 
     return {points: points, elements: elements}// part of debugging
-    //console.log(elements)
     //return elements
 }
 
@@ -151,31 +177,43 @@ export function findAbsCotangent(start, end) {
     return cotangent
 }
 
-function getCenter(element) {
+export function getCenter(element) {
     const rect = element.getBoundingClientRect()
 
-    const left = rect.left + rect.width / 2 + window.scrollX + transform.x
-    const top = rect.top + rect.height / 2 + window.scrollY + transform.y
-    return { x: left, y: top }
+    const currentTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
+
+    const left = rect.left + rect.width / 2 + window.scrollX 
+    const top = rect.top + rect.height / 2 + window.scrollY
+
+    const c = currentTransform.invert([left, top])
+
+    return { x: c[0], y: c[1] }
 }
 
 export function getPoints(element) {
     const rect = element.getBoundingClientRect()
 
-    const x1 = rect.left + window.scrollX + transform.x
-    const x2 = rect.left + window.scrollX + rect.width + transform.x
-    const y1 = rect.top + window.scrollY + rect.width / 2 + transform.y
-    const y2 = rect.top + window.scrollY + rect.width / 2 + transform.y
+    const x1 = rect.left + window.scrollX
+    const x2 = rect.left + window.scrollX + rect.width 
+    const y1 = rect.top + window.scrollY + rect.width / 2 
+    const y2 = rect.top + window.scrollY + rect.width / 2
 
-    let x3 = null
-    let y3 = null
-    if (element.classList.contains("connection")) { //for connections all points are on the center (i.e. actualPoint)
+    const currentTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
+
+    const c1 = currentTransform.invert([x1, y1])
+    const c2 = currentTransform.invert([x2, y2])
+    let c3 = [0, 0];
+
+    if (element.classList.contains("connection") || element.classList.contains("amperometer")) { //for connections all points are on the center (i.e. actualPoint)
         const center = getCenter(element)
-        x3 = center.x
-        y3 = center.y
+
+        c3[0] = center.x
+        c3[1] = center.y
     }
+
+
  
-    return { leftPoint: { x: x1, y: y1 }, rightPoint: { x: x2, y: y2 }, actualPoint: { x: x3, y: y3 } }
+    return { leftPoint: { x: c1[0], y: c1[1] }, rightPoint: { x: c2[0], y: c2[1] }, actualPoint: { x: c3[0], y: c3[1] } }
 }
 
 
@@ -315,4 +353,25 @@ function fillTab(tab, rect, closeButton, element, array, object) {
             }
         })
     })
+}
+
+export function replaceValueInAllElements(element, oldValue, newValue) {
+    //Determines the location of the old value
+    const object = allElements.find(obj => obj.element === element)
+
+    let side;
+    let index;
+
+    //It is possible to avoid the .includes() but it makes the program less readable
+    if (object.connections.left.includes(oldValue)) {
+        side = "left"
+    } else {
+        side = "right"
+    }
+
+    //Finds the specific index of the old value
+    index = object.connections[side].findIndex(value => value === oldValue)
+
+    //Replaces the old value
+    object.connections[side][index] = newValue 
 }

@@ -4,26 +4,57 @@ import { addResistor, removeResistor } from "./resistor.js";
 import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
 import { findAllPaths } from "./paths.js";
-import { drawCurrent } from "./current.js";
+import { svg, screen } from "./management.js";
+import { drawCurrent, addAmperometer, removeAmperometer } from "./current.js";
 import { addMove, removeMove } from "../camera/move.js";
+import { addZoom, removeZoom} from "../camera/zoom.js";
 import { calculateResistance } from "../calculation/calculateResistance.js";
+import { calculateVoltage } from "../calculation/calculateVoltage.js";
+import { calculateCurrent } from "../calculation/calculateCurrent.js";
+import { adjustMenu } from "../save/saveMenu.js";
+import { addScreen, addClickLogic } from "../save/toggleScreens.js";
 
 //function names
-const funcNames = [addVoltage, addWire, addResistor, addConnection, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addMove, null, remove];
-const handles = [removeVoltage, removeWire, removeResistor, removeConnection, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeMove, null, remove2];
+const funcNames = [addVoltage, addWire, addResistor, addConnection, addAmperometer, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, null, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addZoom, null, remove];
+const handles = [removeVoltage, removeWire, removeResistor, removeConnection, removeAmperometer, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, null, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeZoom, null, remove2];
 
 //icon names
 const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "amperometer", "placeholder3", "placeholder4", "placeholder5", "placeholder6", "placeholder7", "placeholder8", "placeholder9"];
-const iconNames2 = ["voltage1", "wire1", "voltage2", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
+const iconNames2 = ["save", "wire1", "voltage2", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
+
+//extra logic buttons
+const IDs = ["save", "currentFlow"];
 
 const root = document.documentElement;
 const body = document.body;
-const screen = document.getElementById("screen");
+//const screen = document.getElementById("screen");
 
 //creates the menu
 const menu = document.createElement("div");
 body.appendChild(menu);
 menu.classList.add("menu");
+
+//Adds changing screen capabilities
+const screensDiv = document.createElement("div");
+menu.appendChild(screensDiv);
+screensDiv.classList.add("screensDiv");
+
+
+addScreen(true)
+/*const screenButton = document.createElement("button");
+screensDiv.appendChild(screenButton);
+screenButton.innerHTML = "Screen-1";
+screenButton.id = "ScreenButton-0";*/
+
+
+const addScreenButton = document.createElement("button");
+screensDiv.appendChild(addScreenButton);
+addScreenButton.innerHTML = "+";
+addScreenButton.classList.add("addScreen");
+
+addScreenButton.addEventListener("click", () => {
+    addScreen()
+});
 
 //creates the top part of the menu
 const topPart = document.createElement("div");
@@ -71,7 +102,13 @@ for (let i = 0; i < numberOfSubmenus; i++) {
             button.id = iconNames1[x] 
             console.log(button.id)
         } else {
-            button.style.backgroundImage = `url("../icons/${iconNames2[x]}Text.svg")`
+            if (x === 0) {
+                button.style.backgroundImage = `url("../icons/${iconNames2[x]}.png")`
+                button.style.border = "none"
+            } else {
+                button.style.backgroundImage = `url("../icons/${iconNames2[x]}Text.svg")`
+            }
+
             button.id = iconNames2[x]
         }
 
@@ -108,7 +145,7 @@ showMenu.addEventListener("click", function () {
 let lastButton;
 
 for (let i = 0; i < buttons.length; i++) {
-    if (buttons[i].id === "currentFlow") { //this specific button has different logic
+    if (IDs.includes(buttons[i].id)) { //these specific buttons require different logic
         continue
     }
 
@@ -135,6 +172,7 @@ for (let i = 0; i < buttons.length; i++) {
     })
 }
 
+//Logic For The Other Buttons
 const currentFlow = document.getElementById("currentFlow");
 currentFlow.style.borderColor = "gold"
 
@@ -150,15 +188,26 @@ currentFlow.addEventListener("click", () => {
     }
 })
 
+const save = document.getElementById("save");
+
+save.addEventListener("click", adjustMenu)
+
 window.addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
-    const path = findAllPaths(voltageSources)
+    const path = findAllPaths(voltageSources())
 
     drawCurrent(path)
 
     console.log(calculateResistance(path))
+    console.log(calculateVoltage(path))
+    console.log(calculateCurrent(path))
+
+    const elementData = screen.innerHTML
+    //localStorage.setItem("test", JSON.stringify(elementData))
   }
 });
+
+//screen.innerHTML = JSON.parse(localStorage.getItem("test"))
 
 window.addEventListener("contextmenu", (event) => {
     event.preventDefault()

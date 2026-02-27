@@ -6,7 +6,8 @@ body {
     background-color: black;
 }
 
-#screen {
+.screen {
+    display: none;
     position: absolute;
     left: 0;
     top: 0;
@@ -14,9 +15,11 @@ body {
     height: 100vh;
     background-color: aliceblue;
     overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
 }
 
-#overlay {
+.overlay {
     pointer-events: none;
     position: absolute; /* or fixed */
     top: 0;
@@ -32,11 +35,67 @@ body {
     height: 30vh;
     background-color: beige;
     opacity: 0.8;
-    display: block;
-    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    top: 100%;
     left: 0;
+    transform: translateY(-100%);
     transition: height 0.5s ease;
     padding-bottom: 2px;
+    z-index: 50;
+}
+
+.screensDiv {
+    position: relative;
+    display: flex;
+    background-color: aliceblue;
+    width: 100%;
+    height: 4vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.screensDiv button {
+    display: flex;
+    width: 8%;
+    min-width: 8%;
+    height: 100%;
+    background-color: honeydew;
+    border: 2px solid lavender;
+    border-radius: 10px;
+    color: lavender;
+    justify-content: center;
+    align-items: center;
+}
+
+.screensDiv::-webkit-scrollbar {
+    height: 4px;
+    width: 100%;
+}
+
+.screensDiv::-webkit-scrollbar-track {
+    background-color: silver;
+}
+
+.screensDiv::-webkit-scrollbar-thumb {
+    border: 2px solid gold;
+    border-radius: 4px;
+}
+
+.screensDiv button:hover {
+    border-color: gold;
+    color: gold;
+}
+
+.screensDiv button:active {
+    transform: translateY(-5%);
+}
+
+.addScreen {
+    width: fit-content !important;
+    border: none !important;
+    color: gold !important;
+    min-width: auto !important;
 }
 
 .topPart {

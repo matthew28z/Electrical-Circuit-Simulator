@@ -1,9 +1,9 @@
-import { findAllPaths, breaks } from "./paths.js";
+import { findAllPaths, breaks, allElements } from "./paths.js";
 import { voltageSources } from "./voltage.js";
-import { getPoints, calculateDistance } from "./commonFunctions.js";
-import { wires } from "./wires.js"
+import { getPoints, getCenter, calculateDistance, replaceValueInAllElements } from "./commonFunctions.js";
+import { wires, drawWirePointToPoint } from "./wires.js"
 import { createCurrentBridge, findBridgePoints } from "./bridge.js";
-import { currentG } from "./management.js";
+import { currentG, allObject, screen } from "./management.js";
 
 //const path = findAllPaths(voltageSources)
 
@@ -81,6 +81,7 @@ export function drawCurrent(pathObject, isBreak = false) {
             if (!(pointA === "stop" || pointB === "stop")) { //in reality only pointB can have the value of "stop" but it is more of a failsafe mechanism
                 let start = pointA
                
+                console.log(pointA, pointB)
                 const intersectionPoints = findIntersectionsOnWireGroup(findWireGroup(pointA, pointB))
                 console.log(intersectionPoints)
 
@@ -128,6 +129,24 @@ function findWireGroup(pointA, pointB) {
     let wiresA = document.elementsFromPoint(pointA.x, pointA.y).filter(element => element.classList.contains("wire"))
     let wiresB = document.elementsFromPoint(pointB.x, pointB.y).filter(element => element.classList.contains("wire"))
 
+    console.log(document.elementsFromPoint(pointB.x, pointB.y))
+    console.log(document.elementsFromPoint(pointA.x, pointA.y))
+    console.log(wiresA)
+    console.log(wiresB)
+
+  /*  //kati paei lathos
+    d3.select(`#${screen.id} svg`).append("circle")
+  .attr("cx", pointB.x)   // x position
+  .attr("cy", pointB.y)   // y position
+  .attr("r", 5)      // radius
+  .attr("fill", "gold"); // color
+
+      d3.select(`#${screen.id} svg`).append("circle")
+  .attr("cx", pointA.x)   // x position
+  .attr("cy", pointA.y)   // y position
+  .attr("r", 5)      // radius
+  .attr("fill", "gold"); // color
+*/
     //Finds the general information about the specific wires
     wiresA = wires.filter(object => wiresA.includes(object.element))
     wiresB = wires.filter(object => wiresB.includes(object.element))
@@ -142,3 +161,91 @@ function findIntersectionsOnWireGroup(wireGroup) {
     return wires.find(object => object.wireGroup === wireGroup).intersectionPoints
 }
 
+//Logic for amperometers
+export const amperometers = () => allObject.amperometers;
+
+function determinePoint(element, connectedElement) {
+    let side;
+    //Finds the element's object in the allElements array
+    if (element.classList.contains("connection") || element.classList.contains("amperometer")) {
+        side = "actualPoint"
+    } else {
+        const object = allElements.find(obj => obj.element === element)
+
+        if (object.connections.left.includes(connectedElement)) {
+            side = "leftPoint"
+        } else {
+            side = "rightPoint"
+        }
+    }
+
+    return side
+}
+
+
+
+const handleClick = (event) => {
+    const button = document.getElementById("amperometer");
+
+    if (button.style.borderColor === "white") {
+        if (event.target.classList.contains("wire")) {
+            const wire = event.target
+
+            const values = wires.find(object => object.element === wire)
+
+            const connectedElements = values.connections
+            const wireGroup = wires.filter(object => object.wireGroup === values.wireGroup).map(object => object.element)
+
+            const side1 = determinePoint(connectedElements[0], connectedElements[1])
+            const side2 = determinePoint(connectedElements[1], connectedElements[0])
+
+
+            wireGroup.forEach(element => {
+                const index = wires.findIndex(object => object.element === element)
+                
+                wires.splice(index, 1)
+
+                element.remove()
+            })
+
+            const amperometer = document.createElement("div")
+            screen.appendChild(amperometer)
+            amperometer.classList.add("amperometer", "userCreated")
+            amperometer.style.left = event.clientX - body.clientHeight * 0.02 + "px"
+            amperometer.style.top = event.clientY - body.clientHeight * 0.02 + "px"
+
+            const point1 = getPoints(connectedElements[0])[side1]
+            const point2 = getPoints(connectedElements[1])[side2]
+
+            const amperometerPoint = getCenter(amperometer)
+        
+            drawWirePointToPoint(point1, amperometerPoint)
+            drawWirePointToPoint(amperometerPoint, point2)
+
+            //Updates the allElements array
+            replaceValueInAllElements(connectedElements[0], connectedElements[1], amperometer)
+            replaceValueInAllElements(connectedElements[1], connectedElements[0], amperometer)
+
+            allElements.push({element: amperometer, connections: {left: [connectedElements[0]], right: [connectedElements[1]]}})
+        
+            //updates the amperometers array
+            amperometers().push({element: amperometer, connectedPath: null, resistance: {value: 0, UM: "(Ω)"}})
+        }/* else {
+            const goodClick = handleAllClicks("amperometer", amperometers, event, body.clientHeight * 0.02)
+
+            if (goodClick) {
+                const amperometer = amperometers.at(-1)
+
+                amperometers[amperometers.length - 1] = {element: amperometer, connectedPath: null}
+            }
+        }*/
+    }
+}
+
+export function addAmperometer() {
+    body.addEventListener("click", handleClick)
+}
+
+export function removeAmperometer() {
+    body.removeEventListener("click", handleClick)
+}

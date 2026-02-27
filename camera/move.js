@@ -1,11 +1,19 @@
+/*Mostly old code not used anymore but left here to avoid having to change relative file paths
+  The camera functions were in fact dealt with the d3 engine in zoom.js*/
+
+import { allG } from "../logic/management.js";
+
 const body = document.body;
-const screen = document.getElementById("screen");
 
 //Adds drag compatability
 let start;
 let end; 
 
-export const transform = {x: 0, y: 0};
+export let transform = {x: 0, y: 0, z: 1};
+
+export function changeTransform(newTransform) {
+    transform = newTransform
+}
 
 const move = (event) => {
     start = {x: event.clientX, y: event.clientY}
@@ -38,7 +46,12 @@ function calculateOffset(start, end) {
 }
 
 function adjustScreen(offsets) {
-    const rect = screen.getBoundingClientRect()
+    transform.x += offsets.horizontalOffset
+    transform.y += offsets.verticalOffset
+
+    allG.attr("transform", `translate(${transform.x}, ${transform.y}) scale(${transform.z})`)
+
+    /*const rect = screen.getBoundingClientRect()
 
     const elements = screen.querySelectorAll("*")
 
@@ -47,7 +60,7 @@ function adjustScreen(offsets) {
 
     elements.forEach(element => {
         element.style.transform = `translate(${transform.x}px, ${transform.y}px)`
-    });
+    });*/
 
 
     /*

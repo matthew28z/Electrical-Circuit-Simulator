@@ -1,11 +1,8 @@
 import { findAbsCotangent } from "./commonFunctions.js";
 import { wires } from "./wires.js";
-import { bridgeG, cBridgeG, fakeWireG } from "./management.js";
+import { bridgeG, cBridgeG, fakeWireG, svg } from "./management.js";
 
 const body = document.body;
-const svg = d3.select("#overlay")
-
-
 
 const radius = 10
 

@@ -1,11 +1,11 @@
 import { breaks, pathColors } from "../logic/paths.js";
-import { allObject } from "../logic/management.js";
 import { data } from "./data.js";
 import { findValue, determineBreak } from "./commonFunctions.js";
 
 function initiateData() {
     pathColors.forEach(color => {
-        data.resistance.push({path: color, pathResistance: null, splitsTo: breaks.filter(object => object.descendantOf === color).map(object => object.color)})
+        console.log()
+        data.push({path: color, pathResistance: null, pathVoltage: null, pathCurrent: null, splitsTo: breaks.filter(array => array[0].descendantOf === color).flatMap(array => array.map(object => object.color))})
     })
 }
 
@@ -17,7 +17,7 @@ export function calculateResistance(pathObj) {
     const flippedBreaks = structuredClone(breaks).reverse() //creates a deep-copy so that the original data stays in its intended form
     */
 
-    console.log(data.resistance.find(object => object.path === pathObj.color))
+    console.log(data.find(object => object.path === pathObj.color))
 
     let lackOfInformation = false;
 
@@ -40,7 +40,7 @@ export function calculateResistance(pathObj) {
             })
             
             if (!lackOfInformation) { //allows the paths parallel to the one checked to also be checked since they do not inherently require information about each other
-                data.resistance.find(obj => obj.path === pathObject.color).pathResistance = pathResistance
+                data.find(obj => obj.path === pathObject.color).pathResistance = pathResistance
             }
         })
 
@@ -66,7 +66,7 @@ export function calculateResistance(pathObj) {
             }
         }
 
-        data.resistance.find(object => object.path === pathObj.color).pathResistance = pathResistance
+        data.find(object => object.path === pathObj.color).pathResistance = pathResistance
 
     }
 
@@ -74,13 +74,13 @@ export function calculateResistance(pathObj) {
 }
 
 
-function calculateParallelResistance(breakNumber) {
+export function calculateParallelResistance(breakNumber) {
     const breakPaths = breaks[breakNumber]
 
     let flippedResistance = 0
 
     breakPaths.forEach(breakPath => {
-        flippedResistance += Math.pow(data.resistance.find(object => object.path === breakPath.color).pathResistance, -1)
+        flippedResistance += Math.pow(data.find(object => object.path === breakPath.color).pathResistance, -1)
     })
 
     return Math.pow(flippedResistance, -1)

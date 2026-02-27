@@ -1,25 +1,24 @@
 import { handleAllClicks, removeAllClicks } from "./commonFunctions.js";
-import { allObject } from "./management.js"
+import { allObject, screen } from "./management.js";
 
 const body = document.body;
-const screen = document.getElementById("screen");
 
-export const connections = allObject.connections;
+export const connections = () => allObject.connections;
 
 const handleClick = (event) => {
-    const goodClick = handleAllClicks("connection", connections, event, body.clientHeight * 0.02)
+    const goodClick = handleAllClicks("connection", connections(), event, body.clientHeight * 0.02)
 
     if (goodClick) { //new element was added
-        connections[connections.length - 1] = {element: connections[connections.length - 1], state: "socket", resistance: 0}
+        connections()[connections().length - 1] = {element: connections().at(-1), state: "socket", resistance: 0}
         //The function above adds the newest element to the connections array
-        const connection = connections[connections.length - 1].element
+        const connection = connections().at(-1).element
 
         connection.addEventListener("mousedown", handleMouseClick)
     }
 }
 
 export function addConnection() {
-    screen.addEventListener("click", handleClick)
+    body.addEventListener("click", handleClick)
 }
 
 
@@ -33,9 +32,9 @@ function handleMouseClick(event) {
 
         this.style.backgroundColor = color === "gold" ? "purple" : "gold"
 
-        const index = connections.findIndex(object => object.element === this)
+        const index = connections().findIndex(object => object.element === this)
         //color holds the old value, thus the logic is flipped because the acrtual background color has already changed
-        connections[index].state = color === "gold" ? "plug" : "socket"
+        connections()[index].state = color === "gold" ? "plug" : "socket"
     
     /* An option for a popUp menu (avoided due to inconsistencies)
     const rect = this.getBoundingClientRect()

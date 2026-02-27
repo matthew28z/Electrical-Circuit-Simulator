@@ -1,0 +1,183 @@
+.saveMenu {
+    position: absolute;
+    display: flex;
+    opacity: 0;
+    background-color: aquamarine;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40%;
+    height: 60%;
+    z-index: 999;
+    border: 2px solid gold;
+    border-radius: 5px;
+    transition: opacity 0.8s ease-in-out;
+    pointer-events: none;
+}
+
+.saveMenu p {
+    margin: 0 auto;
+    font-size: larger;
+    color: silver;
+    width: 90%;
+    height: fit-content;
+}
+
+.closeMenu {
+    position: absolute;
+    width: 4%;
+    aspect-ratio: 1 / 1;
+    top: 0;
+    left: 100%;
+    transform: translateX(-100%);
+    background-image: url("../icons/X.svg");
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    border: none;
+    background-color: transparent;
+}
+
+.closeMenu:active {
+    transform: translate(-100%, -5%);
+}
+
+.subSaveMenu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    height: 70%;
+    background-color: transparent;
+    left: 0;
+    top: 100%;
+    transform: translateY(-100%);
+}
+
+.saveButton {
+    margin-left: 50%;
+    margin-bottom: 2px;
+    margin-top: 5px;
+    transform: translateX(-50%);
+    height: 15%;
+    width: 50%;
+    color: gold;
+    border: 2px solid gold;
+    border-radius: 4px;
+    background-color: coral;
+}
+
+.saveButton:hover {
+    color: silver;
+    border-color: silver;
+}
+
+.saveButton:active {
+    transform: translate(-50%, -5%);
+}
+
+.subSaveMenu input {
+    width: 80%;
+    margin: 0;
+    margin-left: 10%;
+    color: silver;
+    border: 2px solid gold;
+    border-radius: 4px;
+}
+
+.subSaveMenu textarea {
+    width: 80%;
+    margin: 0;
+    margin-left: 10%;
+    color: silver;
+    border: 2px solid gold;
+    border-radius: 4px;
+    resize: none;
+}
+
+.scrollArea {
+    flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    background-color: transparent;
+    scrollbar-width: none;
+    cursor: pointer;
+}
+
+.slot {
+    position: relative;
+    width: 99.5%;
+    height: auto;
+    border: 2px solid gold;
+    border-left: none;
+    border-radius: 4px;
+}
+
+.slot:hover {
+    width: 99%;
+    border-color: silver;
+}
+
+.delete {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    transform: translateY(95%);
+    background-color: transparent !important;
+    border: none !important;
+    width: 8% !important;
+    aspect-ratio: 1 / 1 !important;
+    background-image: url("../icons/X.svg");
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.delete:active {
+    transform: translateY(92%) !important;
+}
+
+.slot button {
+    color: gold;
+    margin-top: 5px;
+    margin-bottom: 2px;
+    margin-left: calc(4% / 3);
+    width: 48%;
+    height: 5vh;
+    background-color: coral;
+    border: 2px solid gold;
+    border-radius: 4px;
+}
+
+.slot button:hover {
+    border-color: silver;
+    color: silver;
+}
+
+.slot button:active {
+    transform: translateY(-5%);
+}
+
+.slot p {
+    margin: 0;
+    margin-left: 5px;
+    text-align: left;
+}
+
+.alertP {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: auto;
+    justify-self: center;
+    text-align: center;
+    transform: translate(-50%, -50%);
+}
+
+.scrollArea::-webkit-scrollbar {
+    display: none;
+}

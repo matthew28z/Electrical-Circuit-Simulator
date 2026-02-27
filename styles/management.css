@@ -1,12 +1,14 @@
 .userCreated {
+    pointer-events: all !important;
     position: absolute;
-    height: 10vh;
+    height: 100%;
     aspect-ratio: 1 / 1;
     background-repeat: no-repeat;
     background-position: center;
     opacity: 1;
     border: 3px solid transparent;
-    border-radius: 100px;
+    box-sizing: border-box;
+    border-radius: 50%;
     border-style: dotted;
     transition: transform 1s;
 }
@@ -26,3 +28,15 @@
 .highlighted {
     stroke: rgba(238, 222, 130, 0.689);
 }
+
+.visible {
+    opacity: 1 !important;
+    pointer-events: all !important;
+    display: block;
+}
+
+.currentScreenButton {
+    border-color: gold !important;
+    color: gold !important;
+}
+

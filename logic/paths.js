@@ -1,4 +1,5 @@
-import { getRandomInt } from "./commonFunctions.js"
+import { getRandomInt } from "./commonFunctions.js";
+import { amperometers } from "./current.js";
 
 const body = document.body;
 
@@ -12,7 +13,7 @@ export const pathColors = [];/*["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine
 "Gainsboro", "GhostWhite", "Gold", "GoldenRod"];*/
 
 
-export const allElements = []; //is meant to have this form: [{element: any element, connections: {left: an array, right: an array}}]
+export let allElements = []; //is meant to have this form: [{element: any element, connections: {left: an array, right: an array}}]
 
 export function updateAllElements(element, connectedElement = null, side = null) {
     const index = allElements.findIndex(object => object.element === element)
@@ -277,6 +278,12 @@ function closeLoop(start, loopIndex, pathObject, side = "left") {
                 
                 if (connectedElement.classList.contains("connection")) {
                     point = "actualPoint"
+                } else if (connectedElement.classList.contains("amperometer")) {
+                    point = "actualPoint"
+
+                    const obj = amperometers().find(object => object.element === connectedElement)
+
+                    obj.connectedPath = pathObject.color
                 } else {
                     point = side === "left" ? "rightPoint" : "leftPoint"
                 }
@@ -341,7 +348,15 @@ function findNextConnection(currentElement, loopIndex, pathObject, side) {
                 console.log("success")  
                 console.log(nextConnection) 
             } else {
-                point = side === "left" ? "rightPoint" : "leftPoint"
+                if (connectedElement.classList.contains("amperometer")) {
+                    point = "actualPoint"
+
+                    const obj = amperometers().find(object => object.element === connectedElement)
+
+                    obj.connectedPath = pathObject.color
+                } else {
+                    point = side === "left" ? "rightPoint" : "leftPoint"
+                }   
             }
             
             pathObject.path.push({element: connectedElement, point: point})
@@ -450,3 +465,6 @@ function findColor() {
     return color
 }
 
+export function changeAllElements(newAllElements) {
+    allElements = newAllElements
+}

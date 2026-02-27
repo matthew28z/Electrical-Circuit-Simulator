@@ -2,11 +2,9 @@ import { removeAllClicks, calculateDistance, getTopElements as getAllElements, g
 import { createBridge, findBridgePoints } from "./bridge.js"
 import { updateAllElements, allElements } from "./paths.js"
 import { connections } from "./connection.js"
-import { wireG, fakeWireG } from "./management.js"
+import { wireG, fakeWireG, screen, svg, allG } from "./management.js"
 
 const body = document.body;
-const screen = document.getElementById("screen");
-const svg = d3.select("#overlay");
 const root = document.documentElement;
 
 let wireCounter = 0;
@@ -79,8 +77,8 @@ function determine(element1, element2, tF = false, scenario = null) {
             result = extraCheck(element2, element1, "rightPoint", false)
         }
     } else {
-        const rect1 = element1.getBoundingClientRect()
-        const rect2 = element2.getBoundingClientRect()
+        const rect1 = getPoints(element1).actualPoint
+        const rect2 = getPoints(element2).actualPoint
 
 
         const dx = rect1.left - rect2.left
@@ -150,11 +148,11 @@ function choosePoints(element1, element2) {
         }
     } else if (isCon1 && isCon2) {
         //Sockets only make connections on their leftPoint whilst Plugs only make connections on their rightPoint
-        const index1 = connections.findIndex(object => object.element === element1)
-        const index2 = connections.findIndex(object => object.element === element2)
+        const index1 = connections().findIndex(object => object.element === element1)
+        const index2 = connections().findIndex(object => object.element === element2)
 
-        const state1 = connections[index1].state
-        const state2 = connections[index2].state
+        const state1 = connections()[index1].state
+        const state2 = connections()[index2].state
 
         if (state1 === "socket") {
             if (state2 === "socket") {
@@ -174,8 +172,8 @@ function choosePoints(element1, element2) {
             }
         }
     } else if (isCon1) {
-        const index = connections.findIndex(object => object.element === element1)
-        const state = connections[index].state
+        const index = connections().findIndex(object => object.element === element1)
+        const state = connections()[index].state
         
         const i = clickedElements.findIndex(object => object.element === element2)
 
@@ -208,8 +206,8 @@ function choosePoints(element1, element2) {
             }
         }
     } else { //isCon2
-        const index = connections.findIndex(object => object.element === element2)
-        const state = connections[index].state
+        const index = connections().findIndex(object => object.element === element2)
+        const state = connections()[index].state
         console.log(state)
 
         const i = clickedElements.findIndex(object => object.element === element1)
@@ -590,11 +588,18 @@ function drawFakeWire(element, mousePoint) {
 
 }
 
+export function drawWirePointToPoint(point1, point2) {
+    const values = checkIntersection(point1, point2)
+
+    drawBridges(values, point1, point2)
+}
+
 const handleMove = (event) => {
     const wireButton = document.getElementById("wire")
 
     if (wireButton.style.borderColor === "white") {
-        const mousePoint = {x: event.clientX, y: event.clientY}
+        const mouseData = d3.pointer(event, allG.node())
+        const mousePoint = {x: mouseData[0], y: mouseData[1]}
 
         removeFakeWires()
         if ((event.target.classList.contains("userCreated") || event.target.classList.contains("wire") || event.target === screen)) {         
@@ -695,7 +700,7 @@ export function removeWire() {
     removeAllClicks(handleClicks)
 }
 
-function removeFakeWires() {
+export function removeFakeWires() {
     fakeWireG.selectAll("*").remove()
 }
 

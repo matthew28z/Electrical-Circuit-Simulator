@@ -21,6 +21,7 @@
 .connection {
     height: 2vh !important;
     border: 2px solid silver !important;
+    box-sizing: unset !important;
     border-radius: 10%;
     background-color: gold;
     z-index: 10;
@@ -28,6 +29,14 @@
 
 .connection:hover {
     border-color: red !important;
+}
+
+.amperometer {
+    height: 4vh !important;
+    background-image: url("../icons/amperometer.svg");
+    background-size: cover;
+    z-index: 10;
+    pointer-events: none;
 }
 
 .current {
