@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 import { allG } from "../logic/management.js";
 import { changeTransform, transform } from "./move.js";
 

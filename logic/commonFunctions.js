@@ -1,3 +1,5 @@
+import * as d3 from "../node_modules/d3/src/index.js";
+
 import { updateAllElements as update, allElements } from "./paths.js";
 import { minimumValues, screen, allG } from "./management.js";
 import { transform } from "../camera/move.js";

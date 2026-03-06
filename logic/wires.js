@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 import { removeAllClicks, calculateDistance, getTopElements as getAllElements, getPoints } from "./commonFunctions.js";
 import { createBridge, findBridgePoints } from "./bridge.js"
 import { updateAllElements, allElements } from "./paths.js"

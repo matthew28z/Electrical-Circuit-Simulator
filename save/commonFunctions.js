@@ -32,6 +32,7 @@ export function processAllObjectId(allObjectId) {
 export function processWiresId(wiresId) {
     return wiresId.map(object => {
         const wire = document.getElementById(object.id)
+
         //removes the IDs to prevent duplicates when loading another circuit
         wire.id = ""
 

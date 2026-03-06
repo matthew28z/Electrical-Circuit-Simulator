@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 import { changeValues, allObject } from "../logic/management.js";
 import { changeAllElements, allElements } from "../logic/paths.js";
 import { wires, removeFakeWires } from "../logic/wires.js";

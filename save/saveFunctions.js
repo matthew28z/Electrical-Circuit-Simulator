@@ -93,7 +93,8 @@ export function saveCircuit(name, description, boolean = false) {
         lastParams.name = name
         lastParams.description = description
     }
-    const names = JSON.parse(localStorage.getItem("names"))
+    const parsed = JSON.parse(localStorage.getItem("names"));
+    const names = parsed ? parsed : [];
 
     const confirmFunc = (e) => {
         if (e.key === "Enter") {
@@ -115,12 +116,14 @@ export function saveCircuit(name, description, boolean = false) {
         flagInput(textArea)                  
         window.addEventListener("keydown", confirmFunc)                  
     } else {
-        const preparedData = prepareData()
+        localStorage.setItem(`${name}-wiresId`, JSON.stringify(prepareWires()))
+
+        const preparedData = prepareData() //has to be after prepareWires
 
         localStorage.setItem(`${name}-allElementsId`, JSON.stringify(preparedData.allElementsId))
         localStorage.setItem(`${name}-allObjectId`, JSON.stringify(preparedData.allObjectId))
-        localStorage.setItem(`${name}-wiresId`, JSON.stringify(prepareWires()))
         localStorage.setItem(`${name}-circuitHTML`, preparedData.circuitHTML)
+        console.log(preparedData.circuitHTML)
 
         window.removeEventListener("keydown", confirmFunc)
 
@@ -144,7 +147,7 @@ export function saveCircuit(name, description, boolean = false) {
 function updateNames(newEntry) {
     const savedData = localStorage.getItem("names")
 
-    const usableData = JSON.parse(savedData)
+    const usableData = savedData ? JSON.parse(savedData) : [];
 
     if (!usableData.includes(newEntry)) {
         usableData.push(newEntry)
@@ -193,9 +196,6 @@ function prepareData() {
         const id = object.element.id
         objectId.id = id
 
-        console.log(object)
-        console.log(object.left)
-
         objectId.connections.left = object.connections.left.map(element => element.id)
         objectId.connections.right = object.connections.right.map(element => element.id)
 
@@ -211,11 +211,14 @@ function prepareData() {
 function prepareWires() {
     //Filters to the wires currently visible as wires stores more than that
     const visibleWires = wires.filter(object => object.element.closest(".screen.visible"));
+    console.log(visibleWires)
 
     //Passes IDs to all the filtered wires, assumes all other elements have already been processed (i.e. given an ID)
     let tracker = 0;
     visibleWires.forEach(object => {
+        console.log(object.element)
         object.element.id = `wire-${tracker}`;
+        console.log(object.element.id)
         tracker++;
     })
 

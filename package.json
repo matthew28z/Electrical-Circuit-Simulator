@@ -1,15 +1,27 @@
 {
   "name": "Zimaris Lab",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "logic/menu.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "keywords": ["circuits", "simulation", "d3", "js", "zimaris-lab"],
+  "keywords": [
+    "circuits",
+    "simulation",
+    "d3",
+    "js",
+    "zimaris-lab"
+  ],
   "author": "Matthaios Zimaris",
   "license": "CC BY-NC 4.0",
   "description": "Zimaris Lab is a software that helps visualise circuits and is mainly targeted for students.",
   "dependencies": {
     "d3": "^7.9.0"
+  },
+  "devDependencies": {
+    "vite": "^7.3.1"
   }
 }

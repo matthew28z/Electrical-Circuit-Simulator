@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 import { findAllPaths, breaks, allElements } from "./paths.js";
 import { voltageSources } from "./voltage.js";
 import { getPoints, getCenter, calculateDistance, replaceValueInAllElements } from "./commonFunctions.js";

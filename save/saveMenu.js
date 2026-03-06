@@ -210,15 +210,14 @@ export function adjustMenu() {
     if (saveMenu.classList.contains("visible")) {
         saveMenu.classList.remove("visible")
     } else {
-        const usableNames = JSON.parse(localStorage.getItem("names"))
+        const parsed = JSON.parse(localStorage.getItem("names"));
+        const usableNames = parsed ? parsed : [];
 
         const entries = document.querySelectorAll(".slot")
 
-        if (entries.length < usableNames.length) { //a new entry was added
+        if (entries.length <= usableNames.length) { //a new entry was added
             reRenderSubMenu()
-        } else if (entries.length === 0) {
-            reRenderSubMenu()
-        }
+        } 
 
         const input = document.querySelector("input")
         const textArea = document.querySelector("textarea")

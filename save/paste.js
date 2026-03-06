@@ -1,7 +1,10 @@
-import { wireG, bridgeG, cBridgeG, currentG, fakeWireG, allG} from "../logic/management.js"
+import * as d3 from "d3";
+
+import { wireG, bridgeG, cBridgeG, currentG, fakeWireG, allG, allObject } from "../logic/management.js"
 import { transform } from "../camera/move.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
-import { adjustWireCounter, wireCounter } from "../logic/wires.js";
+import { adjustWireCounter, wireCounter, wires } from "../logic/wires.js";
+import { allElements } from "../logic/paths.js";
 
 
 const quickPaste = (event) => {
@@ -21,47 +24,53 @@ function copyCircuit(name) {
 }
 
 function pasteHTML(circuitHTML) {
+    console.log(circuitHTML)
     //Converts the raw text data into an HTML that can be processed easily
     const parser = new DOMParser();
     const circuit = parser.parseFromString(circuitHTML, "text/html"); //This represents the circuit as HTML
    
     const circuitAllG = circuit.querySelector(".allG");
     const oldTransform = d3.zoomTransform(circuitAllG);
-    //Wraps the object with D3
-    const oldTransformD3 = d3.zoomIdentity.translate(oldTransform.x, oldTransform.y).scale(oldTransform.k);
 
     /*Some math I didn't get my head into that much, used AI and d3 to understand them
       Basically the goal is to change the coords of each element to something that 
       will fit perfectly in the new allG. I did not try to find a solution for how the zoom would 
       accounted for as that is not really the focus of the project, and I have already resorted to D3 in the past*/
-    const newTransformD3 = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
+    const newTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
     //old coords -> world coords -> relative coords
-    const relativeTransform = oldTransformD3.invert().translate(newTransform.x, newTransform.y).scale(newTransform.k);
-    console.log(7)
-    circuitAllG.attr("transform", `translate(${transform.x}, ${transform.y}) scale(${transform.z})`)
-    console.log(8)
+    const newZoom = newTransform.k / oldTransform.k;
+    const relativeTransform = d3.zoomIdentity.translate(newTransform.x - oldTransform.x * newZoom, newTransform.y - oldTransform.y * newZoom).scale(newZoom);
+    d3.select(circuitAllG).attr("transform", `translate(${transform.x}, ${transform.y}) scale(${transform.z})`)
 
+    //This is only for wires, bridges and currents
     const circuitGs = circuitAllG.querySelectorAll("g");
-    console.log(9)
 
     circuitGs.forEach(g => {
-        console.log(10)
         const gClass = g.classList[0]
-        console.log(11)
 
         while (g.children.length > 0) { //adoptNode removes the element from the circuit document
-            
             //Calculates the correct coordinates for each element copied
             const child = g.children[0];
+            console.log(child)
+            console.log(child.id)
 
-            const finalTransform = relativeTransform.compose(d3.zoomTransform(child)) //merges relative transform with preexisting ones
-            child.setAttribute("transform", finalTransform.toString())
+            //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
+            child.setAttribute("transform", relativeTransform.toString() + " " + child.getAttribute("transform"))
             document.adoptNode(child);
 
-            const wantedG = allG.querySelector(`.${gClass}`)
+            const wantedG = allG.node().querySelector(`.${gClass}`)
             wantedG.appendChild(child)                   
         }
     })
+
+    //This is for the elements
+    circuitAllG.querySelectorAll("foreignObject").forEach(element => {
+        console.log(element);
+        element.setAttribute("transform", relativeTransform.toString() + " " + element.getAttribute("transform"));
+
+        document.adoptNode(element);
+        allG.node().appendChild(element);
+    });
 
 }
 
@@ -103,7 +112,7 @@ export function pasteCircuit() {
         //We now add the new data to the old data
         wires.push(...newWires);
         allElements.push(...newAllElements);
-        allObject.keys.forEach(key => {
+        Object.keys(allObject).forEach(key => {
             allObject[key].push(...newAllObject[key]);
         })
     } else {

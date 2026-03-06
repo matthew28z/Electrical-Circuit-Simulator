@@ -23,10 +23,10 @@ const handles = [removeVoltage, removeWire, removeResistor, removeConnection, re
 
 //icon names
 const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "amperometer", "placeholder3", "placeholder4", "placeholder5", "placeholder6", "placeholder7", "placeholder8", "placeholder9"];
-const iconNames2 = ["save", "paste", "voltage2", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
+const iconNames2 = ["save", "paste", "run", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
 
 //extra logic buttons
-const IDs = ["save", "currentFlow", "paste"];
+const IDs = ["save", "currentFlow", "paste", "run"];
 
 const root = document.documentElement;
 const body = document.body;
@@ -111,7 +111,7 @@ for (let i = 0; i < numberOfSubmenus; i++) {
             button.id = iconNames1[x] 
             console.log(button.id)
         } else {
-            if (x < 2) { //these specific buttons have more complex icons that use the png format
+            if (x < 3) { //these specific buttons have more complex icons that use the png format
                 button.style.backgroundImage = `url("../icons/${iconNames2[x]}.png")`
                 button.style.border = "none"
             } else {
@@ -204,8 +204,7 @@ save.addEventListener("click", adjustMenu);
 const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
-window.addEventListener('keydown', function(event) {
-  if (event.key === 'Enter') {
+function simulate() {
     const path = findAllPaths(voltageSources())
 
     drawCurrent(path)
@@ -216,6 +215,14 @@ window.addEventListener('keydown', function(event) {
 
     const elementData = screen.innerHTML
     //localStorage.setItem("test", JSON.stringify(elementData))
+}
+
+const run = document.getElementById("run");
+run.addEventListener("click", simulate)
+
+window.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    simulate()
   }
 });
 

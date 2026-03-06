@@ -1,3 +1,5 @@
+import * as d3 from "d3";
+
 import { allObject } from "../logic/management.js";
 import { allElements } from "../logic/paths.js";
 import { changeTransform } from "../camera/move.js";
