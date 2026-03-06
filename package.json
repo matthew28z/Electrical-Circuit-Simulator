@@ -1,0 +1,15 @@
+{
+  "name": "Zimaris Lab",
+  "version": "0.0.4",
+  "main": "logic/menu.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["circuits", "simulation", "d3", "js", "zimaris-lab"],
+  "author": "Matthaios Zimaris",
+  "license": "CC BY-NC 4.0",
+  "description": "Zimaris Lab is a software that helps visualise circuits and is mainly targeted for students.",
+  "dependencies": {
+    "d3": "^7.9.0"
+  }
+}

@@ -1,0 +1,24 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="silverGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="35%" stop-color="#D9D9D9"/>
+      <stop offset="50%" stop-color="#A6A6A6"/>
+      <stop offset="65%" stop-color="#E6E6E6"/>
+      <stop offset="100%" stop-color="#BFBFBF"/>
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700"/>
+      <stop offset="50%" stop-color="#FFC107"/>
+      <stop offset="100%" stop-color="#FFB300"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Silver Circle -->
+  <circle cx="60" cy="60" r="50" fill="url(#silverGradient)" stroke="#8C8C8C" stroke-width="2"/>
+  
+  <!-- Golden Bold A -->
+  <text x="60" y="80" text-anchor="middle" font-size="60" font-weight="bold" fill="url(#goldGradient)" font-family="Arial, sans-serif">
+    A
+  </text>
+</svg>
