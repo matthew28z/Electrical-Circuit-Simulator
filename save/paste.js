@@ -24,7 +24,7 @@ function copyCircuit(name) {
 }
 
 function pasteHTML(circuitHTML) {
-    console.log(circuitHTML)
+    const addedElements = [];
     //Converts the raw text data into an HTML that can be processed easily
     const parser = new DOMParser();
     const circuit = parser.parseFromString(circuitHTML, "text/html"); //This represents the circuit as HTML
@@ -51,8 +51,8 @@ function pasteHTML(circuitHTML) {
         while (g.children.length > 0) { //adoptNode removes the element from the circuit document
             //Calculates the correct coordinates for each element copied
             const child = g.children[0];
-            console.log(child)
-            console.log(child.id)
+
+            addedElements.push(child);
 
             //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
             child.setAttribute("transform", relativeTransform.toString() + " " + child.getAttribute("transform"))
@@ -65,13 +65,15 @@ function pasteHTML(circuitHTML) {
 
     //This is for the elements
     circuitAllG.querySelectorAll("foreignObject").forEach(element => {
-        console.log(element);
+        addedElements.push(element);
+
         element.setAttribute("transform", relativeTransform.toString() + " " + element.getAttribute("transform"));
 
         document.adoptNode(element);
         allG.node().appendChild(element);
     });
 
+    return addedElements; //keeps track of the pastedElements
 }
 
 export function pasteCircuit() {
@@ -83,7 +85,7 @@ export function pasteCircuit() {
     if (allElementsId && allObjectId && wiresId && circuitHTML) { //failsafe
         const screen = document.querySelector(".screen.visible")
 
-        pasteHTML(circuitHTML);
+        const newElements = pasteHTML(circuitHTML);
 
         /*Before filtering the data, we first push all the old data to the the current data
           To achieve this we must first convert ID data to something usable*/
@@ -115,6 +117,8 @@ export function pasteCircuit() {
         Object.keys(allObject).forEach(key => {
             allObject[key].push(...newAllObject[key]);
         })
+
+        //Now we need to check if there is any overlap and remove those elements
     } else {
         console.log("ERROR: Failed to paste circuit")
     }
