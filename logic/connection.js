@@ -13,7 +13,7 @@ const handleClick = (event) => {
         //The function above adds the newest element to the connections array
         const connection = connections().at(-1).element
 
-        connection.addEventListener("mousedown", handleMouseClick)
+        //connection.addEventListener("mousedown", handleMouseClick)
     }
 }
 
@@ -26,7 +26,7 @@ export function removeConnection() {
     removeAllClicks(handleClick)
 }
 
-function handleMouseClick(event) {
+export function handleMouseClick(event) {
     if (event.button === 2) {
         const color = window.getComputedStyle(this).backgroundColor === "rgb(255, 215, 0)" /*gold*/ ? "gold" : "purple"
 

@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 
+import { addEventListeners, removeEventListeners, changeOperation } from "../logic/elementFunctions.js";
 import { changeValues, allObject } from "../logic/management.js";
 import { changeAllElements, allElements } from "../logic/paths.js";
 import { wires, removeFakeWires } from "../logic/wires.js";
@@ -88,6 +89,12 @@ export function addScreen(change = false, boolean = false) {
         }
     } else {
         screenButton.classList.add("currentScreenButton")
+
+        //Adds event listeners (special case as no old screen exists)
+        const screen = document.querySelector(".visible.screen");
+
+        changeOperation(screen);
+        addEventListeners(screen);
     }
     
     screensButtons.push(screenButton)
@@ -119,10 +126,14 @@ function changeScreen(screenNumber) {
         changeScreen(newScreenNumber)
     } else {
         const oldScreen = body.querySelector(".visible.screen")
-
         oldScreen.classList.remove("visible")
+        //Call this before reassigning operation
+        removeEventListeners(oldScreen);
 
         const newScreen = document.getElementById(`screen-${screenNumber}`)
+
+        changeOperation(newScreen)
+        addEventListeners(newScreen)
 
         newScreen.classList.add("visible")
 

@@ -5,6 +5,12 @@ const body = document.body;
 
 const resistors = () => allObject.resistors;
 
+export const rightClick = (event) => {
+    if (event.button === 2) {
+        userCreatedTab(event.target, resistors())
+    }
+}
+
 const handleClick = (event) => {
     const goodClick = handleAllClicks("resistor", resistors(), event)
 
@@ -13,11 +19,7 @@ const handleClick = (event) => {
 
         resistors()[resistors().length - 1] = {element: resistor, resistance: {value: null, UM: "(Ω)"}, hasTab: false}
 
-        resistor.addEventListener("mousedown", (event) => {
-            if (event.button === 2) {
-                userCreatedTab(resistor, resistors())
-            }
-        })
+        //resistor.addEventListener("mousedown", rightClick)
     }
 }
 

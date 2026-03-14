@@ -52,8 +52,6 @@ function pasteHTML(circuitHTML) {
             //Calculates the correct coordinates for each element copied
             const child = g.children[0];
 
-            addedElements.push(child);
-
             //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
             child.setAttribute("transform", relativeTransform.toString() + " " + child.getAttribute("transform"))
             document.adoptNode(child);
