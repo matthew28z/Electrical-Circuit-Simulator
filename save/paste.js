@@ -3,7 +3,7 @@ import * as d3 from "d3";
 import { wireG, bridgeG, cBridgeG, currentG, fakeWireG, allG, allObject } from "../logic/management.js"
 import { transform } from "../camera/move.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
-import { adjustWireCounter, wireCounter, wires } from "../logic/wires.js";
+import { adjustWireCounter, wireCounter, wires, clickedElements } from "../logic/wires.js";
 import { allElements } from "../logic/paths.js";
 
 
@@ -76,6 +76,13 @@ function pasteHTML(circuitHTML) {
     return addedElements; //keeps track of the pastedElements
 }
 
+//Adds event listeners to all the new elements
+function addEventListeners(addedElements) {
+    addedElements.forEach(element => {
+
+    })
+}
+
 export function pasteCircuit() {
     const allElementsId = JSON.parse(sessionStorage.getItem("allElementsId"))
     const allObjectId = JSON.parse(sessionStorage.getItem("allObjectId"))
@@ -91,8 +98,8 @@ export function pasteCircuit() {
           To achieve this we must first convert ID data to something usable*/
 
         const newAllElements = processAllElementsId(allElementsId);
-        const newAllObject = processAllObjectId(allObjectId);  
         const newWires = processWiresId(wiresId);
+        const newAllObject = processAllObjectId(allObjectId);  
 
         /*We need to adjust the wire groups of the pasted elements so that there is no overlap
           this could be done after the overlaping elements get deleted, yet I believe this will be simpler
@@ -114,6 +121,11 @@ export function pasteCircuit() {
         //We now add the new data to the old data
         wires.push(...newWires);
         allElements.push(...newAllElements);
+
+        newAllElements.forEach(object => {
+            clickedElements.push({element: object.element, leftPoint: !object.element.classList.contains("connection") && object.connections.left.length > 0, rightPoint: !object.element.classList.contains("connection") && object.connections.right.length > 0})
+        })
+
         Object.keys(allObject).forEach(key => {
             allObject[key].push(...newAllObject[key]);
         })

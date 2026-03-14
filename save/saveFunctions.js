@@ -116,14 +116,12 @@ export function saveCircuit(name, description, boolean = false) {
         flagInput(textArea)                  
         window.addEventListener("keydown", confirmFunc)                  
     } else {
+        const preparedData = prepareData() 
+
         localStorage.setItem(`${name}-wiresId`, JSON.stringify(prepareWires()))
-
-        const preparedData = prepareData() //has to be after prepareWires
-
         localStorage.setItem(`${name}-allElementsId`, JSON.stringify(preparedData.allElementsId))
         localStorage.setItem(`${name}-allObjectId`, JSON.stringify(preparedData.allObjectId))
-        localStorage.setItem(`${name}-circuitHTML`, preparedData.circuitHTML)
-        console.log(preparedData.circuitHTML)
+        localStorage.setItem(`${name}-circuitHTML`, screen.innerHTML)
 
         window.removeEventListener("keydown", confirmFunc)
 
@@ -202,10 +200,7 @@ function prepareData() {
         return objectId
     })
 
-    //Processes the HTML
-    const circuitHTML = screen.innerHTML
-
-    return {allElementsId: allElementsId, allObjectId: allObjectId, circuitHTML: circuitHTML}
+    return {allElementsId: allElementsId, allObjectId: allObjectId}
 }
 
 function prepareWires() {
@@ -226,7 +221,8 @@ function prepareWires() {
     return visibleWires.map(object => {
         const {element, connections, ...rest} = object
 
-        return {id: element.id, connections: connections.map(element => element.id), ...rest}
+        console.log(connections.map(el => el.id))
+        return {id: element.id, connections: connections.map(el => el.id), ...rest}
     })
 }
 

@@ -5,7 +5,7 @@ import { voltageSources } from "./voltage.js";
 import { getPoints, getCenter, calculateDistance, replaceValueInAllElements } from "./commonFunctions.js";
 import { wires, drawWirePointToPoint } from "./wires.js"
 import { createCurrentBridge, findBridgePoints } from "./bridge.js";
-import { currentG, allObject, screen } from "./management.js";
+import { currentG, allObject, screen, allG } from "./management.js";
 
 //const path = findAllPaths(voltageSources)
 
@@ -210,11 +210,19 @@ const handleClick = (event) => {
                 element.remove()
             })
 
+            const c = d3.pointer(event, allG.node())
+
+            const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+            foreignObject.setAttribute("x", c[0] - body.clientHeight * 0.02);
+            foreignObject.setAttribute("y", c[1] - body.clientHeight * 0.02);
+            foreignObject.setAttribute("width", body.clientHeight + 16);
+            foreignObject.setAttribute("height", body.clientHeight + 16);
+
             const amperometer = document.createElement("div")
-            screen.appendChild(amperometer)
             amperometer.classList.add("amperometer", "userCreated")
-            amperometer.style.left = event.clientX - body.clientHeight * 0.02 + "px"
-            amperometer.style.top = event.clientY - body.clientHeight * 0.02 + "px"
+
+            foreignObject.appendChild(amperometer);
+            allG.node().appendChild(foreignObject);
 
             const point1 = getPoints(connectedElements[0])[side1]
             const point2 = getPoints(connectedElements[1])[side2]
