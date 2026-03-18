@@ -36,10 +36,10 @@ export function processWiresId(wiresId) {
         //removes the IDs to prevent duplicates when loading another circuit
         wire.id = ""
 
-        const { connections, ...rest } = object
+        const { id, connections, ...rest } = object
 
-        console.log(connections.map(id => document.getElementById(id)))
+        console.log(connections.map(elID => document.getElementById(elID)))
 
-        return {element: wire, connections: connections.map(id => document.getElementById(id)), ...rest}
+        return {element: wire, connections: connections.map(elID => document.getElementById(elID)), ...rest}
     })
 }

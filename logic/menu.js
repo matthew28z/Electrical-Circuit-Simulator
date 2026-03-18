@@ -109,7 +109,6 @@ for (let i = 0; i < numberOfSubmenus; i++) {
         if (i === 0) {
             button.style.backgroundImage = `url("../icons/${iconNames1[x]}Text.svg")`
             button.id = iconNames1[x] 
-            console.log(button.id)
         } else {
             if (x < 3) { //these specific buttons have more complex icons that use the png format
                 button.style.backgroundImage = `url("../icons/${iconNames2[x]}.png")`

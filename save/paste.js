@@ -42,8 +42,8 @@ function pasteHTML(circuitHTML) {
     const relativeTransform = d3.zoomIdentity.translate(newTransform.x - oldTransform.x * newZoom, newTransform.y - oldTransform.y * newZoom).scale(newZoom);
     d3.select(circuitAllG).attr("transform", `translate(${transform.x}, ${transform.y}) scale(${transform.z})`)
 
-    //This is only for wires, bridges and currents
-    const circuitGs = circuitAllG.querySelectorAll("g");
+    //This is only for wires and bridges
+    const circuitGs = circuitAllG.querySelectorAll("g:not(.currentG, .cBridgeG)");
 
     circuitGs.forEach(g => {
         const gClass = g.classList[0]
@@ -51,6 +51,8 @@ function pasteHTML(circuitHTML) {
         while (g.children.length > 0) { //adoptNode removes the element from the circuit document
             //Calculates the correct coordinates for each element copied
             const child = g.children[0];
+
+            addedElements.push(child);
 
             //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
             child.setAttribute("transform", relativeTransform.toString() + " " + child.getAttribute("transform"))
@@ -64,6 +66,7 @@ function pasteHTML(circuitHTML) {
     //This is for the elements
     circuitAllG.querySelectorAll("foreignObject").forEach(element => {
         addedElements.push(element);
+        addedElements.push(...element.querySelectorAll("*")) //adds the elements and their container (foreignObject)
 
         element.setAttribute("transform", relativeTransform.toString() + " " + element.getAttribute("transform"));
 
@@ -74,10 +77,132 @@ function pasteHTML(circuitHTML) {
     return addedElements; //keeps track of the pastedElements
 }
 
-//Adds event listeners to all the new elements
-function addEventListeners(addedElements) {
-    addedElements.forEach(element => {
+function findElements(a, b, constant, isVertical) {
+    //I am not sure this covers the case for rotated elements
+    const step = Math.trunc(0.08 * document.body.clientHeight); //A safe value smaller than the size of the elements we are trying to find
 
+    const elements = new Set();
+
+    if (a > b) { //avoid code duplication
+        return findElements(b, a, constant, isVertical);
+    }
+
+    for (a; a < b; a += step) {
+        const point = isVertical ? {x: constant, y: a} : {x: a, y: constant};
+        const foundElements = Array.from(document.elementsFromPoint(point.x, point.y)).filter(element => {
+            const child = element.classList.contains(".userCreated");
+
+            return child;
+        })
+
+        console.log(foundElements)
+
+        if (foundElements.length > 0) {
+            for (const el of foundElements) {
+                elements.add(el);
+            }
+        }
+    }
+
+    return elements;
+}
+
+function findLines(element) { //this function assumes the element does not have any rotation applied to it
+    const rect = element.getBoundingClientRect();
+    const topLeft = {x: rect.left, y: rect.top};
+    const topRight = {x: rect.left + rect.width, y: rect.top};
+    const bottomLeft = {x: rect.left, y: rect.top + rect.height};
+    const bottomRight = {x: rect.left + rect.width, y: rect.top + rect.height};
+
+    return [{start: topLeft, end: topRight}, {start: topRight, end: bottomRight}, {start: bottomLeft, end: bottomRight}, {start: topLeft, end: bottomLeft}];
+}
+
+//This is a very important function
+function removeElementFromData(element) {
+    if (element.classList.contains("userCreated")) {
+        //We need to remove every instance of this element from the programs data
+
+        if (!element.classList.contains("wire")) {
+            //allElements
+            const aEIndex = allElements.findIndex(object => object.element === element);
+
+            if (aEIndex > -1) {
+                allElements.splice(aEIndex, 1);
+            } else {
+                console.log("Error: Corrupted Data (allElements)");
+            }
+
+            //clickedElements
+            //May just be the same index as aEIndex (further testing required)
+            const cEIndex = clickedElements.findIndex(object => object.element === element);
+
+            if (cEIndex > -1) {
+                clickedElements.splice(cEIndex, 1);
+            } else {
+                console.log("Error: Corrupted Data (clickedElements)");
+            }
+
+            //allObject
+            const uniqueClass = Array.from(element.classList).find(className => className !== "userCreated");
+
+            if (uniqueClass) {
+                const aOIndex = allObject[uniqueClass].findIndex(object => object.element === element);
+
+                if (aOIndex > -1) {
+                    allObject[uniqueClass].splice(aOIndex, 1);
+                } else {
+                    console.log("Error: Corrupted Data (allObject)");
+                }
+            } else {
+                console.log("Error: Corrupted Data (No unique class passed to a userCreated HTML Element)");
+            }
+        } else { 
+            //wires  
+
+            //We need to delete all the associated wires 
+            const objectToDelete = wires.find(object => object.element === element);
+
+            if (objectToDelete) {
+                const wireGroupElements = wires.filter(object => object.wireGroup === objectToDelete.wireGroup)
+
+                //No check required at least one object should be returned
+                wires.splice(wires.indexOf(wireGroupElements[0]), wireGroupElements.length) //No check required
+            } else {
+                console.log("Error: Corrupted Data (wires)");
+            }
+        }
+    }  //if not then it is the foreignObject container or current which should just be deleted, no need to adjust the data
+}
+
+function deleteOverlap(newElements) { //this function must be called before including the new elements to the data
+    /*The plan is to make four lines in the perimeter and check them
+      This is done in case I ever add rotation to elements as currently I just need 4 points*/
+
+    const elementsToBeDeleted = new Set();
+
+    newElements.forEach(element => {
+        findLines(element).forEach(line => {
+            const isVertical = line.start.x === line.end.x;
+            const constant = isVertical ? line.start.x : line.start.y;
+
+            const a = isVertical ? line.start.y : line.start.x;
+            const b = isVertical ? line.end.y : line.end.x;
+
+            const temp = findElements(a, b, constant, isVertical);
+
+            if (temp.size > 0) {
+                for (const el of temp) {
+                    elementsToBeDeleted.add(el);
+                }
+            }
+
+        })
+    })
+
+    Array.from(elementsToBeDeleted).filter(element => !newElements.includes(element)).forEach(element => {
+        removeElementFromData(element);
+
+        element.remove();
     })
 }
 
@@ -96,6 +221,7 @@ export function pasteCircuit() {
           To achieve this we must first convert ID data to something usable*/
 
         const newAllElements = processAllElementsId(allElementsId);
+        console.log(newAllElements)
         const newWires = processWiresId(wiresId);
         const newAllObject = processAllObjectId(allObjectId);  
 
@@ -118,17 +244,22 @@ export function pasteCircuit() {
 
         //We now add the new data to the old data
         wires.push(...newWires);
+        console.log(wires)
+        console.log(allElements)
         allElements.push(...newAllElements);
+        console.log(allElements)
 
         newAllElements.forEach(object => {
             clickedElements.push({element: object.element, leftPoint: !object.element.classList.contains("connection") && object.connections.left.length > 0, rightPoint: !object.element.classList.contains("connection") && object.connections.right.length > 0})
         })
+
 
         Object.keys(allObject).forEach(key => {
             allObject[key].push(...newAllObject[key]);
         })
 
         //Now we need to check if there is any overlap and remove those elements
+        deleteOverlap(newElements)
     } else {
         console.log("ERROR: Failed to paste circuit")
     }

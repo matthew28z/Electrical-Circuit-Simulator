@@ -13,8 +13,6 @@ export function fetchNames() {
     if (dataNames) {
         const usableNames = JSON.parse(dataNames)
 
-        console.log(usableNames)
-
         return usableNames
     }
 

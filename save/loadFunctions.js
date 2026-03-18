@@ -17,7 +17,12 @@ export function loadCircuit(name, isCopy = false) {
 
     addScreen(true); //adds a new screen and changes to it
 
-    document.querySelector(".screen.visible").innerHTML = localStorage.getItem(`${name}-circuitHTML`)
+    const newScreen = document.querySelector(".screen.visible");
+    newScreen.innerHTML = localStorage.getItem(`${name}-circuitHTML`);
+
+    //Erase the current from the loaded data
+    newScreen.querySelector(".currentG").replaceChildren();
+    newScreen.querySelector(".cBridgeG").replaceChildren();
 
     processWires(wiresId)
     processLoadedData(allObjectId, allElementsId)

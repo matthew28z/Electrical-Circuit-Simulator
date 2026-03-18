@@ -28,11 +28,13 @@ export function removeConnection() {
 
 export function handleMouseClick(event) {
     if (event.button === 2) {
-        const color = window.getComputedStyle(this).backgroundColor === "rgb(255, 215, 0)" /*gold*/ ? "gold" : "purple"
+        const element = event.target;
+        
+        const color = window.getComputedStyle(element).backgroundColor === "rgb(255, 215, 0)" /*gold*/ ? "gold" : "purple"
 
-        this.style.backgroundColor = color === "gold" ? "purple" : "gold"
+        element.style.backgroundColor = color === "gold" ? "purple" : "gold"
 
-        const index = connections().findIndex(object => object.element === this)
+        const index = connections().findIndex(object => object.element === element)
         //color holds the old value, thus the logic is flipped because the acrtual background color has already changed
         connections()[index].state = color === "gold" ? "plug" : "socket"
     

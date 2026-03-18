@@ -21,7 +21,6 @@ export let allG = svg.append("g");
 allG.classed("allG", true);
 
 export let bridgeG = allG.append("g");
-console.log(bridgeG)
 bridgeG.classed("bridgeG", true);
 
 export let cBridgeG = allG.append("g");

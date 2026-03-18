@@ -76,6 +76,8 @@ export function drawCurrent(pathObject, isBreak = false) {
 
         allPoints.push(lastPoint)
 
+        console.log(allPoints)
+
         //since all points are in pairs, we use i += 2 to go to the next pair
         for (let i = 0; i < allPoints.length; i += 2) {
             const pointA = allPoints[i]
@@ -127,6 +129,7 @@ export function drawCurrent(pathObject, isBreak = false) {
 }
 
 function findWireGroup(pointA, pointB) {
+    console.log(pointA, pointB)
     //Passes the found wire elements into two arrays
     let wiresA = document.elementsFromPoint(pointA.x, pointA.y).filter(element => element.classList.contains("wire"))
     let wiresB = document.elementsFromPoint(pointB.x, pointB.y).filter(element => element.classList.contains("wire"))

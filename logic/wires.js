@@ -215,7 +215,6 @@ function choosePoints(element1, element2) {
     } else { //isCon2
         const index = connections().findIndex(object => object.element === element2)
         const state = connections()[index].state
-        console.log(state)
 
         const i = clickedElements.findIndex(object => object.element === element1)
 

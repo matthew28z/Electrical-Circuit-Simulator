@@ -201,7 +201,6 @@ export function getPoints(element) {
     const y2 = rect.top + window.scrollY + rect.width / 2
 
     const currentTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
-
     const c1 = currentTransform.invert([x1, y1])
     const c2 = currentTransform.invert([x2, y2])
     let c3 = [0, 0];
