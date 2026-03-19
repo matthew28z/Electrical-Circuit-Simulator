@@ -251,15 +251,27 @@ function positionAndSizeTab(element, array) {
     const left = rect.left + rect.width * 0.8 + "px"
     const top = rect.top
 
-    const popUp = document.createElement("div")
-    screen.appendChild(popUp)
-    popUp.classList.add("popUp")
-    popUp.style.height = 9 * (Object.keys(array[0]).length) + "%"
+    const fO = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+    screen.querySelector(".allG").appendChild(fO)
 
-    const tabRect = popUp.getBoundingClientRect()
+    const rowHeight = screen.getBoundingClientRect().height * 0.09;
+    const height = rowHeight * (Object.keys(array[0]).length);
+    const width = height * 0.9;
+
+    fO.setAttribute("height", height);
+    fO.setAttribute("width", width);
+
+    const tabRect = fO.getBoundingClientRect()
+
+    fO.setAttribute("x", left);
+    fO.setAttribute("y", top - tabRect.height);
+
+    screen.querySelector(".allG").appendChild(fO)
+
+    const popUp = document.createElement("div")
+    popUp.classList.add("popUp")
+    fO.appendChild(popUp)
     
-    popUp.style.left = left
-    popUp.style.top = top - tabRect.height + "px"
 
     return popUp
 }
@@ -297,7 +309,7 @@ function addCloseButton(tab, rect, object) {
     close.addEventListener("click", () => {
         object.hasTab = false 
 
-        tab.remove()
+        tab.parentElement.remove()
     })
 
     return close

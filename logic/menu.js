@@ -203,7 +203,7 @@ save.addEventListener("click", adjustMenu);
 const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
-function simulate() {
+async function simulate() {
     const path = findAllPaths(voltageSources())
 
     drawCurrent(path)
@@ -211,7 +211,7 @@ function simulate() {
     console.log(calculateResistance(path))
     console.log(calculateVoltage(path))
     console.log(calculateCurrent(path))
-
+    
     const elementData = screen.innerHTML
     //localStorage.setItem("test", JSON.stringify(elementData))
 }
