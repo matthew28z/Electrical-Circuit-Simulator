@@ -203,7 +203,7 @@ save.addEventListener("click", adjustMenu);
 const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
-async function simulate() {
+function simulate() {
     const path = findAllPaths(voltageSources())
 
     drawCurrent(path)

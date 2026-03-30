@@ -8,5 +8,6 @@ This file explains how data is stored in this application and how it cam be safe
 * *(B) clickedElements Array*
 ### (C) allObject Object
 ### (D) wires Array
+### (E) data Array
 
 ## ***allElements Array***

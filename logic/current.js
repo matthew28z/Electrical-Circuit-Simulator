@@ -17,6 +17,7 @@ const line = d3.line()
 
 export function drawCurrent(pathObject, isBreak = false) {
     console.log(breaks)
+    console.log(pathObject)
     if (pathObject.isClosed) {
         console.log(pathObject.color, pathObject.isClosed)
         const firstElement = pathObject.path[0].element
@@ -129,7 +130,6 @@ export function drawCurrent(pathObject, isBreak = false) {
 }
 
 function findWireGroup(pointA, pointB) {
-    console.log(pointA, pointB)
     //Passes the found wire elements into two arrays
     let wiresA = document.elementsFromPoint(pointA.x, pointA.y).filter(element => element.classList.contains("wire"))
     let wiresB = document.elementsFromPoint(pointB.x, pointB.y).filter(element => element.classList.contains("wire"))

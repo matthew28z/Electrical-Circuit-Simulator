@@ -55,7 +55,7 @@ function pasteHTML(circuitHTML) {
             addedElements.push(child);
 
             //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
-            child.setAttribute("transform", relativeTransform.toString() + " " + child.getAttribute("transform"))
+            child.setAttribute("transform", (relativeTransform.toString() + " " + child.getAttribute("transform")).replace("null", "").trim())
             document.adoptNode(child);
 
             const wantedG = allG.node().querySelector(`.${gClass}`)
@@ -68,10 +68,13 @@ function pasteHTML(circuitHTML) {
         addedElements.push(element);
         addedElements.push(...element.querySelectorAll("*")) //adds the elements and their container (foreignObject)
 
-        element.setAttribute("transform", relativeTransform.toString() + " " + element.getAttribute("transform"));
+        element.setAttribute("transform", ((relativeTransform.toString() + " " + element.getAttribute("transform")).replace("null", "").trim()));
 
         document.adoptNode(element);
         allG.node().appendChild(element);
+
+        console.log(element.getBoundingClientRect())
+        console.log(element.querySelector("*").getBoundingClientRect())
     });
 
     return addedElements; //keeps track of the pastedElements
@@ -221,7 +224,6 @@ export function pasteCircuit() {
           To achieve this we must first convert ID data to something usable*/
 
         const newAllElements = processAllElementsId(allElementsId);
-        console.log(newAllElements)
         const newWires = processWiresId(wiresId);
         const newAllObject = processAllObjectId(allObjectId);  
 
@@ -244,8 +246,6 @@ export function pasteCircuit() {
 
         //We now add the new data to the old data
         wires.push(...newWires);
-        console.log(wires)
-        console.log(allElements)
         allElements.push(...newAllElements);
         console.log(allElements)
 

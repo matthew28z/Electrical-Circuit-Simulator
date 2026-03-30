@@ -173,6 +173,12 @@ saveMenu.addEventListener("click", (event) => {
         if (nameInput.value) {
             if (nameInput.value.length <= 25) {
                 saveCircuit(nameInput.value, descriptionInput.value)
+
+                //Removes all the added element IDs
+                for (const element of document.querySelectorAll(".screen.visible .userCreated,.wire")) {
+                    element.removeAttribute("id");
+                }
+
                 //Forces the submenu to update
                 //Quite inefficient as it rerenders the whole submenu instead of just updating the specific entry
                 reRenderSubMenu()

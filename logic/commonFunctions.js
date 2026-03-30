@@ -194,6 +194,8 @@ export function getCenter(element) {
 
 export function getPoints(element) {
     const rect = element.getBoundingClientRect()
+    console.log(rect)
+    console.log(element.closest(".screen"))
 
     const x1 = rect.left + window.scrollX
     const x2 = rect.left + window.scrollX + rect.width 
@@ -203,7 +205,8 @@ export function getPoints(element) {
     const currentTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
     const c1 = currentTransform.invert([x1, y1])
     const c2 = currentTransform.invert([x2, y2])
-    let c3 = [0, 0];
+    
+    const c3 = [0, 0];
 
     if (element.classList.contains("connection") || element.classList.contains("amperometer")) { //for connections all points are on the center (i.e. actualPoint)
         const center = getCenter(element)

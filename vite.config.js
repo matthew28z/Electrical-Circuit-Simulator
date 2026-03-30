@@ -24,6 +24,7 @@ export default defineConfig({
       ],
       provider: playwright(),
     },
+    setupFiles: ["./tests/setup.js"],
     environment: "node",
     globals: true,
     isolate: true

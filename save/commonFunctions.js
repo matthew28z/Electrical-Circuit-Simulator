@@ -17,7 +17,7 @@ export function processAllObjectId(allObjectId) {
             //The ids are cleared to allow for the user to load another circuit without having duplicate id names
             const element = document.getElementById(objectId.id)
             console.log(element)
-            element.id = ""
+            element.removeAttribute("id");
 
             //Object Destructuring to seperate the wanted data from the id
             const {id, ...rest} = objectId
@@ -34,7 +34,7 @@ export function processWiresId(wiresId) {
         const wire = document.getElementById(object.id)
 
         //removes the IDs to prevent duplicates when loading another circuit
-        wire.id = ""
+        wire.removeAttribute("id");
 
         const { id, connections, ...rest } = object
 
