@@ -1,56 +1,54 @@
 import { expect } from 'vitest';
-import userEvent from '@testing-library/user-event';
-
-const user = userEvent.setup();
+import { page } from "vitest/browser";
 
 export async function simpleCircuit() {
-        const screen = document.getElementById("screen-0");
-        const allG = document.querySelector(".allG");
+    console.log("DEBUG - page object:", page);
+    console.log("DEBUG - locator type:", typeof page.elementLocator);
 
-        const voltageSourceButton = document.getElementById("voltageSource");
-        const connectionButton = document.getElementById("connection");
-        const resistorButton = document.getElementById("resistor");
+        const screen = page.elementLocator("#screen-0");
+        const allG = page.elementLocator(".allG");
 
-        await user.click(voltageSourceButton);
+        const voltageSourceButton = page.elementLocator("#voltageSource");
+        const connectionButton = page.elementLocator("#connection");
+        const resistorButton = page.elementLocator("#resistor");
 
-        await user.pointer([{ target: screen, coords: { x: 255, y: 102 }, keys: "[MouseLeft]" }]) //create the voltage source
-        const voltageSource = document.querySelector(".voltageSource");
+        await voltageSourceButton.click();
 
-        await user.click(connectionButton);
+        await screen.click({ position: { x: 255, y: 102 } }) //create the voltage source
 
-        await user.pointer([
-            { target: screen, coords: { x: 182, y: 288 }, keys: "[MouseLeft]" },
-            { coords: { x: 398, y: 288 }, keys: "[MouseLeft]" }
-        ]) // create the connections
+        const voltageSource = page.elementLocator(".voltageSource");
 
-        const connections = document.querySelectorAll(".connection");
+        await connectionButton.click();
 
-        await user.click(resistorButton)
+        await screen.click({ position: { x: 182, y: 288} });
+        await screen.click({ position: { x: 398, y: 288} }); // create the connections
 
-        await user.pointer([{ target: screen, coords: { x: 255, y: 333 }, keys: "[MouseLeft]" }])
+        const connections = page.elementLocator(".connection");
 
-        const resistor = document.querySelector(".resistor");
+        await resistorButton.click();
+
+        await screen.click({ position: { x: 255, y: 333} }); //create the resistor
+
+        const resistor = page.elementLocator(".resistor");
 
         //Create the wires
-        const wireButton = document.getElementById("wire");
+        const wireButton = page.elementLocator("#wire");
 
-        await user.click(wireButton);
+        await wireButton.click();
 
-        await user.pointer([
-            { target: voltageSource, keys: "[MouseLeft]" }, //select the voltage-source
-            { target: connections[0], keys: "[MouseLeft]" }, //connect it to a connection
-            { keys: "[MouseRight]" }, //change the state of the connection
-            { target: resistor, keys: "[MouseLeft]" }, //connect that connection to the resistor
-            { target: connections[1], keys: "[MouseLeft]" }, //connect the resistor to the other connection
-            { keys: "[MouseRight]" }, //change the other connection's state
-            { target: voltageSource, keys: "[MouseLeft]" }, //close the circuit
-        ])
+        await voltageSource.click(); //select the voltage-source
+        await connections[0].click(); //connect it to a connection
+        await connections[0].click({ button: "right" }); //change the state of the connection
+        await resistor.click(); //connect that connection to the resistor
+        await connections[1].click(); //connect the resistor to the other connection
+        await connections[1].click({ button: "right" }); //change the other connection's state
+        await voltageSource.click(); //close the circuit 
 
-        await user.pointer([{ target: voltageSource, keys: "[MouseRight]" }]) //open the VS' tab
+        await voltageSource.click({ button: "right" }) //open the VS' tab
 
         await addValues([50, 0]);
 
-        await user.pointer([{ target: resistor, keys: "[MouseRight]" }]) //open the resistor's tab
+        await resistor.click({ button: "right"}) //open the resistor's tab
 
         await addValues([10]);
 
@@ -63,9 +61,9 @@ export async function simpleCircuit() {
 
         const { data } = await import("../calculation/data.js");
 
-        const simulateButton = document.getElementById("run");
+        const simulateButton = page.elementLocator("#run");
 
-        await user.click(simulateButton);
+        await simulateButton.click();
 
         //Check the initial calculations
         expect(data[0].pathResistance).toBe(10);
@@ -75,53 +73,51 @@ export async function simpleCircuit() {
 }
 
 export async function saveCircuit(name) {
-    await user.click(document.getElementById("save"));
+    await page.elementLocator("#save").click();
 
-    const saveMenu = document.querySelector(".saveMenu");
-    const nameInput = saveMenu.querySelector(".subSaveMenu input");
+    const saveMenu = page.elementLocator(".saveMenu");
+    const nameInput = saveMenu.elementLocator(".subSaveMenu input");
 
-    await user.type(nameInput, name);
+    await nameInput.fill(name);
 
-    const saveButton = nameInput.parentElement.querySelector("button");
+    const saveButton = nameInput.elementLocator("..").getByRole("button", { name: "Save"});
 
-    await user.click(saveButton);
+    await saveButton.click();
 
     //Check if the save went through
-    const savedSlot = saveMenu.querySelector(".subSaveMenu .slot");
+    const savedSlot = saveMenu.elementLocator(".subSaveMenu .slot");
     expect(savedSlot).toBeTruthy();
     expect(JSON.parse(localStorage.getItem("names")).includes(name)).toBe(true);
-    expect(savedSlot.querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim()).toBe(name);
+    expect(savedSlot.element().querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim()).toBe(name);
 }
 
 export async function addValues(values) {
-    const allG = document.querySelector(".screen.visible .allG");
+    const allG = page.elementLocator(".screen.visible .allG");
 
-    const tab = allG.querySelector(".popUp"); //find the open tab
+    const tab = allG.elementLocator(".popUp"); //find the open tab
 
-    const rows = tab.querySelectorAll(".subTab");
+    const rows = tab.elementLocator(".subTab").all();
 
     for (let i = 0; i < rows.length && i < values.length; i++) {
-        const input = rows[i].querySelector("input");
+        const input = rows[i].elementLocator("input");
     
-        await user.clear(input); //clears the defaults
-        await user.type(input, `${values[i]}`); //adds the wanted changes
-
-        console.log(input.value)
+        await input.fill(""); //clears the defaults
+        await input.fill(values[i]); //adds the wanted changes
     }
 
-    await user.click(tab.querySelector(".Xbutton")); //closes the tab
+    await tab.elementLocator(".Xbutton").click(); //closes the tab
 }
 
 export async function copyCircuit(name) {
-    const saveMenu = document.querySelector(".saveMenu");
+    const saveMenu = page.elementLocator(".saveMenu");
     
-    const savedSlot = Array.from(document.querySelectorAll(".saveMenu .subSaveMenu .slot")).find(el => {
-        return el.querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim() === name;
+    const savedSlot = Array.from(page.elementLocator(".saveMenu .subSaveMenu .slot").all()).find(el => {
+        return el.elementLocator("p").element().textContent.replace("Electrical Circuit Name:", "").trim() === name;
     })
 
     expect(savedSlot).toBeTruthy();
 
-    await user.click(savedSlot.querySelectorAll("button:not(.delete")[1])
+    await savedSlot.elementLocator("button:not(.delete)").nth(1).click();
 
     //Check if the data got copied
     expect(sessionStorage.getItem("circuitHTML")).toBeTruthy();
@@ -129,5 +125,5 @@ export async function copyCircuit(name) {
     expect(sessionStorage.getItem("allObjectId")).toBeTruthy();
     expect(sessionStorage.getItem("allElementsId")).toBeTruthy();
 
-    await user.click(saveMenu.querySelector(".closeMenu")); //close the menu
+    await saveMenu.elementLocator(".closeMenu").click(); //close the menu
 }
