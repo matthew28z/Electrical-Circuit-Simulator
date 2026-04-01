@@ -1,15 +1,12 @@
 import { expect, test } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from "vitest/browser";
 
-import { addValues, simpleCircuit, saveCircuit, copyCircuit } from "./commonTests.js";
+import { simpleCircuit, saveCircuit, copyCircuit } from "./commonTests.js";
 
 test(`In this test we put the save-copy-paste-sim mechanics under stress. We 
         create a whole new circuit, we simulate the circuit and then save it with the name "test" and immediately copy it.
         We then create a new screen and paste the circuit into the new screen. We then compare the two results
         with the expected outcome.`, async () => { 
-        
-            const user = userEvent.setup();
-
             //Create the circuit
             await simpleCircuit();
 
@@ -17,12 +14,12 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
             await saveCircuit("test");
             //Copy the circuit
             await copyCircuit("test");
-
+    
+            const user = userEvent.setup();
+    
             //Paste the circuit
-            await user.pointer([
-                { target: document.querySelector(".addScreen"), keys: "[MouseRight]" }, //create a new screen and change to it
-                { target: document.getElementById("paste"), keys: "[MouseLeft]"} //paste the circuit
-            ]) 
+            await user.click(document.querySelector(".addScreen"), { button: "right" });//create a new screen and change to it
+            await user.click(document.getElementById("paste")); //paste the circuit
 
             const { allObject } = await import("../logic/management.js");
 
@@ -33,9 +30,7 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
 
             const { data } = await import("../calculation/data.js");
 
-            const simulateButton = document.getElementById("run");
-
-            await user.click(simulateButton);
+            await user.click(document.getElementById("run"));
 
             //Check the initial calculations
             expect(data[0].pathResistance).toBe(10);

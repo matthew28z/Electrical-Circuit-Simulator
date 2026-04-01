@@ -1,35 +1,34 @@
 import { expect, test } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { userEvent, commands } from "vitest/browser";
 
-import { addValues, simpleCircuit, saveCircuit, copyCircuit } from "./commonTests.js";
+import { simpleCircuit, saveCircuit, copyCircuit } from "./commonTests.js";
 
 test(`In this test we will be testing the accuracy of the pasting logic. We will initially create a simple circuit
     and then use the camera feature before saving and ultimately copying it. Then, we will proceed by creating
     a new screen just before using the camera feature once more. Finally we will paste the copied circuit,
-    and check if the coordinates are correct.`, async() => {
-            const user = userEvent.setup();
-
+    and check if the coordinates are correct.`, async () => {
             //Create the circuit
             await simpleCircuit();
+    
+            const user = userEvent.setup();
 
             const { allElements } = await import("../logic/paths.js");
 
             let coordinates = allElements.map(object => {
                 const { element } = object;
+
                 const { x, y } = element.getBoundingClientRect();
                 
                 return { element, x, y }; 
-            });            
+            });  
 
-            await user.pointer([
-                { target: document.getElementById("camera"), keys: "[MouseLeft]" },
-            ]);
-
-            await user.pointer([
-                { target: document.querySelector(".screen.visible"), coords: { x: 140, y:  315 }, keys: "[MouseLeft>]" },
-                { coords: { x: 370, y: 145 } }, 
-                { keys: "[/MouseLeft]" }
-            ]);
+            //Move the camera
+            await user.click(document.getElementById("camera"));
+    
+            await commands.mouseMove({ x: 140, y: 315 });
+            await commands.mouseDown();
+            await commands.mouseMove({ x: 370, y: 145 });
+            await commands.mouseUp();
 
             //Check how accurate the initial camera movement was
             coordinates.forEach(object => {
@@ -42,23 +41,23 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
             //Save the circuit
             await saveCircuit("test");
             
-            coordinates = allElements.map(object => {
-                const { element } = object;
-                const { x, y } = element.getBoundingClientRect();
-                
-                return { element, x, y }; 
-            });
+            coordinates = coordinates.map(object => {
+                const { x, y } = object.element.getBoundingClientRect();
+
+                return { element: object.element, x, y };
+            })
 
             //Copy the circuit
             await copyCircuit("test");
 
-            //Paste the circuit
-            await user.pointer([
-                { target: document.querySelector(".screen.visible"), coords: { x: 310, y:  135 }, keys: "[MouseLeft>]" },
-                { coords: { x: 140, y: 325 }, keys: "[/MouseLeft]" },
-                { target: document.querySelector(".addScreen"), keys: "[MouseRight]" }, //create a new screen and change to it
-                { target: document.getElementById("paste"), keys: "[MouseLeft]"} //paste the circuit
-            ]) 
+            //Paste the circuit after moving the camera
+            await commands.mouseMove({ x: 310, y: 125 });
+            await commands.mouseDown();
+            await commands.mouseMove({ x: 140, y: 325 });
+            await commands.mouseUp();
+
+            await page.elementLocator(document.querySelector(".addScreen")).click({ button: "right" }); //create a new screen and change to it
+            await page.elementLocator(document.getElementById("paste")).click(); //paste the circuit
 
             //Check the final calculated offsets
             coordinates.forEach(object => {

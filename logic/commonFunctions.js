@@ -225,8 +225,8 @@ export function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function userCreatedTab(element, array) {
-    const object = array.find(object => object.element === element)
+export function userCreatedTab(element, array) { 
+    const object = array.find(object => object.element === element);
     const hasTab = object.hasTab
 
     if (!hasTab) {

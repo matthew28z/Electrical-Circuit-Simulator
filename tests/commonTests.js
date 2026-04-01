@@ -1,54 +1,53 @@
 import { expect } from 'vitest';
-import { page } from "vitest/browser";
+import { userEvent } from "vitest/browser";
+
+const user = userEvent.setup();
 
 export async function simpleCircuit() {
-    console.log("DEBUG - page object:", page);
-    console.log("DEBUG - locator type:", typeof page.elementLocator);
+        const screen = document.getElementById("screen-0");
+        const allG = document.querySelector(".allG");
 
-        const screen = page.elementLocator("#screen-0");
-        const allG = page.elementLocator(".allG");
+        const voltageSourceButton = document.getElementById("voltageSource");
+        const connectionButton = document.getElementById("connection");
+        const resistorButton = document.getElementById("resistor");
 
-        const voltageSourceButton = page.elementLocator("#voltageSource");
-        const connectionButton = page.elementLocator("#connection");
-        const resistorButton = page.elementLocator("#resistor");
+        await user.click(voltageSourceButton);
 
-        await voltageSourceButton.click();
+        await user.click(screen, { position: { x: 255, y: 510 } }); //create the voltage source
 
-        await screen.click({ position: { x: 255, y: 102 } }) //create the voltage source
+        const voltageSource = document.querySelector(".voltageSource");
 
-        const voltageSource = page.elementLocator(".voltageSource");
+        await user.click(connectionButton);
 
-        await connectionButton.click();
+        await user.click(screen, { position: { x: 182, y: 550} });
+        await user.click(screen, { position: { x: 398, y: 550} }); // create the connections
 
-        await screen.click({ position: { x: 182, y: 288} });
-        await screen.click({ position: { x: 398, y: 288} }); // create the connections
+        const connections = document.querySelectorAll(".connection");
 
-        const connections = page.elementLocator(".connection");
+        await user.click(resistorButton);
 
-        await resistorButton.click();
+        await user.click(screen, { position: { x: 255, y: 600} }); //create the resistor
 
-        await screen.click({ position: { x: 255, y: 333} }); //create the resistor
-
-        const resistor = page.elementLocator(".resistor");
+        const resistor = document.querySelector(".resistor");
 
         //Create the wires
-        const wireButton = page.elementLocator("#wire");
+        const wireButton = document.getElementById("wire");
 
-        await wireButton.click();
+        await user.click(wireButton);
 
-        await voltageSource.click(); //select the voltage-source
-        await connections[0].click(); //connect it to a connection
-        await connections[0].click({ button: "right" }); //change the state of the connection
-        await resistor.click(); //connect that connection to the resistor
-        await connections[1].click(); //connect the resistor to the other connection
-        await connections[1].click({ button: "right" }); //change the other connection's state
-        await voltageSource.click(); //close the circuit 
+        await user.click(voltageSource); //select the voltage-source
+        await user.click(connections[0]); //connect it to a connection
+        await user.click(connections[0], { button: "right" }); //change the state of the connection
+        await user.click(resistor); //connect that connection to the resistor
+        await user.click(connections[1]); //connect the resistor to the other connection
+        await user.click(connections[1], { button: "right" }); //change the other connection's state
+        await user.click(voltageSource); //close the circuit 
 
-        await voltageSource.click({ button: "right" }) //open the VS' tab
+        await user.click(voltageSource, { button: "right" }); //open the VS' tab
 
-        await addValues([50, 0]);
+        await addValues([50, 0]); //add the voltage and the internal resistance
 
-        await resistor.click({ button: "right"}) //open the resistor's tab
+        await user.click(resistor, { button: "right" }); //open the resistor's tab
 
         await addValues([10]);
 
@@ -61,9 +60,9 @@ export async function simpleCircuit() {
 
         const { data } = await import("../calculation/data.js");
 
-        const simulateButton = page.elementLocator("#run");
+        const simulateButton = document.getElementById("run");
 
-        await simulateButton.click();
+        await user.click(simulateButton);
 
         //Check the initial calculations
         expect(data[0].pathResistance).toBe(10);
@@ -73,51 +72,51 @@ export async function simpleCircuit() {
 }
 
 export async function saveCircuit(name) {
-    await page.elementLocator("#save").click();
+    await document.getElementById("save").click();
 
-    const saveMenu = page.elementLocator(".saveMenu");
-    const nameInput = saveMenu.elementLocator(".subSaveMenu input");
+    const saveMenu = document.querySelector(".saveMenu");
+    const nameInput = saveMenu.querySelector(".subSaveMenu input");
 
-    await nameInput.fill(name);
+    await user.fill(nameInput, name);
 
-    const saveButton = nameInput.elementLocator("..").getByRole("button", { name: "Save"});
+    const saveButton = nameInput.parentElement.querySelector("button:not(.delete)");
 
-    await saveButton.click();
+    await user.click(saveButton);
 
     //Check if the save went through
-    const savedSlot = saveMenu.elementLocator(".subSaveMenu .slot");
+    const savedSlot = saveMenu.querySelector(".subSaveMenu .slot");
     expect(savedSlot).toBeTruthy();
     expect(JSON.parse(localStorage.getItem("names")).includes(name)).toBe(true);
-    expect(savedSlot.element().querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim()).toBe(name);
+    expect(savedSlot.querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim()).toBe(name);
 }
 
 export async function addValues(values) {
-    const allG = page.elementLocator(".screen.visible .allG");
+    const allG = document.querySelector(".screen.visible .allG");
 
-    const tab = allG.elementLocator(".popUp"); //find the open tab
+    const tab = allG.querySelector(".popUp");
 
-    const rows = tab.elementLocator(".subTab").all();
+    const rows = tab.querySelectorAll(".subTab");
 
     for (let i = 0; i < rows.length && i < values.length; i++) {
-        const input = rows[i].elementLocator("input");
+        const input = rows[i].querySelector("input");
     
-        await input.fill(""); //clears the defaults
-        await input.fill(values[i]); //adds the wanted changes
+        await user.fill(input, ""); //clears the defaults
+        await user.fill(input, String(values[i])); //adds the wanted changes
     }
 
-    await tab.elementLocator(".Xbutton").click(); //closes the tab
+    await user.click(tab.querySelector(".Xbutton")); //closes the tab
 }
 
 export async function copyCircuit(name) {
-    const saveMenu = page.elementLocator(".saveMenu");
+    const saveMenu = document.querySelector(".saveMenu");
     
-    const savedSlot = Array.from(page.elementLocator(".saveMenu .subSaveMenu .slot").all()).find(el => {
-        return el.elementLocator("p").element().textContent.replace("Electrical Circuit Name:", "").trim() === name;
+    const savedSlot = Array.from(document.querySelectorAll(".saveMenu .subSaveMenu .slot")).find(el => {
+        return el.querySelector("p").textContent.replace("Electrical Circuit Name:", "").trim() === name;
     })
 
     expect(savedSlot).toBeTruthy();
 
-    await savedSlot.elementLocator("button:not(.delete)").nth(1).click();
+    await user.click(savedSlot.querySelectorAll("button:not(.delete)")[1]);
 
     //Check if the data got copied
     expect(sessionStorage.getItem("circuitHTML")).toBeTruthy();
@@ -125,5 +124,5 @@ export async function copyCircuit(name) {
     expect(sessionStorage.getItem("allObjectId")).toBeTruthy();
     expect(sessionStorage.getItem("allElementsId")).toBeTruthy();
 
-    await saveMenu.elementLocator(".closeMenu").click(); //close the menu
+    await user.click(saveMenu.querySelector(".closeMenu")); //close the menu
 }

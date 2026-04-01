@@ -1,16 +1,11 @@
 import { vi, beforeEach } from "vitest"
 
+import "../styles/menu.css";
+import "../styles/circuit.css";
+import "../styles/management.css";
+import "../styles/save.css";
+
 beforeEach(async () => {
-    document.head.innerHTML = `<meta charset="UTF-8">
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <title>Zimaris Lab</title>
-                                <link rel="icon" type="image/png" href="./icons/appIcon.png" />
-
-                                <link rel="stylesheet" href="./styles/menu.css">
-                                <link rel="stylesheet" href="./styles/circuit.css">
-                                <link rel="stylesheet" href="./styles/management.css">
-                                <link rel="stylesheet" href="./styles/save.css">`
-
     document.body.innerHTML =  `<div class="screen visible" id="screen-0">
                                    <svg class="overlay"></svg>
                                 </div>`;
