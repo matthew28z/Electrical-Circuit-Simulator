@@ -175,16 +175,16 @@ function determinePoint(element, connectedElement) {
     if (element.classList.contains("connection") || element.classList.contains("amperometer")) {
         side = "actualPoint"
     } else {
-        const object = allElements.find(obj => obj.element === element)
+        const object = allElements.get(element);
 
-        if (object.connections.left.includes(connectedElement)) {
-            side = "leftPoint"
+        if (object.connections.left.has(connectedElement)) {
+            side = "leftPoint";
         } else {
-            side = "rightPoint"
+            side = "rightPoint";
         }
     }
 
-    return side
+    return side;
 }
 
 
@@ -239,7 +239,7 @@ const handleClick = (event) => {
             replaceValueInAllElements(connectedElements[0], connectedElements[1], amperometer)
             replaceValueInAllElements(connectedElements[1], connectedElements[0], amperometer)
 
-            allElements.push({element: amperometer, connections: {left: [connectedElements[0]], right: [connectedElements[1]]}})
+            allElements.set(amperometer, { element: amperometer, connections: { left: [connectedElements[0]], right: [connectedElements[1]] } });
         
             //updates the amperometers array
             amperometers().push({element: amperometer, connectedPath: null, resistance: {value: 0, UM: "(Ω)"}})

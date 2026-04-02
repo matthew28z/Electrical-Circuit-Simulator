@@ -373,21 +373,20 @@ function fillTab(tab, rect, closeButton, element, array, object) {
 
 export function replaceValueInAllElements(element, oldValue, newValue) {
     //Determines the location of the old value
-    const object = allElements.find(obj => obj.element === element)
+    const object = allElements.get(element);
 
     let side;
     let index;
 
     //It is possible to avoid the .includes() but it makes the program less readable
-    if (object.connections.left.includes(oldValue)) {
-        side = "left"
+    if (object.connections.left.has(oldValue)) {
+        side = "left";
     } else {
-        side = "right"
+        side = "right";
     }
 
-    //Finds the specific index of the old value
-    index = object.connections[side].findIndex(value => value === oldValue)
-
     //Replaces the old value
-    object.connections[side][index] = newValue 
+    object.connections[side].delete(oldValue);
+    object.connections[side].set(newValue, newValue);
+    
 }

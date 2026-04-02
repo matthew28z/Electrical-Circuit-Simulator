@@ -1,8 +1,6 @@
 import { getRandomInt } from "./commonFunctions.js";
 import { amperometers } from "./current.js";
 
-const body = document.body;
-
 const scenario = getRandomInt(1, 2) === 1 ? "yellowish" : "lightBlueish"
 
 export const pathColors = [];/*["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine", "Azure", "Beige", "Bisque", "Black", "BlanchedAlmond", "Blue",
@@ -12,27 +10,26 @@ export const pathColors = [];/*["AliceBlue", "AntiqueWhite", "Aqua", "Aquamarine
 "DarkViolet", "DeepPink", "DeepSkyBlue", "DimGray", "DodgerBlue", "FireBrick", "FloralWhite", "ForestGreen", "Fuchsia",
 "Gainsboro", "GhostWhite", "Gold", "GoldenRod"];*/
 
-
-export let allElements = []; //is meant to have this form: [{element: any element, connections: {left: an array, right: an array}}]
+export let allElements = new Map(); //is meant to have this form: [{element: any element, connections: {left: an array, right: an array}}] with the key being the element itself
 
 export function updateAllElements(element, connectedElement = null, side = null) {
-    const index = allElements.findIndex(object => object.element === element)
-    if (index === -1) { //is a new element
+    const objectToUpdate = allElements.get(element);
+
+    if (!objectToUpdate) { //is a new element
         if (connectedElement) {
             if (side === "left") {
-                allElements.push({element: element, connections: {left: [connectedElement], right: []}})
+                allElements.set(element, { element: element, connections: { left: new Map([[connectedElement, connectedElement]]), right: new Map() } });
             } else {
-                allElements.push({element: element, connections: {left: [], right: [connectedElement]}})
-            }
+                allElements.set(element, { element: element, connections: { left: new Map(), right: new Map([[connectedElement, connectedElement]]) } });
+            };
         } else {
-            allElements.push({element: element, connections: {left: [], right: []}})
+            allElements.set(element, { element: element, connections: { left: new Map(), right: new Map() } });
         }
     } else {
         //For an element to not be new this means that there is a connectedElement and a side specified
-        const secondIndex = allElements[index].connections[side].findIndex(element => element === connectedElement)
 
-        if (secondIndex === -1) { //avoids duplicates
-            allElements[index].connections[side].push(connectedElement)
+        if (!objectToUpdate.connections[side].has(connectedElement)) { //avoids duplicates
+            objectToUpdate.connections[side].set(connectedElement, connectedElement);
         }
     }
 }
@@ -55,22 +52,22 @@ export function findAllPaths(voltageSources, flow = "conventional") {
         if (index < voltageSources.length) {
             start = voltageSources[index].element
             
-            const elementIndex = allElements.findIndex(object => object.element === start)
-            const left = allElements[elementIndex].connections.left.length !== 0 
-            const right = allElements[elementIndex].connections.right.length !== 0
+            const startObject = allElements.get(start);
+            const left = startObject.connections.left.length !== 0;
+            const right = startObject.connections.right.length !== 0;
 
             if (right && left) {
-                isClosedLoop = true
-                startIndex = elementIndex
-                numberOfPaths = 1
+                isClosedLoop = true;
+                startIndex = elementIndex;
+                numberOfPaths = 1;
             } else {
-                index++
+                index++;
             }
         } else {
-            alert("NO PATHS FOUND")
-            break
+            alert("NO PATHS FOUND");
+            break;
         }
-    } while (!isClosedLoop) 
+    } while (!isClosedLoop);
 
     let loopHasClosed = false;
     //let currentElement = allElements[startIndex].connections.left[0] //since start is not a connection it will only have one element connected to its left point
@@ -82,14 +79,14 @@ export function findAllPaths(voltageSources, flow = "conventional") {
     console.log(loopIndex)
     console.log(mainPath)
     console.log(side)*/
-    closeLoop(start, loopIndex, mainPath, side)
+    closeLoop(start, mainPath, side)
 
-    return mainPath
+    return mainPath;
 }
 
 let shouldBreak = false;
 
-function handleBreak(connectedElements, pathObject, loopIndex, startingElement) {
+function handleBreak(connectedElements, pathObject, startingElement) {
     console.log("reached")
     let end;
     pathObject.path.push(`break-${breakCounter}`)
@@ -103,40 +100,36 @@ function handleBreak(connectedElements, pathObject, loopIndex, startingElement) 
     const connectionPathArray = [];
 
     //Creates a new path for each connected element and immediatly tries to find its ending
-    for (let i = 0; i < connectedElements.length; i++) {
-        let object = {color: findColor(), path: [{element: startingElement, point: "actualPoint"}], isClosed: null, descendantOf: pathObject.color}
-        numberOfPaths++
+    for (let element of connectedElements.values()) {
+        let object = { color: findColor(), path: [{ element: startingElement, point: "actualPoint" }], isClosed: null, descendantOf: pathObject.color };
+        numberOfPaths++;
 
-
-        let newCurrentElement = connectedElements[i]
-        let newLoopIndex = allElements.findIndex(object => object.element === newCurrentElement)
-        let side = allElements[newLoopIndex].connections.left.includes(startingElement) ? "right" : "left"
+        const elementObject = allElements.get(element);
+        const side = elementObject.connections.left.has(startingElement) ? "right" : "left"; 
 
         let point;
 
-        if (newCurrentElement.classList.contains("connection")) {
-            point = "actualPoint"
+        if (element.classList.contains("connection")) {
+            point = "actualPoint";
         } else {
-            point = side === "left" ? "rightPoint" : "leftPoint"
+            point = side === "left" ? "rightPoint" : "leftPoint";
         }
 
-        object.path.push({element: newCurrentElement, point: point})
+        object.path.push({ element: element, point: point });
 
-        const values = findNextConnection(newCurrentElement, newLoopIndex, object, side)
-        const nextConnection = values.element
-        const nextSide = values.nextSideToCheck
-        object = values.pathObject
+        const values = findNextConnection(element, object, side);
+        const nextConnection = values.element;
+        const nextSide = values.nextSideToCheck;
+        object = values.pathObject;
 
-        nextConnections.push({element: nextConnection, nextSideToCheck: nextSide})
+        nextConnections.push({ element: nextConnection, nextSideToCheck: nextSide });
 
-        newPaths.push(object)
-        amountOfNewPaths++
+        newPaths.push(object);
+        amountOfNewPaths++;
 
         connectionPathArray.push([{element: nextConnection, nextSideToCheck: nextSide}])
     }
 
-
-    
     let foundTheEnd = false;
 
     const indexTracker = new Set();
@@ -187,31 +180,31 @@ function handleBreak(connectedElements, pathObject, loopIndex, startingElement) 
                   Although I see a possibility for this logic to fail, the complexity of the problem requires either extreme meta data, 
                   a quite bigger tutorial and a system in general that is even more mistake friendly if the user is not well accustomed to it
                   or a whole rethink of the current structure, and to all the above at least for now I say no.*/
-                const values = checkFoundConnections(connectionPathArray)
+                const values = checkFoundConnections(connectionPathArray);
 
-                let result = values.result
+                let result = values.result;
 
                 if (result) {
-                    end = values.end //assigns end the intended value
+                    end = values.end; //assigns end the intended value
 
                     updateBreakArrays(nextConnections, connectionPathArray, end, newPaths).forEach(index => {
-                        unfinishedIndexes.delete(index)
+                        unfinishedIndexes.delete(index);
                     })
                 }
             }
 
             //removes the finished paths
             indexTracker.forEach(index => {
-                unfinishedIndexes.delete(index)
+                unfinishedIndexes.delete(index);
             })
         } else { 
             unfinishedIndexes.forEach(index => {
                 console.log("k")
-                const connection = nextConnections[index].element
+                const connection = nextConnections[index].element;
 
                 //checks if the path found the end in the previous iteration or if the path is open
                 if (connection === end || newPaths[index].isClosed === false) {
-                    unfinishedIndexes.delete(index)
+                    unfinishedIndexes.delete(index);
                 }
             })
         }
@@ -219,12 +212,11 @@ function handleBreak(connectedElements, pathObject, loopIndex, startingElement) 
         //progresses the unfinished paths
         unfinishedIndexes.forEach(index => {
             console.log(nextConnections)
-            const element = nextConnections[index].element
-            const side = nextConnections[index].nextSideToCheck
-            const finalLoopIndex = allElements.findIndex(object => object.element === element)
+            const element = nextConnections[index].element;
+            const side = nextConnections[index].nextSideToCheck;
 
             //updates the array responsible for the shallow search (stores most recent connections)
-            const values = findNextConnection(element, finalLoopIndex, newPaths[index], side)
+            const values = findNextConnection(element, newPaths[index], side)
             if (values.element !== startingElement) {// prevents infinite loops
                 //updates the shallow-search loop
                 nextConnections[index] = {element: values.element, nextSideToCheck: values.nextSideToCheck}
@@ -244,128 +236,123 @@ function handleBreak(connectedElements, pathObject, loopIndex, startingElement) 
             return (object.element === end || currentPath.isClosed === false)
         })
     }
-
-    loopIndex = allElements.findIndex(object => object.element === end)
     
-    breaks[currentCounter] = newPaths
+    breaks[currentCounter] = newPaths;
 
     const nextSideToCheck = nextConnections.find(object => object.element === end).nextSideToCheck
 
-    console.log({element: end, loopIndex: loopIndex, nextSideToCheck: nextSideToCheck})
-    return {element: end, loopIndex: loopIndex, nextSideToCheck: nextSideToCheck}
+    console.log({ element: end, nextSideToCheck: nextSideToCheck });
+    return { element: end, nextSideToCheck: nextSideToCheck };
 }
 
-function closeLoop(start, loopIndex, pathObject, side = "left") {
-    let loopHasClosed = false
-    let currentElement = start
-    let iteration = 0
-    let point = "leftPoint" //closeLoop always starts from the left
+function closeLoop(start, pathObject, side = "left") {
+    let loopHasClosed = false;
+    let currentElement = start;
+    let iteration = 0;
+    let point = "leftPoint"; //closeLoop always starts from the left
 
     while (!loopHasClosed) {
         //console.log(allElements[loopIndex])
-        const connectedElements = allElements[loopIndex].connections[side]
+        const connectedElements = allElements.get(currentElement).connections[side];
         //console.log(connectedElements)
 
         if (iteration <= allElements.length + 3) {
-            if (connectedElements.length === 1) {
-                const connectedElement = connectedElements[0]
-
-                //adjusts the loop index for the next element
-                loopIndex = allElements.findIndex(object => object.element === connectedElement)
+            if (connectedElements.size === 1) {
+                const connectedElement = connectedElements.values().next().value();
 
                 //checks which side should be the next to be checked
-                side = allElements[loopIndex].connections.left.includes(currentElement) ? "right" : "left"
+                side = allElements.get(connectedElement).connections.left.has(currentElement) ? "right" : "left";
                 
                 if (connectedElement.classList.contains("connection")) {
-                    point = "actualPoint"
+                    point = "actualPoint";
                 } else if (connectedElement.classList.contains("amperometer")) {
-                    point = "actualPoint"
+                    point = "actualPoint";
 
-                    const obj = amperometers().find(object => object.element === connectedElement)
+                    const obj = amperometers().find(object => object.element === connectedElement);
 
-                    obj.connectedPath = pathObject.color
+                    obj.connectedPath = pathObject.color;
                 } else {
-                    point = side === "left" ? "rightPoint" : "leftPoint"
+                    point = side === "left" ? "rightPoint" : "leftPoint";
                 }
                 //adjusts the element
-                currentElement = connectedElement
+                currentElement = connectedElement;
                 
                 /*This checks if the path reached back to the original voltage source and if so, 
                   it adjusts point to the free space of the original starting point*/
                 if (start === connectedElement) {
-                    loopHasClosed = true
-                    pathObject.isClosed = true
-                    point = "rightPoint"
+                    loopHasClosed = true;
+                    pathObject.isClosed = true;
+                    point = "rightPoint";
                 }
                   
-                pathObject.path.push({element: connectedElement, point: point})
-            } else if (connectedElements.length === 0) {
-                alert("NO PATHS FOUND")
-                break
+                pathObject.path.push({ element: connectedElement, point: point });
+            } else if (connectedElements.size === 0) {
+                alert("NO PATHS FOUND");
+                break;
             } else {
                 //console.warn("infinite loop")
                 //break //temporary
-                const values = handleBreak(connectedElements, pathObject, loopIndex, currentElement)
-                currentElement = values.element
-                loopIndex = values.loopIndex
-                side = values.nextSideToCheck
+                const values = handleBreak(connectedElements, pathObject, currentElement);
+                currentElement = values.element;
+                loopIndex = values.loopIndex;
+                side = values.nextSideToCheck;
 
                 //handleBreak always returns a connection and connections only have one point
-                const point = "actualPoint" 
+                const point = "actualPoint";
 
-                pathObject.path.push({element: currentElement, point: point})
+                pathObject.path.push({ element: currentElement, point: point });
             }
-            iteration++
+            iteration++;
         } else {
-            console.warn("infinite loop")
-            break
+            console.warn("infinite loop");
+            break;
         }
              
     }
 
 }
 
-function findNextConnection(currentElement, loopIndex, pathObject, side) {
+function findNextConnection(currentElement, pathObject, side) {
     let connectionFound = false;
     let nextConnection = null;
     let point = "actualPoint" //findNextConnection always starts at a connection
 
     while (!connectionFound) {
         console.log("h")
-        const connectedElements = allElements[loopIndex].connections[side]
+        const connectedElements = allElements.get(currentElement).connections[side]
 
-        if (connectedElements.length === 1) {
-            const connectedElement = connectedElements[0]
+        if (connectedElements.size === 1) {
+            const connectedElement = connectedElements.values().next().value;
 
-            loopIndex = allElements.findIndex(object => object.element === connectedElement)
-            side = allElements[loopIndex].connections.left.includes(currentElement) ? "right" : "left"
-            currentElement = connectedElement
+            const connectedElementObject = allElements.get(connectedElement);
+            side = connectedElementObject.connections.left.has(currentElement) ? "right" : "left";
+            currentElement = connectedElement;
 
             if (connectedElement.classList.contains("connection")) {
-                connectionFound = true  
-                nextConnection = connectedElement 
-                point = "actualPoint" 
-                console.log("success")  
-                console.log(nextConnection) 
+                connectionFound = true; 
+                nextConnection = connectedElement;
+                point = "actualPoint";
+                console.log("success");
+                console.log(nextConnection);
             } else {
                 if (connectedElement.classList.contains("amperometer")) {
-                    point = "actualPoint"
+                    point = "actualPoint";
 
-                    const obj = amperometers().find(object => object.element === connectedElement)
+                    const obj = amperometers().find(object => object.element === connectedElement);
 
-                    obj.connectedPath = pathObject.color
+                    obj.connectedPath = pathObject.color;
                 } else {
-                    point = side === "left" ? "rightPoint" : "leftPoint"
+                    point = side === "left" ? "rightPoint" : "leftPoint";
                 }   
             }
             
-            pathObject.path.push({element: connectedElement, point: point})
-        } else if (connectedElements.length === 0) {
-            pathObject.isClosed = false
-            alert("NO PATHS FOUND")
-            break
+            pathObject.path.push({ element: connectedElement, point: point });
+        } else if (connectedElements.size === 0) {
+            pathObject.isClosed = false;
+            alert("NO PATHS FOUND");
+            break;
         } else {
-            const values = handleBreak(connectedElements, pathObject, loopIndex, currentElement)
+            const values = handleBreak(connectedElements, pathObject, currentElement)
             currentElement = values.element
             nextConnection = values.element
             loopIndex = values.loopIndex

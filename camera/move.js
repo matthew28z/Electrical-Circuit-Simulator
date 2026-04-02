@@ -1,8 +1,5 @@
 /*Mostly old code not used anymore but left here to avoid having to change relative file paths
   The camera functions were in fact dealt with the d3 engine in zoom.js*/
-
-import { allG } from "../logic/management.js";
-
 /*const body = document.body;
 
 //Adds drag compatability
