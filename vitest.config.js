@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
-import { playwright } from '@vitest/browser-playwright'
+import { defineConfig } from "vitest/config"
+import { playwright } from "@vitest/browser-playwright"
 
 export default defineConfig({
   test: {
@@ -20,6 +20,11 @@ export default defineConfig({
         },
         mouseMove: async ({ page }, { x, y }) => {
           await page.mouse.move(x, y);
+        },
+        boundingBox: async ({ page }, testID = "temp") => { //this function expects the element to have a unique test-id which defaults to "temp"
+          const { x, y } = await page.getByTestId(testID).boundingBox();
+
+          return { x, y };
         }
       }
     },

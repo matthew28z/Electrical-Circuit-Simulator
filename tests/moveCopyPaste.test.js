@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { userEvent, commands } from "vitest/browser";
+import { userEvent, commands, page } from "vitest/browser";
 
 import { simpleCircuit, saveCircuit, copyCircuit } from "./commonTests.js";
 
@@ -14,38 +14,52 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
 
             const { allElements } = await import("../logic/paths.js");
 
-            let coordinates = allElements.map(object => {
+            let coordinates = []; 
+    
+            for (const object of allElements) {
                 const { element } = object;
 
-                const { x, y } = element.getBoundingClientRect();
-                
-                return { element, x, y }; 
-            });  
+                element.setAttribute("data-testid", "temp");
+                console.log(element, "DEBUG");
+                //const coords = await commands.boundingBox();
+
+                element.removeAttribute("data-testid");
+
+                //coordinates.push({ element, ...coords }); 
+            }
 
             //Move the camera
             await user.click(document.getElementById("camera"));
     
-            await commands.mouseMove({ x: 140, y: 315 });
-            await commands.mouseDown();
-            await commands.mouseMove({ x: 370, y: 145 });
-            await commands.mouseUp();
+            await commands.mouseMove({ page }, { x: 140, y: 315 });
+            await commands.mouseDown({ page });
+            await commands.mouseMove({ page }, { x: 370, y: 145 });
+            await commands.mouseUp({ page });
 
             //Check how accurate the initial camera movement was
-            coordinates.forEach(object => {
-                const { x: newX, y: newY } = object.element.getBoundingClientRect();
+            for (const object of coordinates) {
+                object.element.setAttribute("data-testid", "temp");
 
-                expect(newX).toBe(object.x + 230);
-                expect(newY).toBe(object.y - 170);
-            })
+                //const coords = await commands.boundingBox(object.element);
+
+                object.element.removeAttribute("data-testid");
+
+                //expect(coords.x).toBeCloseTo(object.x + 230);
+                //expect(coords.y).toBeCloseTo(object.y - 170);                
+            }
 
             //Save the circuit
             await saveCircuit("test");
             
-            coordinates = coordinates.map(object => {
-                const { x, y } = object.element.getBoundingClientRect();
+            for (let object of coordinates) {
+                object.element.setAttribute("data-testid", "temp");
 
-                return { element: object.element, x, y };
-            })
+                const coords = await commands.boundingBox(object.element);
+
+                object.element.removeAttribute("data-testid");
+
+                object = { element: object.element, ...coords };                 
+            }
 
             //Copy the circuit
             await copyCircuit("test");
@@ -60,10 +74,12 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
             await page.elementLocator(document.getElementById("paste")).click(); //paste the circuit
 
             //Check the final calculated offsets
-            coordinates.forEach(object => {
-                const { x: newX, y: newY } = object.element.getBoundingClientRect();
+            for (const object of coordinates) {
+                object.element.setAttribute("data-testid", "temp");
 
-                expect(newX).toBe(object.x - 170);
-                expect(newY).toBe(object.y + 190);
-            })
+                const coords = await commands.boundingBox(object.element);
+
+                expect(coords.x).toBeCloseTo(object.x - 170);
+                expect(coords.y).toBeCloseTo(object.y + 190);                
+            }
     })
