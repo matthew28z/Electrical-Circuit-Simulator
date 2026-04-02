@@ -31,10 +31,10 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
             //Move the camera
             await user.click(document.getElementById("camera"));
     
-            await commands.mouseMove({ page }, { x: 140, y: 315 });
-            await commands.mouseDown({ page });
-            await commands.mouseMove({ page }, { x: 370, y: 145 });
-            await commands.mouseUp({ page });
+            await commands.mouseMove(140, 315);
+            await commands.mouseDown();
+            await commands.mouseMove(370, 145);
+            await commands.mouseUp();
 
             //Check how accurate the initial camera movement was
             for (const object of coordinates) {

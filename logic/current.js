@@ -239,7 +239,7 @@ const handleClick = (event) => {
             replaceValueInAllElements(connectedElements[0], connectedElements[1], amperometer)
             replaceValueInAllElements(connectedElements[1], connectedElements[0], amperometer)
 
-            allElements.set(amperometer, { element: amperometer, connections: { left: [connectedElements[0]], right: [connectedElements[1]] } });
+            allElements.set(amperometer, { element: amperometer, connections: { left: new Set(connectedElements[0]), right: new Set(connectedElements[1]) } });
         
             //updates the amperometers array
             amperometers().push({element: amperometer, connectedPath: null, resistance: {value: 0, UM: "(Ω)"}})

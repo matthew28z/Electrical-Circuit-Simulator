@@ -186,7 +186,7 @@ function prepareData() {
     })
 
     //Processes the allElements array
-    const allElementsId = allElements.map(object => {
+    const allElementsId = Array.from(allElements.values()).map(object => {
         const objectId = {id: null, connections: { left: [], right: [] }}
 
         const id = object.element.id

@@ -367,13 +367,7 @@ function blockWireCreation(element1, element2, scenario) {
             side2 = "right"
         }
 
-        const index1 = allElements.findIndex(object => object.element === element1)
-        const index2 = allElements.findIndex(object => object.element === element2)
-
-        const already1 = allElements[index1].connections[side1].includes(element2)
-        const already2 = allElements[index2].connections[side2].includes(element1)
-
-        if (already1 && already2) {
+        if (allElements.get(element1).connections[side1].has(element2) && allElements.get(element2).connections[side2].has(element1)) {
             block = true
         }
     } 

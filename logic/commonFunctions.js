@@ -219,7 +219,12 @@ export function getPoints(element) {
  
     return { leftPoint: { x: c1[0], y: c1[1] }, rightPoint: { x: c2[0], y: c2[1] }, actualPoint: { x: c3[0], y: c3[1] } }
 }
-
+/**
+ * Generates a random int
+ * @param {number} min 
+ * @param {number} max 
+ * @returns {number}
+ */
 
 export function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;

@@ -8,7 +8,7 @@ import { changeTransform, transform } from "../camera/move.js";
 
 const screensButtons = Array.from(document.querySelectorAll(".screensDiv button"));
 const screensObject = {
-    screen_0: {allObject: allObject, allElements: allElements, transform: transform} //accounts for mutations but not for reassignments just like its intention
+    screen_0: { allObject, allElements, transform } //accounts for mutations but not for reassignments just like its intention
 }
 const body = document.body;
 
@@ -74,7 +74,7 @@ export function addScreen(change = false, boolean = false) {
         const newTransform = {x: 0, y: 0, z: 1}
 
         //updates the screensObject
-        const newAllElements = []
+        const newAllElements = new Map();
         const newAllObject = {    
             voltageSources: [],
             resistors: [],

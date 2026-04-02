@@ -18,7 +18,7 @@ export default defineConfig({
         mouseUp: async ({ page }) => {
           await page.mouse.up();
         },
-        mouseMove: async ({ page }, { x, y }) => {
+        mouseMove: async ({ page }, x, y) => {
           await page.mouse.move(x, y);
         },
         boundingBox: async ({ page }, testID = "temp") => { //this function expects the element to have a unique test-id which defaults to "temp"

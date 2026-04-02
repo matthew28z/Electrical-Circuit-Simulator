@@ -134,8 +134,8 @@ const deleteAll = (event) => {
     }
 }
 
-function loopAndUpdate(mapToLoop, deletedElement) {
-    mapToLoop.forEach(connectedElement => {
+function loopAndUpdate(setToLoop, deletedElement) {
+    setToLoop.forEach(connectedElement => {
         const newObject = allElements.get(connectedElement);
             
         //updates the clickedElements array

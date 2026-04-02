@@ -5,6 +5,7 @@ import { transform } from "../camera/move.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
 import { adjustWireCounter, wireCounter, wires, clickedElements } from "../logic/wires.js";
 import { allElements } from "../logic/paths.js";
+import { deleteElementFromAllElements } from "./delete.js";
 
 
 const quickPaste = (event) => {
@@ -126,14 +127,7 @@ function removeElementFromData(element) {
         //We need to remove every instance of this element from the programs data
 
         if (!element.classList.contains("wire")) {
-            //allElements
-            const aEIndex = allElements.findIndex(object => object.element === element);
-
-            if (aEIndex > -1) {
-                allElements.splice(aEIndex, 1);
-            } else {
-                console.log("Error: Corrupted Data (allElements)");
-            }
+            deleteElementFromAllElements(element);
 
             //clickedElements
             //May just be the same index as aEIndex (further testing required)
@@ -246,13 +240,14 @@ export function pasteCircuit() {
 
         //We now add the new data to the old data
         wires.push(...newWires);
-        allElements.push(...newAllElements);
-        console.log(allElements)
 
-        newAllElements.forEach(object => {
-            clickedElements.push({element: object.element, leftPoint: !object.element.classList.contains("connection") && object.connections.left.length > 0, rightPoint: !object.element.classList.contains("connection") && object.connections.right.length > 0})
+        newAllElements.forEach((element, object) => {
+            allElements.set(element, object);
+
+            const isNotConnection = !element.classList.contains("connection");
+            clickedElements.push({ element, leftPoint: isNotConnection && object.connections.left.size > 0, rightPoint: isNotConnection && object.connections.right.size > 0 });
         })
-
+        console.log(allElements)
 
         Object.keys(allObject).forEach(key => {
             allObject[key].push(...newAllObject[key]);

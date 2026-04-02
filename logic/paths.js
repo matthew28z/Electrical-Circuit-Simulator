@@ -18,19 +18,16 @@ export function updateAllElements(element, connectedElement = null, side = null)
     if (!objectToUpdate) { //is a new element
         if (connectedElement) {
             if (side === "left") {
-                allElements.set(element, { element: element, connections: { left: new Map([[connectedElement, connectedElement]]), right: new Map() } });
+                allElements.set(element, { element: element, connections: { left: new Set(connectedElement), right: new Set() } });
             } else {
-                allElements.set(element, { element: element, connections: { left: new Map(), right: new Map([[connectedElement, connectedElement]]) } });
+                allElements.set(element, { element: element, connections: { left: new Set(), right: new Set(connectedElement) } });
             };
         } else {
-            allElements.set(element, { element: element, connections: { left: new Map(), right: new Map() } });
+            allElements.set(element, { element: element, connections: { left: new Set(), right: new Set() } });
         }
     } else {
         //For an element to not be new this means that there is a connectedElement and a side specified
-
-        if (!objectToUpdate.connections[side].has(connectedElement)) { //avoids duplicates
-            objectToUpdate.connections[side].set(connectedElement, connectedElement);
-        }
+        objectToUpdate.connections[side].add(connectedElement); //avoids duplicates since it is a set
     }
 }
 
@@ -53,8 +50,8 @@ export function findAllPaths(voltageSources, flow = "conventional") {
             start = voltageSources[index].element
             
             const startObject = allElements.get(start);
-            const left = startObject.connections.left.length !== 0;
-            const right = startObject.connections.right.length !== 0;
+            const left = startObject.connections.left.size !== 0;
+            const right = startObject.connections.right.size !== 0;
 
             if (right && left) {
                 isClosedLoop = true;
