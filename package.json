@@ -2,7 +2,7 @@
   "name": "zimaris-lab",
   "version": "0.0.6",
   "type": "module",
-  "main": "logic/menu.js",
+  "main": "logic/menu.ts",
   "scripts": {
     "test": "vitest --browser",
     "test:ui": "vitest --ui --browser",

@@ -1,12 +1,13 @@
+//@ts-nocheck temporary
+
 import { addVoltage, removeVoltage, voltageSources } from "./voltage.js";
 import { removeElement as remove, removeDelete as remove2 } from "./delete.js";
 import { addResistor, removeResistor } from "./resistor.js";
 import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
-import { findAllPaths } from "./paths.js";
-import { svg, screen } from "./management.js";
+import { findMainPath } from "./paths";
+import { screen } from "./management.js";
 import { drawCurrent, addAmperometer, removeAmperometer } from "./current.js";
-//import { addMove, removeMove } from "../camera/move.js";
 import { addZoom, removeZoom} from "../camera/zoom.js";
 import { calculateResistance } from "../calculation/calculateResistance.js";
 import { calculateVoltage } from "../calculation/calculateVoltage.js";
@@ -203,8 +204,8 @@ save.addEventListener("click", adjustMenu);
 const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
-async function simulate() {
-    const path = findAllPaths(voltageSources())
+function simulate() {
+    const path = findMainPath(voltageSources())
 
     drawCurrent(path)
 

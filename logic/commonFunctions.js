@@ -1,6 +1,6 @@
-import * as d3 from "../node_modules/d3/src/index.js";
+import * as d3 from "d3";
 
-import { updateAllElements as update, allElements } from "./paths.js";
+import { updateAllElements as update, allElements } from "./paths";
 import { minimumValues, screen, allG } from "./management.js";
 import { transform } from "../camera/move.js";
 
@@ -194,8 +194,6 @@ export function getCenter(element) {
 
 export function getPoints(element) {
     const rect = element.getBoundingClientRect()
-    console.log(rect)
-    console.log(element.closest(".screen"))
 
     const x1 = rect.left + window.scrollX
     const x2 = rect.left + window.scrollX + rect.width 

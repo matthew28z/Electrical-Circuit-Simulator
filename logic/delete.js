@@ -1,6 +1,6 @@
 import { removeAllClicks } from "./commonFunctions.js";
 import { wires, clickedElements } from "./wires.js";
-import { allElements } from "./paths.js";
+import { allElements } from "./paths";
 import { allObject, screen } from "./management.js";
 
 const body = document.body;

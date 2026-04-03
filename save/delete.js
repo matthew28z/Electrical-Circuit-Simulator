@@ -1,4 +1,4 @@
-import { allElements } from "../logic/paths.js";
+import { allElements } from "../logic/paths";
 import { allObject } from "../logic/management.js";
 import { wires, clickedElements } from "../logic/wires.js";
 

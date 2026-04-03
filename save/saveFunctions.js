@@ -1,5 +1,5 @@
 import { allObject } from "../logic/management.js";
-import { allElements } from "../logic/paths.js";
+import { allElements } from "../logic/paths";
 import { wires } from "../logic/wires.js";
 
 const screen = document.querySelector(".screen.visible");

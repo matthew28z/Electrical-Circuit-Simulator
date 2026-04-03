@@ -2,7 +2,7 @@ import * as d3 from "d3";
 
 import { addEventListeners, removeEventListeners, changeOperation } from "../logic/elementFunctions.js";
 import { changeValues, allObject } from "../logic/management.js";
-import { changeAllElements, allElements } from "../logic/paths.js";
+import { changeAllElements, allElements } from "../logic/paths";
 import { wires, removeFakeWires } from "../logic/wires.js";
 import { changeTransform, transform } from "../camera/move.js";
 

@@ -4,7 +4,7 @@ import { wireG, bridgeG, cBridgeG, currentG, fakeWireG, allG, allObject } from "
 import { transform } from "../camera/move.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
 import { adjustWireCounter, wireCounter, wires, clickedElements } from "../logic/wires.js";
-import { allElements } from "../logic/paths.js";
+import { allElements } from "../logic/paths";
 import { deleteElementFromAllElements } from "./delete.js";
 
 
