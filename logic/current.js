@@ -21,6 +21,7 @@ export function drawCurrent(pathObject, isBreak = false) {
     if (pathObject.isClosed) {
         console.log(pathObject.color, pathObject.isClosed)
         const firstElement = pathObject.path[0].element
+        console.log(firstElement)
 
         const startPoints = getPoints(firstElement)
 
@@ -134,12 +135,10 @@ function findWireGroup(pointA, pointB) {
     let wiresA = document.elementsFromPoint(pointA.x, pointA.y).filter(element => element.classList.contains("wire"))
     let wiresB = document.elementsFromPoint(pointB.x, pointB.y).filter(element => element.classList.contains("wire"))
 
-    console.log(document.elementsFromPoint(pointB.x, pointB.y))
-    console.log(document.elementsFromPoint(pointA.x, pointA.y))
     console.log(wiresA)
     console.log(wiresB)
 
-  /*  //kati paei lathos
+    //kati paei lathos
     d3.select(`#${screen.id} svg`).append("circle")
   .attr("cx", pointB.x)   // x position
   .attr("cy", pointB.y)   // y position
@@ -151,10 +150,12 @@ function findWireGroup(pointA, pointB) {
   .attr("cy", pointA.y)   // y position
   .attr("r", 5)      // radius
   .attr("fill", "gold"); // color
-*/
+
     //Finds the general information about the specific wires
     wiresA = wires.filter(object => wiresA.includes(object.element))
     wiresB = wires.filter(object => wiresB.includes(object.element))
+    console.log(wiresA)
+    console.log(wiresB)
 
     //Finds the 
     const wireGroup = wiresA.filter(object => wiresB.some(object2 => object2.wireGroup === object.wireGroup))[0].wireGroup

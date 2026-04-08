@@ -1,5 +1,6 @@
 import { start } from "node:repl";
 import { getRandomInt } from "./commonFunctions.js";
+import path from "node:path";
 
 //Types-Interfaces
 type currentHue = "yellowish" | "lightBlueish";
@@ -28,11 +29,12 @@ interface currentPathData {
     path: pathObject[];
     isClosed: boolean;
     descendantOf?: currentColor;
+    parallelTo?: Set<currentColor | string>;
 }
 
 const scenario : currentHue = getRandomInt(1, 2) === 1 ? "yellowish" : "lightBlueish";
 
-export const pathColors: currentColor[] = [];
+export const pathColors: Set<currentColor> = new Set();
 
 export let allElements : Map<HTMLElement, AE>= new Map();
 
@@ -78,65 +80,32 @@ function findPathStart(voltageSources : any) : HTMLElement | undefined {
     return startingElement;
 }
 
-function traversePath(startingElement : HTMLElement, side : side, pathData : currentPathData) : void {
-    let nextAEObject: AE | undefined = allElements.get(startingElement);
-
-    if (!nextAEObject) {
-        console.log("FATAL ERROR (CORRUPTED DATA)");
-
+function addNextElement(pathToAdd: pathObject[], AEObject: AE, side: side): HTMLElement | undefined {
+    if (AEObject.connections[side].size > 1) {
         return;
     }
 
-    const pathToTraverse: pathObject[] = pathData.path;
+    const elementToAdd : HTMLElement | undefined = AEObject.connections[side].values().next().value;
 
-    while (!pathData.isClosed) {
-        const AEObject: AE = nextAEObject;
-        const currentElement: HTMLElement = AEObject.element;
-
-        const nextSide : side = side === "left" ? "right" : "left";
-        
-        if (AEObject.connections[nextSide].size === 0) {
-            console.log("NO PATH FOUND");
-
-            return;
-        } else if (AEObject.connections[nextSide].size === 1) {
-            const nextElement : HTMLElement | undefined = AEObject.connections[nextSide].values().next().value;
-            
-            if (!nextElement) {
-                console.log("FATAL ERROR (CORRUPTED DATA)")
-                return;
-            } 
-
-            const nextPoint : point = nextSide === "left" ? "leftPoint" : "rightPoint";
-
-            pathToTraverse.push({ element: nextElement, point: nextPoint });
-
-            nextAEObject = allElements.get(nextElement);
-
-            if (!nextAEObject) {
-                console.log("FATAL ERROR (CORRUPTED DATA)");
-
-                return;
-            }
-            
-            side = nextAEObject.connections.left.has(currentElement) ? "left" : "right";
-        } else {
-            pathToTraverse.push({ element: `break-${breaks.length}` });
-
-            const breakPath: currentPathData | undefined = findBreakPath(currentElement, side, pathData.color);
-
-            if (breakPath) {
-                breaks.push(breakPath); //the first break found will be the last one pushed
-            }
-        }
-
-        if (currentElement === startingElement) { //checks only after currentElement has been reassigned
-            pathData.isClosed = true;
-        }
+    if (!elementToAdd) {
+        return;
     }
+
+    const AEToAdd: AE | undefined = allElements.get(elementToAdd);
+    
+    if (!AEToAdd) {
+        return;
+    }
+
+    pathToAdd.push({
+        element: elementToAdd,
+        point: AEToAdd.element.matches(".connection, .amperometer") ? "actualPoint" :  AEToAdd.connections.left.has(AEObject.element) ? "leftPoint" : "rightPoint"
+    });
+
+    return elementToAdd;
 }
 
-export function findMainPath(voltageSources : any) : currentPathData | undefined {
+export function findMainPath(voltageSources: any): currentPathData | undefined {
     const startingElement : HTMLElement | undefined = findPathStart(voltageSources);
     
     if (startingElement) {       
@@ -146,54 +115,88 @@ export function findMainPath(voltageSources : any) : currentPathData | undefined
             isClosed: false,
         };
 
-        traversePath(startingElement, "left", mainPath);
+        const firstAEObject: AE | undefined = allElements.get(startingElement);
+        const firstSide: side = "left";
 
-        console.log(mainPath);
+        if (!firstAEObject) {
+            console.log("FATAL ERROR");
+
+            return;
+        }
+
+        let currentAEObject: AE = firstAEObject;
+        let currentSide : side = firstSide;
+
+        while (!mainPath.isClosed) {
+            const elementsFound = currentAEObject.connections[currentSide].size;
+
+            if (elementsFound === 0) {
+                console.log("NO PATH FOUND");
+
+                return;
+            } else if (elementsFound === 1) {
+                const valueAdded: HTMLElement | undefined = addNextElement(mainPath.path, currentAEObject, currentSide) 
+
+                if (!valueAdded) {
+                    console.log("CORRUPTED DATA");
+
+                    return;
+                }
+
+                const oldElement: HTMLElement = currentAEObject.element;
+
+                if (valueAdded === startingElement) {
+                    mainPath.isClosed = true;
+
+                    break;
+                }
+
+                const nextAE: AE | undefined = allElements.get(valueAdded);
+                
+                if (!nextAE) {
+                    console.log("FATAL ERROR");
+
+                    return;
+                }
+
+                currentAEObject = nextAE;
+
+                currentSide = currentAEObject.connections.left.has(oldElement) ? "right" : "left";
+            } else {
+                
+            }            
+        }
+
+
+
+
+
         return mainPath;
     }
 
     return;
 }
 
-//Not finished
-function findBreakPath(startingConnection : HTMLElement, startingSide : side, originalPath : currentColor) : currentPathData | undefined {
-    let currentElement : HTMLElement = startingConnection;
-    let side : side = startingSide;
+function findBreakPaths(originalPathData: currentPathData, elementsFound: Set<HTMLElement>) {
+    const connectionsFound: Set<HTMLElement>[] = [];
+    const newPaths: currentPathData[] = [];
+    elementsFound.forEach(element => {
+        connectionsFound.push(new Set<HTMLElement>);
+        newPaths.push({
+            color: findColor(),
+            path: [],
+            isClosed: false,
+            descendantOf: originalPathData.color
+        })
+    });
 
-    const startingObject : AE | undefined = allElements.get(currentElement);
+    let pathsHaveMerged: boolean = false;
 
-    if (startingObject) {
-        const connectionSets: Set<HTMLElement>[] = [];
-        
-        startingObject.connections[side].forEach(breakStart => {
-            const currentSet : Set<HTMLElement> = new Set();
-
-            const currentBreakData : currentPathData = {
-                color: findColor(),
-                path: [],
-                isClosed: false,
-                descendantOf: originalPath
-            };
-
-            const breakAE: AE | undefined = allElements.get(breakStart);
+    while (!pathsHaveMerged) {
+        newPaths.forEach(pathData => {
             
-            if (!breakAE) {
-                console.log("FATAL ERROR (CORRUPTED DATA)");
-                
-                return;
-            }
-
-            traversePath(breakStart, breakAE.connections.left.has(startingConnection) ? "left" : "right", currentBreakData);
-
-            currentBreakData.path.forEach(object => {
-                if (typeof object.element !== "string" && object.element.classList.contains("connection")) {
-                    currentSet.add(object.element);
-                }
-            })
-        }) 
+        })
     }
-
-    return;
 }
 
 function findColor() : currentColor {
@@ -201,7 +204,8 @@ function findColor() : currentColor {
     let green : number;
     let blue : number;
 
-    let color : currentColor;
+    let color: currentColor;
+
     if (scenario === "yellowish") {
         do {
             red   = getRandomInt(230, 255); 
@@ -210,7 +214,7 @@ function findColor() : currentColor {
 
 
             color = `rgb(${red}, ${green}, ${blue})`
-        } while (pathColors.includes(color))  
+        } while (!pathColors.add(color))  
     } else {
         do {
             red   = getRandomInt(200, 245);  
@@ -219,10 +223,8 @@ function findColor() : currentColor {
 
 
             color = `rgb(${red}, ${green}, ${blue})`
-        } while (pathColors.includes(color))
+        } while (!pathColors.add(color))
     }
-
-    pathColors.push(color)
 
     return color
 }
