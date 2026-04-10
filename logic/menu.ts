@@ -7,7 +7,7 @@ import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
 import { findMainPath } from "./paths";
 import { screen } from "./management.js";
-import { drawCurrent, addAmperometer, removeAmperometer } from "./current.js";
+import { drawCurrent, addAmperometer, removeAmperometer } from "./current";
 import { addZoom, removeZoom} from "../camera/zoom.js";
 import { calculateResistance } from "../calculation/calculateResistance.js";
 import { calculateVoltage } from "../calculation/calculateVoltage.js";

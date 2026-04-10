@@ -1,3 +1,5 @@
+//@ts-nocheck temporary
+
 import * as d3 from "d3";
 
 import { findMainPath, breaks, allElements } from "./paths";
@@ -52,9 +54,7 @@ export function drawCurrent(pathObject, isBreak = false) {
 
                 const string = pathObject.path[i]
 
-                const int = string.split("-")[1] //gets the integer
-
-                breaks[int].forEach(newPathObject => {
+                breaks.get(string).forEach(newPathObject => {
                     drawCurrent(newPathObject, true)
                 })
 

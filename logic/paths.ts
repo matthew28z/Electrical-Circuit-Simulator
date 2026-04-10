@@ -20,16 +20,18 @@ interface AE {
 }
 
 interface pathObject {
-    element: HTMLElement | breakIdentifier;
-    point?: point;
+    element: HTMLElement;
+    point: point;
 }
 
 interface currentPathData {
     color: currentColor;
-    path: pathObject[];
+    path: (pathObject | breakIdentifier)[];
     isClosed: boolean;
     descendantOf?: currentColor;
     parallelTo?: Set<currentColor | string>;
+    splitsTo?: Set<currentColor>;
+
 }
 
 const scenario : currentHue = getRandomInt(1, 2) === 1 ? "yellowish" : "lightBlueish";
@@ -61,7 +63,7 @@ export function updateAllElements(
     }    
 }
 
-export const breaks: currentPathData[] = [];
+const allPaths: Map<currentColor, currentPathData> = new Map();
 
 function findPathStart(voltageSources : any) : HTMLElement | undefined {
     let startingElement : HTMLElement | undefined;
@@ -80,7 +82,7 @@ function findPathStart(voltageSources : any) : HTMLElement | undefined {
     return startingElement;
 }
 
-function addNextElement(pathToAdd: pathObject[], AEObject: AE, side: side): HTMLElement | undefined {
+function addNextElement(pathToAdd: (pathObject | breakIdentifier)[], AEObject: AE, side: side): HTMLElement | undefined {
     if (AEObject.connections[side].size > 1) {
         return;
     }
@@ -114,6 +116,8 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
             path: [{ point: "leftPoint", element: startingElement }],
             isClosed: false,
         };
+
+        allPaths.set(mainPath.color, mainPath);
 
         const firstAEObject: AE | undefined = allElements.get(startingElement);
         const firstSide: side = "left";
@@ -163,13 +167,53 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
 
                 currentSide = currentAEObject.connections.left.has(oldElement) ? "right" : "left";
             } else {
+                const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(mainPath, currentAEObject.connections[currentSide], currentAEObject.element);
+
+                if (!valuesToAdd) {
+                    console.log("FATAL ERROR");
+
+                    return;
+                }
+
+                const [first, ...rest] = valuesToAdd;
+
+                mainPath.path.push(...rest); //avoid duplicates
+
+                const breakCreated : currentPathData | undefined = breaks.get(valuesToAdd[1] as breakIdentifier)?.at(0); //the function above will always return a pathObject containing just a breakIdentifier
+
+                if (!breakCreated) {
+                    console.log("FATAL ERROR");
+
+                    return;
+                }
+
+                const pathObj : pathObject = valuesToAdd.at(-1)! as pathObject;
+
+                const nextElement: HTMLElement  = pathObj.element; 
+
+                const nextAE: AE | undefined = allElements.get(nextElement);
                 
+                if (!nextAE) {
+                    console.log("FATAL ERROR");
+
+                    return;
+                }
+
+                currentAEObject = nextAE;
+
+                const prevVal: pathObject | breakIdentifier | undefined = breakCreated.path.at(-2); //the second to last element of a break path can never be another break
+
+                if (!prevVal || typeof prevVal === "string") {
+                    console.log("FATAL ERROR");
+
+                    return;
+                }
+
+                const prevElement: HTMLElement = prevVal.element;
+
+                currentSide = nextAE.connections.left.has(prevElement) ? "right" : "left";
             }            
         }
-
-
-
-
 
         return mainPath;
     }
@@ -177,26 +221,236 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
     return;
 }
 
-function findBreakPaths(originalPathData: currentPathData, elementsFound: Set<HTMLElement>) {
-    const connectionsFound: Set<HTMLElement>[] = [];
-    const newPaths: currentPathData[] = [];
+export const breaks: Map<breakIdentifier, currentPathData[]> = new Map();
+let breakCounter: number = 0;
+
+function findBreakPaths(
+    originalPathData: currentPathData,
+    elementsFound: Set<HTMLElement>,
+    originElement: HTMLElement
+): (pathObject | breakIdentifier)[] | undefined {
+    let connectionsFound: Set<HTMLElement>[] = [];
+    let newPaths: currentPathData[] = [];
+
     elementsFound.forEach(element => {
         connectionsFound.push(new Set<HTMLElement>);
+
+        const AEToAdd : AE | undefined = allElements.get(element);
+
+        if (!AEToAdd) {
+            console.log("FATAL ERROR");
+
+            return;
+        }
+
         newPaths.push({
             color: findColor(),
-            path: [],
+            path: [{ element: originElement, point: "actualPoint" }, { element: element, point: element.matches(".connection, .amperometer") ? "actualPoint" :  AEToAdd.connections.left.has(originElement) ? "leftPoint" : "rightPoint" }],
             isClosed: false,
             descendantOf: originalPathData.color
         })
+
+        const newPath: currentPathData = newPaths.at(-1)!;
+        
+        allPaths.set(newPath.color, newPath);
     });
 
-    let pathsHaveMerged: boolean = false;
-
-    while (!pathsHaveMerged) {
-        newPaths.forEach(pathData => {
+    while (newPaths.length > 1) {
+        console.log(newPaths)
+        for (let i: number = 0; i < newPaths.length; i++) {
+            const val : pathObject | breakIdentifier | undefined = newPaths[i].path.at(-1);
             
-        })
+            if (typeof val !== "string" && val) {
+                const key: HTMLElement = val.element;
+
+                const AEObject: AE | undefined = allElements.get(key);
+
+                if (!AEObject) {
+                    console.log("CORRUPTED DATA");
+
+                    return;
+                }
+
+                const prevValue: pathObject | breakIdentifier | undefined = newPaths[i].path.at(-2);
+                let prevElement: HTMLElement | undefined;
+
+                if (typeof prevValue === "string") {
+                    const breakPath: currentPathData | undefined = breaks.get(prevValue)?.at(0);
+
+                    if (!breakPath) {
+                        console.log("CORRUPTED DATA");
+
+                        return;
+                    }
+
+                    const lastObj: pathObject | breakIdentifier = breakPath.path.at(-1)!;
+
+                    if (typeof lastObj === "string") { //a break path never ends on another break path
+                        console.log("CORRUPTED DATA");
+
+                        return;
+                    }
+
+
+                    prevElement = lastObj.element;
+
+                    if (!prevElement) {
+                        console.log("CORRUPTED DATA");
+
+                        return; 
+                    }
+                } else {
+                    prevElement = prevValue?.element ?? originElement;
+                }
+
+                const nextSide: side = AEObject.connections.left.has(prevElement) ? "right" : "left";
+
+                const elementsFoundRef: Set<HTMLElement> = AEObject.connections[nextSide];
+
+                if (elementsFoundRef.size === 0) {
+                    console.log("NO PATH FOUND")
+
+                    return;
+                } else if (elementsFoundRef.size === 1) {
+                    const nextElement: HTMLElement | undefined = addNextElement(newPaths[i].path, AEObject, nextSide);
+                    console.log("Current Element was: ", AEObject.element)
+                    console.log("Next Element is: ", nextElement)
+                    if (!nextElement) {
+                        console.log("FATAL ERROR");
+
+                        return;
+                    }
+
+                    const nextAE: AE | undefined = allElements.get(nextElement);
+
+                    if (!nextAE) {
+                        console.log("CORRUPTED DATA");
+
+                        return;
+                    }
+
+                    //No need to check if it is a connnection as only connections abide this check
+                    if (nextAE.connections[nextAE.connections.left.has(AEObject.element) ? "left" : "right"].size > 1) {
+                        connectionsFound[i].add(nextElement);
+
+                        const indexesToMerge: Set<number> = new Set([i]);
+
+                        for (let j: number = 0; j < connectionsFound.length; j++) {
+                            if (connectionsFound[j].has(nextElement)) {
+                                indexesToMerge.add(j);
+                            }
+                        }
+
+                        if (indexesToMerge.size > 1) {
+                            const mergeResult : { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] }  | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, nextElement, originElement);
+                            
+                            if (!mergeResult) {
+                                console.log("FATAL ERROR");
+
+                                return;
+                            }
+
+                            connectionsFound = mergeResult.connectionsFound;
+                            newPaths = mergeResult.newPaths; 
+                        }
+                    } 
+                }
+            }
+        }
     }
+
+    return newPaths[0].path;
+}
+
+function mergeBreakPaths(
+    indexesToMerge: Set<number>,
+    breakPaths: currentPathData[],
+    connectionsFound: Set<HTMLElement>[],
+    commonElement: HTMLElement,
+    originElement: HTMLElement
+): { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] } | undefined {
+    const firstIndex: number | undefined = indexesToMerge.values().next().value;
+
+    if (firstIndex === undefined) {
+        console.log("FATAL ERROR");
+
+        return;
+    }
+
+    const originalAncestor = breakPaths[firstIndex]?.descendantOf as currentColor;
+
+    const isLastMerge : boolean = indexesToMerge.size === breakPaths.length;
+    
+    const newColor: currentColor = isLastMerge ? originalAncestor : findColor(); //here originalAncestor will be the path that initially split
+
+    const pathsMerged : Set<currentColor> = new Set();
+
+    indexesToMerge.forEach(index => {
+        const breakPath: currentPathData = breakPaths[index];
+        
+        if (isLastMerge) {
+            breakPath.isClosed = true;
+
+            if (breakPath.splitsTo !== undefined) {
+                for (const currentColor of breakPath.splitsTo) {
+                    const pathData: currentPathData | undefined = allPaths.get(currentColor);
+
+                    if (!pathData) {
+                        console.log("FATAL ERROR");
+
+                        return;
+                    }
+
+                    pathData.isClosed = true;
+                }
+            }
+        }
+
+        pathsMerged.add(breakPath.color);
+
+        let tracker: boolean = false;
+
+        breakPath.path.forEach((val, index) => {
+            if (tracker) {
+                return;
+            }
+
+            if (typeof val !== "string" && val.element === commonElement) {
+                breakPath.path.splice(index + 1);
+                tracker = true;
+            }
+        })
+
+        if (breakPath.parallelTo === undefined) {
+            breakPath.parallelTo = new Set();
+        } 
+
+        breakPath.descendantOf = newColor;
+
+        indexesToMerge.forEach(otherIndex => {
+            if (otherIndex !== index) {
+                breakPath.parallelTo?.add(breakPaths[otherIndex].color);
+            }
+        })
+    })
+
+    const breakIdentifier : breakIdentifier = `break-${breakCounter++}`;
+
+    breaks.set(breakIdentifier, breakPaths.filter(pathData => pathData.descendantOf === newColor));
+
+    const mergedPath: currentPathData = {
+        color: newColor,
+        path: [{ element: originElement, point: "actualPoint" }, breakIdentifier, { element: commonElement, point: "actualPoint" }],
+        isClosed: false,
+        descendantOf: originalAncestor,
+        splitsTo: pathsMerged
+    }
+
+    if (mergedPath.descendantOf !== originalAncestor) {
+        allPaths.set(mergedPath.color, mergedPath);
+    }
+
+    return { connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set()], newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath] };
 }
 
 function findColor() : currentColor {
