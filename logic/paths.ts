@@ -1,6 +1,5 @@
-import { start } from "node:repl";
+import { should } from "vitest";
 import { getRandomInt } from "./commonFunctions.js";
-import path from "node:path";
 
 //Types-Interfaces
 type currentHue = "yellowish" | "lightBlueish";
@@ -29,7 +28,7 @@ interface currentPathData {
     path: (pathObject | breakIdentifier)[];
     isClosed: boolean;
     descendantOf?: currentColor;
-    parallelTo?: Set<currentColor | string>;
+    parallelTo?: Set<currentColor>;
     splitsTo?: Set<currentColor>;
 
 }
@@ -256,104 +255,129 @@ function findBreakPaths(
     });
 
     while (newPaths.length > 1) {
-        console.log(newPaths)
-        for (let i: number = 0; i < newPaths.length; i++) {
-            const val : pathObject | breakIdentifier | undefined = newPaths[i].path.at(-1);
-            
-            if (typeof val !== "string" && val) {
-                const key: HTMLElement = val.element;
+        for (let i: number = newPaths.length - 1; i >= 0; i--) {
+            let shouldStop: boolean = false;
 
-                const AEObject: AE | undefined = allElements.get(key);
+            while (!shouldStop) {
+                const val : pathObject | breakIdentifier | undefined = newPaths[i].path.at(-1);
+                
+                if (typeof val !== "string" && val) { //a path can never end on a break
+                    const key: HTMLElement = val.element;
 
-                if (!AEObject) {
-                    console.log("CORRUPTED DATA");
+                    const AEObject: AE | undefined = allElements.get(key);
 
-                    return;
-                }
-
-                const prevValue: pathObject | breakIdentifier | undefined = newPaths[i].path.at(-2);
-                let prevElement: HTMLElement | undefined;
-
-                if (typeof prevValue === "string") {
-                    const breakPath: currentPathData | undefined = breaks.get(prevValue)?.at(0);
-
-                    if (!breakPath) {
+                    if (!AEObject) {
                         console.log("CORRUPTED DATA");
 
                         return;
                     }
 
-                    const lastObj: pathObject | breakIdentifier = breakPath.path.at(-1)!;
+                    const prevValue: pathObject | breakIdentifier | undefined = newPaths[i].path.at(-2);
+                    let prevElement: HTMLElement | undefined;
 
-                    if (typeof lastObj === "string") { //a break path never ends on another break path
-                        console.log("CORRUPTED DATA");
+                    if (typeof prevValue === "string") {
+                        let breakPath: currentPathData | undefined = breaks.get(prevValue)?.at(0);
 
-                        return;
-                    }
+                        if (!breakPath) {
+                            console.log("CORRUPTED DATA");
 
-
-                    prevElement = lastObj.element;
-
-                    if (!prevElement) {
-                        console.log("CORRUPTED DATA");
-
-                        return; 
-                    }
-                } else {
-                    prevElement = prevValue?.element ?? originElement;
-                }
-
-                const nextSide: side = AEObject.connections.left.has(prevElement) ? "right" : "left";
-
-                const elementsFoundRef: Set<HTMLElement> = AEObject.connections[nextSide];
-
-                if (elementsFoundRef.size === 0) {
-                    console.log("NO PATH FOUND")
-
-                    return;
-                } else if (elementsFoundRef.size === 1) {
-                    const nextElement: HTMLElement | undefined = addNextElement(newPaths[i].path, AEObject, nextSide);
-                    console.log("Current Element was: ", AEObject.element)
-                    console.log("Next Element is: ", nextElement)
-                    if (!nextElement) {
-                        console.log("FATAL ERROR");
-
-                        return;
-                    }
-
-                    const nextAE: AE | undefined = allElements.get(nextElement);
-
-                    if (!nextAE) {
-                        console.log("CORRUPTED DATA");
-
-                        return;
-                    }
-
-                    //No need to check if it is a connnection as only connections abide this check
-                    if (nextAE.connections[nextAE.connections.left.has(AEObject.element) ? "left" : "right"].size > 1) {
-                        connectionsFound[i].add(nextElement);
-
-                        const indexesToMerge: Set<number> = new Set([i]);
-
-                        for (let j: number = 0; j < connectionsFound.length; j++) {
-                            if (connectionsFound[j].has(nextElement)) {
-                                indexesToMerge.add(j);
-                            }
+                            return;
                         }
 
-                        if (indexesToMerge.size > 1) {
-                            const mergeResult : { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] }  | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, nextElement, originElement);
-                            
-                            if (!mergeResult) {
-                                console.log("FATAL ERROR");
+                        let lastObj: pathObject | breakIdentifier = breakPath.path.at(-2)!;
+
+                        while (typeof lastObj === "string") { 
+                            const obj : pathObject | breakIdentifier | undefined = breaks.get(lastObj)?.at(0)?.path.at(-2);
+
+                            if (!obj) {
+                                console.log("CORRUPTED DATA");
 
                                 return;
                             }
 
-                            connectionsFound = mergeResult.connectionsFound;
-                            newPaths = mergeResult.newPaths; 
+                            lastObj = obj;
                         }
-                    } 
+
+
+                        prevElement = lastObj.element;
+
+                        if (!prevElement) {
+                            console.log("CORRUPTED DATA");
+
+                            return; 
+                        }
+                    } else {
+                        prevElement = prevValue?.element ?? originElement;
+                    }
+
+                    const nextSide: side = AEObject.connections.left.has(prevElement) ? "right" : "left";
+
+                    const elementsFoundRef: Set<HTMLElement> = AEObject.connections[nextSide];
+
+                    if (elementsFoundRef.size === 0) {
+                        console.log("NO PATH FOUND")
+
+                        return;
+                    } else if (elementsFoundRef.size === 1) {
+                        const nextElement: HTMLElement | undefined = addNextElement(newPaths[i].path, AEObject, nextSide);
+
+                        if (!nextElement) {
+                            console.log("FATAL ERROR");
+
+                            return;
+                        }
+
+                        const nextAE: AE | undefined = allElements.get(nextElement);
+
+                        if (!nextAE) {
+                            console.log("CORRUPTED DATA");
+
+                            return;
+                        }
+
+                        //No need to check if it is a connnection as only connections abide this check
+                        if (nextAE.connections[nextAE.connections.left.has(AEObject.element) ? "left" : "right"].size > 1) {
+                            shouldStop = true;
+                            connectionsFound[i].add(nextElement);
+
+                            const indexesToMerge: Set<number> = new Set([i]);
+
+                            for (let j: number = 0; j < connectionsFound.length; j++) {
+                                if (connectionsFound[j].has(nextElement)) {
+                                    indexesToMerge.add(j);
+                                }
+                            }
+
+                            if (indexesToMerge.size > 1) {
+                                const mergeResult : { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] }  | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, nextElement, originElement);
+                                
+                                if (!mergeResult) {
+                                    console.log("FATAL ERROR");
+
+                                    return;
+                                }
+
+                                connectionsFound = mergeResult.connectionsFound;
+                                newPaths = mergeResult.newPaths; 
+                            }
+                        } 
+                    } else {
+                        const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(newPaths[i], elementsFoundRef, AEObject.element);
+
+                        if (!valuesToAdd) {
+                            console.log("FATAL ERROR");
+
+                            return;
+                        }
+
+                        const [first, ...rest] = valuesToAdd;
+
+                        newPaths[i].path.push(...rest); //avoid duplicates 
+
+                        const commonConnectionObj : pathObject = valuesToAdd.at(-1)! as pathObject;
+
+                        connectionsFound[i].add(commonConnectionObj.element)
+                    }
                 }
             }
         }
@@ -369,6 +393,7 @@ function mergeBreakPaths(
     commonElement: HTMLElement,
     originElement: HTMLElement
 ): { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] } | undefined {
+    console.log(breakPaths)
     const firstIndex: number | undefined = indexesToMerge.values().next().value;
 
     if (firstIndex === undefined) {
@@ -450,7 +475,7 @@ function mergeBreakPaths(
         allPaths.set(mergedPath.color, mergedPath);
     }
 
-    return { connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set()], newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath] };
+    return { connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set([commonElement])], newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath] };
 }
 
 function findColor() : currentColor {
