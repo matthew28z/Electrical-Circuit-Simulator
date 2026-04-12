@@ -9,7 +9,7 @@ import { findMainPath } from "./paths";
 import { screen } from "./management.js";
 import { drawCurrent, addAmperometer, removeAmperometer } from "./current";
 import { addZoom, removeZoom} from "../camera/zoom.js";
-import { calculateResistance } from "../calculation/calculateResistance.js";
+import { getResistance } from "../calculation/calculateResistance";
 import { calculateVoltage } from "../calculation/calculateVoltage.js";
 import { calculateCurrent } from "../calculation/calculateCurrent.js";
 import { adjustMenu } from "../save/saveMenu.js";
@@ -209,7 +209,7 @@ function simulate() {
 
     drawCurrent(path)
 
-    console.log(calculateResistance(path))
+    console.log(getResistance(path))
     console.log(calculateVoltage(path))
     console.log(calculateCurrent(path))
     

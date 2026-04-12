@@ -1,7 +1,7 @@
 import { data } from "./data.js";
 import { breaks } from "../logic/paths.js";
 import { calculateNodeVoltage } from "./calculateVoltage.js";
-import { calculateParallelResistance } from "./calculateResistance.js";
+import { calculateParallelResistance } from "./calculateResistance";
 import { determineBreak } from "./commonFunctions.js";
 
 export function calculateCurrent(mainPathObject) {

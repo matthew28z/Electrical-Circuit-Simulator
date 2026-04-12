@@ -44,7 +44,7 @@ const handleClick = (event) => {
                     if (newObject.connections.left.delete(otherElement)) { 
                         clickedElements[otherIndex].leftPoint = isConnection;
                     } else {
-                        newObject.connections.rightdelete(otherElement);
+                        newObject.connections.right.delete(otherElement);
 
                         clickedElements[otherIndex].rightPoint = isConnection;
                     }

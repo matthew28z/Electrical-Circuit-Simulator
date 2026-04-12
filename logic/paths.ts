@@ -1,9 +1,10 @@
 import { should } from "vitest";
 import { getRandomInt } from "./commonFunctions.js";
+import { start } from "node:repl";
 
 //Types-Interfaces
 type currentHue = "yellowish" | "lightBlueish";
-type currentColor = `rgb(${number}, ${number}, ${number})`;
+export type currentColor = `rgb(${number}, ${number}, ${number})`;
 type side = "left" | "right";
 type point = "leftPoint" | "rightPoint" | "actualPoint";
 type breakIdentifier = `break-${number}`;
@@ -23,7 +24,7 @@ interface pathObject {
     point: point;
 }
 
-interface currentPathData {
+export interface currentPathData {
     color: currentColor;
     path: (pathObject | breakIdentifier)[];
     isClosed: boolean;
@@ -62,9 +63,10 @@ export function updateAllElements(
     }    
 }
 
-const allPaths: Map<currentColor, currentPathData> = new Map();
+export const allPaths: Map<currentColor, currentPathData> = new Map();
 
-function findPathStart(voltageSources : any) : HTMLElement | undefined {
+function findPathStart(voltageSources: any): HTMLElement | undefined {
+    console.log(allElements)
     let startingElement : HTMLElement | undefined;
     
     for (const object of voltageSources) {
@@ -166,7 +168,7 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
 
                 currentSide = currentAEObject.connections.left.has(oldElement) ? "right" : "left";
             } else {
-                const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(mainPath, currentAEObject.connections[currentSide], currentAEObject.element);
+                const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(mainPath, currentAEObject.connections[currentSide], currentAEObject.element, startingElement);
 
                 if (!valuesToAdd) {
                     console.log("FATAL ERROR");
@@ -226,10 +228,14 @@ let breakCounter: number = 0;
 function findBreakPaths(
     originalPathData: currentPathData,
     elementsFound: Set<HTMLElement>,
-    originElement: HTMLElement
+    originElement: HTMLElement,
+    startingElement: HTMLElement
 ): (pathObject | breakIdentifier)[] | undefined {
     let connectionsFound: Set<HTMLElement>[] = [];
     let newPaths: currentPathData[] = [];
+    let indexesFinished: Set<number> = new Set();
+
+    let shouldSkip: boolean = false;
 
     elementsFound.forEach(element => {
         connectionsFound.push(new Set<HTMLElement>);
@@ -254,8 +260,24 @@ function findBreakPaths(
         allPaths.set(newPath.color, newPath);
     });
 
-    while (newPaths.length > 1) {
+    let count = 100; //for debugging
+
+    while (newPaths.length > 1 && indexesFinished.size < newPaths.length && count-- > 0) {
         for (let i: number = newPaths.length - 1; i >= 0; i--) {
+            if (indexesFinished.has(i)) {
+                continue;
+            } else if (shouldSkip) { //allows the newly created mergedpath to move one step forward and catch up
+                if (i !== newPaths.length - 1) {
+                    if (i === 0) {
+                        shouldSkip = false;
+                    }
+
+                    continue;                
+                } 
+            }
+
+            let breakFromLoop: boolean = false;
+
             let shouldStop: boolean = false;
 
             while (!shouldStop) {
@@ -317,7 +339,12 @@ function findBreakPaths(
                     if (elementsFoundRef.size === 0) {
                         console.log("NO PATH FOUND")
 
-                        return;
+                        //Remove paths that lead to a dead end
+                        indexesFinished.delete(i);
+                        newPaths.splice(i, 1);
+                        connectionsFound.splice(i, 1);
+
+                        break;
                     } else if (elementsFoundRef.size === 1) {
                         const nextElement: HTMLElement | undefined = addNextElement(newPaths[i].path, AEObject, nextSide);
 
@@ -340,29 +367,54 @@ function findBreakPaths(
                             shouldStop = true;
                             connectionsFound[i].add(nextElement);
 
-                            const indexesToMerge: Set<number> = new Set([i]);
+                            if (i !== 0) {
+                                continue;
+                            }
+
+                            const indexesToMerge: Set<number> = new Set();
 
                             for (let j: number = 0; j < connectionsFound.length; j++) {
-                                if (connectionsFound[j].has(nextElement)) {
-                                    indexesToMerge.add(j);
+                                if (breakFromLoop) {
+                                    break;
                                 }
-                            }
 
-                            if (indexesToMerge.size > 1) {
-                                const mergeResult : { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] }  | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, nextElement, originElement);
+                                for (const potentialMergeElement of connectionsFound[j]) {
+                                    for (let k: number = 0; k < connectionsFound.length; k++) {
+                                        if (connectionsFound[k].has(potentialMergeElement)) {
+                                            indexesToMerge.add(k);
+                                        }
+                                    }
                                 
-                                if (!mergeResult) {
-                                    console.log("FATAL ERROR");
 
-                                    return;
-                                }
+                                    if (indexesToMerge.size > 1) {
+                                        const mergeResult: { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[], indexesFinished: Set<number> } | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, indexesFinished, nextElement, originElement);
+                                    
+                                        if (!mergeResult) {
+                                            console.log("FATAL ERROR");
 
-                                connectionsFound = mergeResult.connectionsFound;
-                                newPaths = mergeResult.newPaths; 
+                                            return;
+                                        }
+
+                                        connectionsFound = mergeResult.connectionsFound;
+                                        newPaths = mergeResult.newPaths;
+                                        indexesFinished = mergeResult.indexesFinished;
+
+                                        shouldSkip = true;
+
+                                        breakFromLoop = true;
+                                        break; //stop searching for new merges
+                                    } else {
+                                        indexesToMerge.clear();
+                                    }
+                                }    
                             }
-                        } 
+
+                            break; //exits the while loop
+                        } else if (nextElement === startingElement) {
+                            indexesFinished.add(i);
+                        }
                     } else {
-                        const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(newPaths[i], elementsFoundRef, AEObject.element);
+                        const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(newPaths[i], elementsFoundRef, AEObject.element, startingElement);
 
                         if (!valuesToAdd) {
                             console.log("FATAL ERROR");
@@ -380,6 +432,10 @@ function findBreakPaths(
                     }
                 }
             }
+
+            if (breakFromLoop) { 
+                break; //re evalautes the outer for loop if a merge occured
+            }
         }
     }
 
@@ -390,9 +446,14 @@ function mergeBreakPaths(
     indexesToMerge: Set<number>,
     breakPaths: currentPathData[],
     connectionsFound: Set<HTMLElement>[],
+    indexesFinished: Set<number>,
     commonElement: HTMLElement,
     originElement: HTMLElement
-): { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[] } | undefined {
+): {
+    connectionsFound: Set<HTMLElement>[],
+    newPaths: currentPathData[],
+    indexesFinished: Set<number>
+} | undefined {
     console.log(breakPaths)
     const firstIndex: number | undefined = indexesToMerge.values().next().value;
 
@@ -402,7 +463,7 @@ function mergeBreakPaths(
         return;
     }
 
-    const originalAncestor = breakPaths[firstIndex]?.descendantOf as currentColor;
+    const originalAncestor = breakPaths[firstIndex].descendantOf!;
 
     const isLastMerge : boolean = indexesToMerge.size === breakPaths.length;
     
@@ -471,11 +532,15 @@ function mergeBreakPaths(
         splitsTo: pathsMerged
     }
 
-    if (mergedPath.descendantOf !== originalAncestor) {
+    if (!isLastMerge) {
         allPaths.set(mergedPath.color, mergedPath);
     }
 
-    return { connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set([commonElement])], newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath] };
+    return {
+        connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set()],
+        newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath],
+        indexesFinished: new Set(Array.from(indexesFinished).filter(index => !indexesToMerge.has(index)))
+    };
 }
 
 function findColor() : currentColor {

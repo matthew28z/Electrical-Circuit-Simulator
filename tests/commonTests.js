@@ -58,16 +58,18 @@ export async function simpleCircuit() {
         expect(allObject.voltageSources[0].voltage.value).toBe(50);
         expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-        const { data } = await import("../calculation/data.js");
+        const { data } = await import("../calculation/data");
 
         const simulateButton = document.getElementById("run");
 
         await user.click(simulateButton);
-
+        
+        const mainPathData = data.values().next().value;
+    
         //Check the initial calculations
-        expect(data[0].pathResistance).toBe(10);
-        expect(data[0].pathVoltage).toBe(50);
-        expect(data[0].pathCurrent).toBe(5);
+        expect(mainPathData.pathResistance).toBe(10);
+        expect(mainPathData.pathVoltage).toBe(50);
+        expect(mainPathData.pathCurrent).toBe(5);
 
 }
 

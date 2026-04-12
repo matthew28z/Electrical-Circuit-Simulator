@@ -12,7 +12,7 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
     
             const user = userEvent.setup();
 
-            const { allElements } = await import("../logic/paths.js");
+            const { allElements } = await import("../logic/paths");
 
             let coordinates = []; 
     

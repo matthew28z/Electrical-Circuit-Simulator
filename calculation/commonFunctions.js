@@ -1,25 +1,11 @@
 import { allObject } from "../logic/management.js";
 
-export function findValue(element, valueWanted, data) {
-    let tempData = data;
+function uniqueClass(element){
+    return Array.from(element.classList).filter(val => val !== "userCreated")[0];
+}
 
-    let valueNotSet = false; //this is outside the if loop since for connections it can never be true
-
-    if (!element.classList.contains("connection")) {
-
-        const elementType = element.classList.value.split(" ").filter(value => value !== "userCreated")[0]
-        console.log(elementType + "s")
-
-        const value = allObject[elementType + "s"].find(obj => obj.element === element)[valueWanted].value
-                    
-        if (value === null) {
-            valueNotSet = true
-        } else {
-            tempData += value
-        }
-    }
-
-    return {boolean: valueNotSet, data: tempData}
+export function findValue(valueWanted, element) {
+    return allObject[uniqueClass(element) + "s"].find(object => object.element === element)[valueWanted];
 }
 
 export function determineBreak(string) {
