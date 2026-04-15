@@ -203,13 +203,33 @@ const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
 function simulate() {
-    const path = findMainPath(voltageSources())
+    const VS = voltageSources();
 
-    drawCurrent(path)
+    let mainPathData;
 
-    console.log(getResistance(path))
-    console.log(calculateVoltage(path))
-    console.log(calculateCurrent(path))
+    try { 
+        mainPathData = findMainPath(VS)
+    } catch (error) {
+        console.log("Path Algorithm Failed, trying again")
+
+        try {
+            mainPathData = findMainPath(VS, true);
+            //this is a not so efficient solution to avoid changing the highly efficient current algorithm
+            mainPathData.path.reverse(); 
+        } catch (innerError) {
+            throw new Error("The Algorithm is incapable of graphing this topology.")
+        }
+    }
+
+
+        
+    
+
+    drawCurrent(mainPathData)
+
+    console.log(getResistance(mainPathData))
+    console.log(calculateVoltage(mainPathData))
+    console.log(calculateCurrent(mainPathData))
     
     const elementData = screen.innerHTML
     //localStorage.setItem("test", JSON.stringify(elementData))

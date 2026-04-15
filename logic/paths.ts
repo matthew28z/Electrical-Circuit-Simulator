@@ -62,6 +62,13 @@ export const allPaths: Map<currentColor, currentPathData> = new Map();
 export const breaks: currentPathData[][] = [];
 let breakCounter: number = 0;
 
+function resetPathData(): void {
+    breakCounter = 0;
+    breaks.length = 0;
+    allPaths.clear();
+    pathColors.clear();
+}
+
 function findPathStart(voltageSources: any): HTMLElement | undefined {
     console.log(allElements)
     let startingElement : HTMLElement | undefined;
@@ -105,20 +112,29 @@ function addNextElement(pathToAdd: (pathObject | number)[], AEObject: AE, side: 
     return elementToAdd;
 }
 
-export function findMainPath(voltageSources: any): currentPathData | undefined {
+//During testing it was spotted that the algorithm was biased by not solving identical circuits if they were flipped, thus a fail-safe of the goOpposite parameter was introduced
+export function findMainPath(voltageSources: any, goOpposite: boolean = false): currentPathData | undefined {
     const startingElement : HTMLElement | undefined = findPathStart(voltageSources);
     
+    let firstPoint: point = "leftPoint";
+    let firstSide: side = "left";
+
+    if (goOpposite) {
+        resetPathData();
+        firstPoint = "rightPoint";
+        firstSide = "right";
+    }
+
     if (startingElement) {       
         const mainPath: currentPathData = {
             color: findColor(),
-            path: [{ point: "leftPoint", element: startingElement }],
+            path: [{ point: firstPoint, element: startingElement }],
             isClosed: false,
         };
 
         allPaths.set(mainPath.color, mainPath);
 
         const firstAEObject: AE | undefined = allElements.get(startingElement);
-        const firstSide: side = "left";
 
         if (!firstAEObject) {
             console.log("FATAL ERROR");

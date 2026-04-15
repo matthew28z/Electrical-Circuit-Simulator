@@ -45,6 +45,7 @@
     stroke-dasharray: 10,10; /* dash length, gap length */
     animation: dashMove 1s linear infinite;
 }
+
 /*We don't use from to, to avoid the animation starting from the same point*/
 @keyframes dashMove {
     to {

@@ -14,7 +14,7 @@ const body = document.body;
 
 let numberOfScreens = -1;
 
-export function addScreen(change = false, boolean = false) {
+export function addScreen(change = false, isFirstScreen = false) {
     const screensDiv = document.querySelector(".screensDiv")
     const addScreenButton = document.querySelector(".addScreen")
 
@@ -32,7 +32,7 @@ export function addScreen(change = false, boolean = false) {
     screenButton.innerHTML = `Screen-${numberOfScreens + 1}`
     screenButton.id = `ScreenButton-${numberOfScreens}`
 
-    if (!boolean) {
+    if (!isFirstScreen) {
         //creates the new screen and all the supportive elements
         const newScreen = document.createElement("div")
         newScreen.classList.add("screen")
@@ -63,12 +63,16 @@ export function addScreen(change = false, boolean = false) {
         const newFakeWireG = newAllG.append("g")
         newFakeWireG.classed("fakeWireG", true)
 
+        const newMarkerG = newAllG.append("g");
+        newMarkerG.classed("markerG", true);
+
         //Repositions the supportive groups
         newWireG.lower()
         newFakeWireG.raise()
         newCurrentG.raise()
         newBridgeG.raise()
         newCBridgeG.raise()
+        newMarkerG.raise();
         newAllG.lower()
 
         const newTransform = {x: 0, y: 0, z: 1}

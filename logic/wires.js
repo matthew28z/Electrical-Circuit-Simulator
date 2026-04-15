@@ -4,7 +4,7 @@ import { removeAllClicks, calculateDistance, getTopElements as getAllElements, g
 import { createBridge, findBridgePoints } from "./bridge.js"
 import { updateAllElements, allElements } from "./paths"
 import { connections } from "./connection.js"
-import { wireG, fakeWireG, screen, svg, allG } from "./management.js"
+import { wireG, fakeWireG, markerG, screen, svg, allG } from "./management.js"
 
 const body = document.body;
 const root = document.documentElement;
@@ -22,39 +22,6 @@ const currentClickedElements = [];
 let pastClickedElement;
 
 export const wires = [];// is meant to have this form [{element: an element, conections: an array, wireGroup: an integer, notConnected: boolean}]
-
-const defs = svg.append("defs");
-
-defs.append("marker")
-    .attr("id", "yellowMark")
-    .attr("viewBox", "0 0 20 10")
-    .attr("refX", "12")
-    .attr("refY", "5")
-    .attr("markerWidth", "10")
-    .attr("markerHeight", "10")
-    .attr("orient", "auto-start-reverse")
-  .append("path")
-    .attr("d", "M 0,5 L 6,5") 
-    .attr("stroke", "gold")
-    .attr("stroke-width", "2")
-    .attr("stroke-linecap", "butt")
-    .attr("fill", "none");
-
-defs.append("marker")
-    .attr("id", "purpleMark")
-    .attr("viewBox", "0 0 20 10")
-    .attr("refX", "12")
-    .attr("refY", "5")
-    .attr("markerWidth", "10")
-    .attr("markerHeight", "10")
-    .attr("orient", "auto-start-reverse")
-  .append("path")
-    .attr("d", "M 0,5 L 6,5")
-    .attr("stroke", "purple")
-    .attr("stroke-width", "2")
-    .attr("stroke-linecap", "butt")
-    .attr("fill", "none");
-
 
 const line = d3.line()
     .x(d => d.x)
@@ -408,7 +375,7 @@ function blockWireCreation(element1, element2, scenario) {
     return block
 }
 
-function drawBridges(values, start, end, isFake = false) {
+function drawBridges(values, start, end, isFake = false, isMarker = false) {
     const intersectionPoints = values.intersectionPoints
     /*
     const ds = []
@@ -441,7 +408,9 @@ function drawBridges(values, start, end, isFake = false) {
         const pointA = newPoints.pointA
         const pointB = newPoints.pointB
 
-        createBridge(pointA, pointB, isFake, intersectionPoints)
+        if (!isMarker) { //no reason to create marker bridges
+            createBridge(pointA, pointB, isFake, intersectionPoints)
+        }
 
         const d1 = calculateDistance(lineStart, pointA)
         const d2 = calculateDistance(lineStart, pointB)
@@ -458,16 +427,16 @@ function drawBridges(values, start, end, isFake = false) {
 
         lineStart = otherPoint
 
-        const wire = (isFake ? fakeWireG : wireG).append("path")
+        const wire = (isMarker ? markerG : isFake ? fakeWireG : wireG).append("path")
             .attr("d", pathData)
-            .attr("stroke", "silver")
+            .attr("stroke", `${isMarker ? "transparent" : "silver"}`)
             .attr("stroke-width", 5)
-            .attr("class", "wire")
             .attr("fill", "none")
             .attr("stroke-linecap", "round")
-            .classed("fakeWire", isFake);
+            .classed("fakeWire", isFake)
+            .classed("wire", !isMarker);
         
-        if (!isFake) {
+        if (!(isMarker || isFake)) {
             wires.push({ element: wire.node(), connections: [], intersectionPoints })
         }
 
@@ -477,16 +446,16 @@ function drawBridges(values, start, end, isFake = false) {
     }
     const pathData2 = line([lineStart, end])
 
-    const wire = (isFake ? fakeWireG : wireG).append("path")
-        .attr("d", pathData2)
-        .attr("stroke", "silver")
-        .attr("stroke-width", 5)
-        .attr("class", "wire")
-        .attr("fill", "none")
-        .attr("stroke-linecap", "round")
-        .classed("fakeWire", isFake);
+    const wire = (isMarker ? markerG : isFake ? fakeWireG : wireG).append("path")
+            .attr("d", pathData2)
+            .attr("stroke", `${isMarker ? "transparent" : "silver"}`)
+            .attr("stroke-width", 5)
+            .attr("fill", "none")
+            .attr("stroke-linecap", "round")
+            .classed("fakeWire", isFake)
+            .classed("wire", !isMarker);
     
-    if (!isFake) {
+    if (!(isFake || isMarker)) {
         wires.push({ element: wire.node(), connections: [], intersectionPoints })
     }
 
@@ -546,7 +515,10 @@ function drawWires(element1, element2, scenario) {
         //checks whether wires will intersect
         const values = checkIntersection(start, end)
 
-        const result = drawBridges(values, start, end);
+        drawBridges(values, start, end);
+
+        //Now go over again
+        const result = drawBridges(values, start, end, false, true);
 
         if (isConnection1) {
             const color = allElements.get(element1)?.connections.left.has(element2) ? "yellow" : "purple";
