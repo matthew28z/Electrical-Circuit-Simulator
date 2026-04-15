@@ -8,9 +8,8 @@ const body = document.body;
 
 export function handleAllClicks(elementID_Class, array, event, height = body.clientHeight * 0.1) {
     const button = document.getElementById(elementID_Class);
-    const styles = window.getComputedStyle(button);
 
-    if (event.target.classList.contains("screen") && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
+    if (event.target.classList.contains("screen") && button.classList.contains("enabled")) { //fail safe mechanism checking for border color
         
         const c = d3.pointer(event, allG.node())
 

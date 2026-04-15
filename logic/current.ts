@@ -1,265 +1,240 @@
-//@ts-nocheck temporary
-
 import * as d3 from "d3";
 
-import { findMainPath, breaks, allElements } from "./paths";
-import { voltageSources } from "./voltage.js";
-import { getPoints, getCenter, calculateDistance, replaceValueInAllElements } from "./commonFunctions.js";
-import { wires, drawWirePointToPoint } from "./wires.js"
-import { createCurrentBridge, findBridgePoints } from "./bridge.js";
-import { currentG, allObject, screen, allG } from "./management.js";
+import { currentPathData, pathObject, AE, breaks, currentColor, allElements } from "./paths";
+import { cBridgeG, currentG, allG, allObject } from "./management.js";
+import { getPoints, getCenter, replaceValueInAllElements } from "./commonFunctions.js";
+import { wires, drawWirePointToPoint } from "./wires.js";
+import { findBridgePoints, createCurrentBridge } from "./bridge";
 
-//const path = findAllPaths(voltageSources)
+type line = d3.Line<point>
+type point = { x: number, y: number };
+type pointData = { belongsTo: HTMLElement, point: point };
+type pair = [pointData, pointData];
 
-const body = document.body;
-
-const line = d3.line()
+const line : line  = d3.line<point>()
     .x(d => d.x)
     .y(d => d.y);
 
-export function drawCurrent(pathObject, isBreak = false) {
-    console.log(breaks)
-    console.log(pathObject)
-    if (pathObject.isClosed) {
-        console.log(pathObject.color, pathObject.isClosed)
-        const firstElement = pathObject.path[0].element
-        console.log(firstElement)
+export function drawCurrent(pathData: currentPathData): void {
+    if (!pathData.isClosed) { //only draw current on closed circuits
+        return;
+    }
 
-        const startPoints = getPoints(firstElement)
+    //The first two entries cannot be a break due to how the data is structured
+    const firstEntry: pathObject = pathData.path[0] as pathObject;
+    const secondEntry: pathObject = pathData.path[1] as pathObject;
+    const secondEntryPoints : { leftPoint: point, rightPoint: point, actualPoint: point } = getPoints(secondEntry.element);
+   
+    if (!connectPair([{ belongsTo: firstEntry.element, point: getPoints(firstEntry.element)[firstEntry.point] }, { belongsTo: secondEntry.element, point: secondEntryPoints[secondEntry.point] }], pathData.color)) {
+        console.log("CORRUPTED DATA (wires) || INCORRECT PATH DATA");
 
-        let firstPoint;
-        let lastPoint;
+        clearCurrent();
 
-        if (isBreak) {
-            //all breaks start and end with a connection
-            firstPoint = startPoints.actualPoint
+        return;
+    }
 
-            const lastElement = pathObject.path[pathObject.path.length - 1].element
+    let lastElement: HTMLElement = secondEntry.element;
+    let nextPoint: point = secondEntryPoints[determineNextPoint(secondEntry.point)];
+    let breakFound: boolean = false;
 
-            lastPoint = getPoints(lastElement).actualPoint
-        } else { //is the main path
-            //If a main path was found succesfully then the first and last element should be the same
-            firstPoint = startPoints.leftPoint
-            lastPoint = startPoints.rightPoint
-        }
+    for (let i: number = 2; i < pathData.path.length; i++) {
+        const val : pathObject | number = pathData.path[i];
 
-        let nextSide;
+        if (!breakFound) {
+            if (typeof val === "number") { //a break was found
+                const breakEntry: currentPathData[] | undefined = breaks.at(val);
 
-        const allPoints = [firstPoint]
-        for (let i = 1; i < pathObject.path.length - 1; i++) { //starts from second and stops at second to last element
-            const element = pathObject.path[i].element
+                if (!breakEntry) {
+                    console.log("CORRUPTED PATH DATA");
 
-            if (!element) { //this means it reached a break
-                allPoints.push("stop")
+                    clearCurrent(); //this is overkill yet if the data is corrupted the sim will probably produce wrong results
 
-                const string = pathObject.path[i]
-
-                breaks.get(string).forEach(newPathObject => {
-                    drawCurrent(newPathObject, true)
-                })
-
-            } else {
-                const side = pathObject.path[i].point
-
-                const points = getPoints(element)
-
-                const point = points[side]
-                if (side !== "actualPoint") {
-                    nextSide = side === "leftPoint" ? "rightPoint" : "leftPoint"
-                } else {
-                    nextSide = side
+                    return;
                 }
 
-                const nextPoint = points[nextSide]
+                breakEntry.forEach(breakPathData => drawCurrent(breakPathData));
 
-                allPoints.push(point, nextPoint)
+                breakFound = true;
+
+                continue; //moves to the next iteration
+            } 
+
+            const elementPoints: { leftPoint: point, rightPoint: point, actualPoint: point } = getPoints(val.element);
+
+            if (!connectPair([{ belongsTo: lastElement, point: nextPoint }, { belongsTo: val.element, point: elementPoints[val.point] }], pathData.color)) {
+                console.log("CORRUPTED DATA (wires) || INCORRECT PATH DATA");
+
+                clearCurrent();
+
+                return;                
             }
-        }
 
-        allPoints.push(lastPoint)
-
-        console.log(allPoints)
-
-        //since all points are in pairs, we use i += 2 to go to the next pair
-        for (let i = 0; i < allPoints.length; i += 2) {
-            const pointA = allPoints[i]
-            const pointB = allPoints[i + 1]
-            if (!(pointA === "stop" || pointB === "stop")) { //in reality only pointB can have the value of "stop" but it is more of a failsafe mechanism
-                let start = pointA
-               
-                console.log(pointA, pointB)
-                const intersectionPoints = findIntersectionsOnWireGroup(findWireGroup(pointA, pointB))
-                console.log(intersectionPoints)
-
-                for (let x = 0; x < intersectionPoints.length; x++) {
-                    const bridgePoints = findBridgePoints(intersectionPoints[x], pointA, pointB)
-
-                    const pointC = bridgePoints.pointA
-                    const pointD = bridgePoints.pointB
-
-                    createCurrentBridge(pointC, pointD, pathObject.color)
-
-                    const d1 = calculateDistance(start, pointC)
-                    const d2 = calculateDistance(start, pointD)
-
-                    let end;
-
-                    if (d1 < d2) {
-                        end = pointC
-                    } else {
-                        end = pointD
-                    }
-                    currentG.append("path")
-                    .attr("d", line([start, end]))
-                    .attr("stroke", pathObject.color)
-                    .classed("current", true);
-
-                    start = end === pointC ? pointD : pointC
-                }
-                currentG.append("path")
-                .attr("d", line([start, pointB]))  //generates the path for the two points
-                .attr("stroke", pathObject.color)
-                .classed("current", true);
-            } else {
-                //skips the break
-                i++
-            }
-    }
-    console.log(allPoints)
-    }
-    console.log(pathObject)
-}
-
-function findWireGroup(pointA, pointB) {
-    //Passes the found wire elements into two arrays
-    let wiresA = document.elementsFromPoint(pointA.x, pointA.y).filter(element => element.classList.contains("wire"))
-    let wiresB = document.elementsFromPoint(pointB.x, pointB.y).filter(element => element.classList.contains("wire"))
-
-    console.log(wiresA)
-    console.log(wiresB)
-
-    //kati paei lathos
-    d3.select(`#${screen.id} svg`).append("circle")
-  .attr("cx", pointB.x)   // x position
-  .attr("cy", pointB.y)   // y position
-  .attr("r", 5)      // radius
-  .attr("fill", "gold"); // color
-
-      d3.select(`#${screen.id} svg`).append("circle")
-  .attr("cx", pointA.x)   // x position
-  .attr("cy", pointA.y)   // y position
-  .attr("r", 5)      // radius
-  .attr("fill", "gold"); // color
-
-    //Finds the general information about the specific wires
-    wiresA = wires.filter(object => wiresA.includes(object.element))
-    wiresB = wires.filter(object => wiresB.includes(object.element))
-    console.log(wiresA)
-    console.log(wiresB)
-
-    //Finds the 
-    const wireGroup = wiresA.filter(object => wiresB.some(object2 => object2.wireGroup === object.wireGroup))[0].wireGroup
-
-    return wireGroup
-}
-
-function findIntersectionsOnWireGroup(wireGroup) {
-    return wires.find(object => object.wireGroup === wireGroup).intersectionPoints
-}
-
-//Logic for amperometers
-export const amperometers = () => allObject.amperometers;
-
-function determinePoint(element, connectedElement) {
-    let side;
-    //Finds the element's object in the allElements array
-    if (element.classList.contains("connection") || element.classList.contains("amperometer")) {
-        side = "actualPoint"
-    } else {
-        const object = allElements.get(element);
-
-        if (object.connections.left.has(connectedElement)) {
-            side = "leftPoint";
+            lastElement = val.element;
+            nextPoint = elementPoints[determineNextPoint(val.point)];            
         } else {
-            side = "rightPoint";
+            breakFound = false;
+
+            if (typeof val === "number") {
+                console.log("IMPOSSIBLE DATA");
+
+                clearCurrent();
+
+                return;
+            }
+
+            lastElement = val.element;
+            nextPoint = getPoints(val.element)[val.point];
         }
     }
-
-    return side;
 }
 
+function determineNextPoint(val: "actualPoint" | "leftPoint" | "rightPoint"): "actualPoint" | "leftPoint" | "rightPoint" {
+    return val === "actualPoint" ? "actualPoint" : val === "leftPoint" ? "rightPoint" : "leftPoint";
+}
 
+function connectPair(pair: pair, color: Readonly<currentColor>): boolean {
+    //We first need to examine if there are any bridges between these points
+    const intersectionPoints : point[] | undefined = getIntersections(pair[0].belongsTo, pair[1].belongsTo);
 
-const handleClick = (event) => {
-    const button = document.getElementById("amperometer");
+    if (!intersectionPoints) {
+        console.log("CORRUPTED DATA (wires) || INCORRECT PATH DATA");
 
-    if (button.style.borderColor === "white") {
-        if (event.target.classList.contains("wire")) {
-            const wire = event.target
+        return false;
+    }
 
-            const values = wires.find(object => object.element === wire)
+    const firstPoint: point = pair[0].point;
+    const lastPoint: point = pair[1].point;
 
-            const connectedElements = values.connections
-            const wireGroup = wires.filter(object => object.wireGroup === values.wireGroup).map(object => object.element)
+    let prevPoint: point = pair[0].point;
 
-            const side1 = determinePoint(connectedElements[0], connectedElements[1])
-            const side2 = determinePoint(connectedElements[1], connectedElements[0])
+    for (const intersectionPoint of intersectionPoints) {
+        const bridgePoints: { pointA: point, pointB: point } = findBridgePoints(intersectionPoint, firstPoint, lastPoint) as any;
 
+        drawLine(prevPoint, bridgePoints.pointA, color); //connects the two points
 
-            wireGroup.forEach(element => {
-                const index = wires.findIndex(object => object.element === element)
-                
-                wires.splice(index, 1)
+        createCurrentBridge(bridgePoints.pointA, bridgePoints.pointB, color); //makes the bridge
 
-                element.remove()
-            })
+        prevPoint = bridgePoints.pointB; //updates the data
+    }
 
-            const c = d3.pointer(event, allG.node())
+    drawLine(prevPoint, lastPoint, color);
 
-            const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
-            foreignObject.setAttribute("x", c[0] - body.clientHeight * 0.02);
-            foreignObject.setAttribute("y", c[1] - body.clientHeight * 0.02);
-            foreignObject.setAttribute("width", body.clientHeight + 16);
-            foreignObject.setAttribute("height", body.clientHeight + 16);
+    return true;
+}
 
-            const amperometer = document.createElement("div")
-            amperometer.classList.add("amperometer", "userCreated")
+function drawLine(pointA: point, pointB: point, color: Readonly<currentColor>): void {
+    currentG.append("path")
+        .attr("d", line([pointA, pointB]))
+        .attr("stroke", color)
+        .classed("current", true);   
+}
 
-            foreignObject.appendChild(amperometer);
-            allG.node().appendChild(foreignObject);
+function getIntersections(elementA: HTMLElement, elementB: HTMLElement) : point[] | undefined {
+    return wires.find(object => object.connections.includes(elementA) && object.connections.includes(elementB)).intersectionPoints;
+}
 
-            const point1 = getPoints(connectedElements[0])[side1]
-            const point2 = getPoints(connectedElements[1])[side2]
+function clearCurrent(): void {
+    currentG.node()!.textContent = "";
+    cBridgeG.node()!.textContent = "";
+}
 
-            const amperometerPoint = getCenter(amperometer)
+//~~~~~Amperometer Logic~~~~~
+const body: HTMLBodyElement = document.body as HTMLBodyElement;
+
+export const amperometers: any = () => allObject.amperometers;
+
+function choosePoint(mainElement: HTMLElement, connectedElement: HTMLElement): "actualPoint" | "leftPoint" | "rightPoint" | undefined {
+    if (mainElement.matches(".connection, .amperometer")) {
+        return "actualPoint";
+    }
+
+    const mainAE: AE | undefined = allElements.get(mainElement);
+
+    if (!mainAE) {
+        console.log("CORRUPTED DATA (allElements)");
+
+        return;
+    }
+
+    return mainAE.connections.left.has(connectedElement) ? "leftPoint" : "rightPoint";
+}
+
+function handleClick(event: MouseEvent): void {
+    const amperometerButton: HTMLElement = document.getElementById("amperometer")!;
+    
+    if (event.target instanceof HTMLElement) {
+        if (!amperometerButton.classList.contains("enabled") || !event.target.matches(".wire:not(.bridge)")) {
+            return;
+        }
+
+        const wire: HTMLElement = event.target;
         
-            drawWirePointToPoint(point1, amperometerPoint)
-            drawWirePointToPoint(amperometerPoint, point2)
+        const wireData: any = wires.find(object => object.element === wire);
 
-            //Updates the allElements array
-            replaceValueInAllElements(connectedElements[0], connectedElements[1], amperometer)
-            replaceValueInAllElements(connectedElements[1], connectedElements[0], amperometer)
+        if (!wireData) {
+            console.log("CORRUPTED DATA (wires)");
 
-            allElements.set(amperometer, { element: amperometer, connections: { left: new Set([connectedElements[0]]), right: new Set([connectedElements[1]]) } });
+            return;
+        }
+
+        //Delete the old wire-group and create a new one
+        wires.splice(wires.findIndex(object => object.wireGroup === wireData.wireGroup), wires.filter(object => object.wireGroup === wireData.wireGroup).length);
+
+        const c = d3.pointer(event, allG.node())
+
+        const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+        foreignObject.setAttribute("x", String(c[0] - body.clientHeight * 0.02));
+        foreignObject.setAttribute("y", String(c[1] - body.clientHeight * 0.02));
+        foreignObject.setAttribute("width", String(body.clientHeight + 16));
+        foreignObject.setAttribute("height", String(body.clientHeight + 16));
+
+        const amperometer : HTMLElement = document.createElement("div");
+        amperometer.classList.add("amperometer", "userCreated");
+
+        foreignObject.appendChild(amperometer);
+        allG.node()!.appendChild(foreignObject);  
         
-            //updates the amperometers array
-            amperometers().push({element: amperometer, connectedPath: null, resistance: {value: 0, UM: "(Ω)"}})
-        }/* else {
-            const goodClick = handleAllClicks("amperometer", amperometers, event, body.clientHeight * 0.02)
 
-            if (goodClick) {
-                const amperometer = amperometers.at(-1)
+        const amperometerPoint: point = getCenter(amperometer);
+        
+        const startPoint = choosePoint(wireData.connections[0], wireData.connections[1]);
+        const endPoint = choosePoint(wireData.connections[1], wireData.connections[0]);
 
-                amperometers[amperometers.length - 1] = {element: amperometer, connectedPath: null}
+        if (!(startPoint && endPoint)) {
+            console.log("CORRUPTED DATA (wires)");
+
+            return;
+        }
+
+        //Draw the new wires
+        drawWirePointToPoint(getPoints(wireData.connections[0])[startPoint], amperometerPoint);
+        drawWirePointToPoint(amperometerPoint, getPoints(wireData.connections[1])[endPoint]);
+
+        //Adjust the data of the new wires
+        wireData.connections.push(amperometer); //we add the amperometer as the path finding algorithm will treat these wires as distinct 
+
+        wires.forEach(object => {
+            if (object.wireGroup === undefined) {
+                object.wireGroup = wireData.wireGroup;
+                object.connections = wireData.connections;
+                object.notConnected = false;
             }
-        }*/
+        })
+
+        //we update the allElements data
+        allElements.set(amperometer, { element: amperometer, connections: { left: new Set([wireData.connections[0]]), right: new Set([wireData.connections[1]]) } });
+        replaceValueInAllElements(wireData.connections[0], wireData.connections[1], amperometer);
+        replaceValueInAllElements(wireData.connections[1], wireData.connections[0], amperometer);
+
+        //we update the allObject data
+        amperometers().push({ element: amperometer, connectedPath: null, resistance: { value: 0, UM: "(Ω)" } });
     }
 }
 
-export function addAmperometer() {
-    body.addEventListener("click", handleClick)
+export function addAmperometer(): void {
+    body.addEventListener("click", handleClick);
 }
 
-export function removeAmperometer() {
-    body.removeEventListener("click", handleClick)
+export function removeAmperometer(): void {
+    body.removeEventListener("click", handleClick);
 }

@@ -40,3 +40,6 @@
     color: gold !important;
 }
 
+.enabled {
+    border-color: white !important;
+}

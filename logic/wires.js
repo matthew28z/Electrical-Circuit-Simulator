@@ -23,6 +23,39 @@ let pastClickedElement;
 
 export const wires = [];// is meant to have this form [{element: an element, conections: an array, wireGroup: an integer, notConnected: boolean}]
 
+const defs = svg.append("defs");
+
+defs.append("marker")
+    .attr("id", "yellowMark")
+    .attr("viewBox", "0 0 20 10")
+    .attr("refX", "12")
+    .attr("refY", "5")
+    .attr("markerWidth", "10")
+    .attr("markerHeight", "10")
+    .attr("orient", "auto-start-reverse")
+  .append("path")
+    .attr("d", "M 0,5 L 6,5") 
+    .attr("stroke", "gold")
+    .attr("stroke-width", "2")
+    .attr("stroke-linecap", "butt")
+    .attr("fill", "none");
+
+defs.append("marker")
+    .attr("id", "purpleMark")
+    .attr("viewBox", "0 0 20 10")
+    .attr("refX", "12")
+    .attr("refY", "5")
+    .attr("markerWidth", "10")
+    .attr("markerHeight", "10")
+    .attr("orient", "auto-start-reverse")
+  .append("path")
+    .attr("d", "M 0,5 L 6,5")
+    .attr("stroke", "purple")
+    .attr("stroke-width", "2")
+    .attr("stroke-linecap", "butt")
+    .attr("fill", "none");
+
+
 const line = d3.line()
     .x(d => d.x)
     .y(d => d.y);
@@ -377,27 +410,29 @@ function blockWireCreation(element1, element2, scenario) {
 
 function drawBridges(values, start, end, isFake = false) {
     const intersectionPoints = values.intersectionPoints
-/*
-const ds = []
-intersectionPoints.forEach(point => {
-    ds.push(findDistance(point, start))
-})
-            
-for (let i = 0; i < ds.length; i++) {
-    const d = ds[i]
-    for (let x = i + 1; x < ds.length; x++) {
-        if (d < ds[x]) {
-            console.log(true)
-        } else {
-            console.log(false)
-        }
-    }*/
+    /*
+    const ds = []
+    intersectionPoints.forEach(point => {
+        ds.push(findDistance(point, start))
+    })
+                
+    for (let i = 0; i < ds.length; i++) {
+        const d = ds[i]
+        for (let x = i + 1; x < ds.length; x++) {
+            if (d < ds[x]) {
+                console.log(true)
+            } else {
+                console.log(false)
+            }
+        }*/
 
     const intersections = intersectionPoints.length
 
     let lineStart = start
 
     let otherPoint;
+
+    const returnData = { firstWire: null, lastWire: null };
 
     for (let i = 0; i < intersections; i++) {
         const point = intersectionPoints[i]
@@ -423,51 +458,48 @@ for (let i = 0; i < ds.length; i++) {
 
         lineStart = otherPoint
 
+        const wire = (isFake ? fakeWireG : wireG).append("path")
+            .attr("d", pathData)
+            .attr("stroke", "silver")
+            .attr("stroke-width", 5)
+            .attr("class", "wire")
+            .attr("fill", "none")
+            .attr("stroke-linecap", "round")
+            .classed("fakeWire", isFake);
+        
         if (!isFake) {
-            const wire = wireG.append("path")
-            .attr("d", pathData)
-            .attr("stroke", "silver")
-            .attr("stroke-width", 5)
-            .attr("class", "wire")
-            .attr("fill", "none")
-            .attr("stroke-linecap", "round"); 
+            wires.push({ element: wire.node(), connections: [], intersectionPoints })
+        }
 
-            wires.push({element: wire.node(), connections: [], intersections: intersectionPoints})
-        } else {
-            fakeWireG.append("path")
-            .attr("d", pathData)
-            .attr("stroke", "silver")
-            .attr("stroke-width", 5)
-            .attr("class", "wire")
-            .attr("fill", "none")
-            .classed("fakeWire", true)
-            .attr("stroke-linecap", "round"); 
-        } 
+        if (!returnData.firstWire) {
+            returnData.firstWire = wire;
+        }
     }
     const pathData2 = line([lineStart, end])
 
+    const wire = (isFake ? fakeWireG : wireG).append("path")
+        .attr("d", pathData2)
+        .attr("stroke", "silver")
+        .attr("stroke-width", 5)
+        .attr("class", "wire")
+        .attr("fill", "none")
+        .attr("stroke-linecap", "round")
+        .classed("fakeWire", isFake);
+    
     if (!isFake) {
-        const wire = wireG.append("path")
-        .attr("d", pathData2)
-        .attr("stroke", "silver")
-        .attr("stroke-width", 5)
-        .attr("class", "wire")
-        .attr("fill", "none")
-        .attr("stroke-linecap", "round");  
-
-        wires.push({element: wire.node(), connections: [], intersectionPoints: intersectionPoints})
-    } else {
-        fakeWireG.append("path")
-        .attr("d", pathData2)
-        .attr("stroke", "silver")
-        .attr("stroke-width", 5)
-        .attr("class", "wire")
-        .attr("fill", "none")
-        .classed("fakeWire", true)
-        .attr("stroke-linecap", "round");  
+        wires.push({ element: wire.node(), connections: [], intersectionPoints })
     }
 
+    if (!returnData.firstWire) {
+        returnData.firstWire = wire;
+    }
+
+    returnData.lastWire = wire;
+
     //wire represents a d3 selection of the element, thus to get the element we use .node()
+
+    //we return the first and last wire to be used later
+    return returnData;
 }
 
 function drawWires(element1, element2, scenario) {
@@ -480,8 +512,8 @@ function drawWires(element1, element2, scenario) {
         let start;
         let end;
 
-        const isConnection1 = element1.classList.contains("connection")
-        const isConnection2 = element2.classList.contains("connection")
+        const isConnection1 = element1.classList.contains("connection");
+        const isConnection2 = element2.classList.contains("connection");
 
         if (scenario === "case1") {
             start = isConnection1 ? element1Points.actualPoint : element1Points.leftPoint
@@ -514,7 +546,19 @@ function drawWires(element1, element2, scenario) {
         //checks whether wires will intersect
         const values = checkIntersection(start, end)
 
-        drawBridges(values, start, end)
+        const result = drawBridges(values, start, end);
+
+        if (isConnection1) {
+            const color = allElements.get(element1)?.connections.left.has(element2) ? "yellow" : "purple";
+
+            result.firstWire.attr("marker-start", `url(#${color}Mark)`)
+        }
+
+        if (isConnection2) {
+            const color = allElements.get(element2)?.connections.left.has(element1) ? "yellow" : "purple";
+
+            result.lastWire.attr("marker-end", `url(#${color}Mark)`)
+        }
 
         /*//test for whether getAllElements followed the right path
         const valuess = getAllElements(start, end)
@@ -597,7 +641,7 @@ export function drawWirePointToPoint(point1, point2) {
 const handleMove = (event) => {
     const wireButton = document.getElementById("wire")
 
-    if (wireButton.style.borderColor === "white") {
+    if (wireButton.classList.contains("enabled")) {
         const mouseData = d3.pointer(event, allG.node())
         const mousePoint = {x: mouseData[0], y: mouseData[1]}
 

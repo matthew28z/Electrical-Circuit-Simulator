@@ -16,7 +16,6 @@ export function fetchNames() {
         return usableNames
     }
 
-    console.log("failed")
     return []
 }
 

@@ -1,37 +1,31 @@
-import { should } from "vitest";
 import { getRandomInt } from "./commonFunctions.js";
-import { start } from "node:repl";
 
 //Types-Interfaces
 type currentHue = "yellowish" | "lightBlueish";
 export type currentColor = `rgb(${number}, ${number}, ${number})`;
 type side = "left" | "right";
 type point = "leftPoint" | "rightPoint" | "actualPoint";
-type breakIdentifier = `break-${number}`;
 
 interface connectionList {
     left: Set<HTMLElement>;
     right: Set<HTMLElement>;
 }
 
-interface AE {
+export interface AE {
     element: HTMLElement;
     connections: connectionList;
 }
 
-interface pathObject {
+export interface pathObject {
     element: HTMLElement;
     point: point;
 }
 
 export interface currentPathData {
     color: currentColor;
-    path: (pathObject | breakIdentifier)[];
+    path: (pathObject | number)[];
     isClosed: boolean;
     descendantOf?: currentColor;
-    parallelTo?: Set<currentColor>;
-    splitsTo?: Set<currentColor>;
-
 }
 
 const scenario : currentHue = getRandomInt(1, 2) === 1 ? "yellowish" : "lightBlueish";
@@ -65,6 +59,9 @@ export function updateAllElements(
 
 export const allPaths: Map<currentColor, currentPathData> = new Map();
 
+export const breaks: currentPathData[][] = [];
+let breakCounter: number = 0;
+
 function findPathStart(voltageSources: any): HTMLElement | undefined {
     console.log(allElements)
     let startingElement : HTMLElement | undefined;
@@ -83,7 +80,7 @@ function findPathStart(voltageSources: any): HTMLElement | undefined {
     return startingElement;
 }
 
-function addNextElement(pathToAdd: (pathObject | breakIdentifier)[], AEObject: AE, side: side): HTMLElement | undefined {
+function addNextElement(pathToAdd: (pathObject | number)[], AEObject: AE, side: side): HTMLElement | undefined {
     if (AEObject.connections[side].size > 1) {
         return;
     }
@@ -168,7 +165,9 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
 
                 currentSide = currentAEObject.connections.left.has(oldElement) ? "right" : "left";
             } else {
-                const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(mainPath, currentAEObject.connections[currentSide], currentAEObject.element, startingElement);
+                const valuesToAdd : (number | pathObject)[] | undefined = findBreakPaths(mainPath, currentAEObject.element, currentAEObject.connections[currentSide], startingElement);
+
+                console.warn(valuesToAdd)
 
                 if (!valuesToAdd) {
                     console.log("FATAL ERROR");
@@ -180,7 +179,7 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
 
                 mainPath.path.push(...rest); //avoid duplicates
 
-                const breakCreated : currentPathData | undefined = breaks.get(valuesToAdd[1] as breakIdentifier)?.at(0); //the function above will always return a pathObject containing just a breakIdentifier
+                const breakCreated : currentPathData | undefined = breaks.at(valuesToAdd[1] as number)?.at(0); 
 
                 if (!breakCreated) {
                     console.log("FATAL ERROR");
@@ -202,19 +201,47 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
 
                 currentAEObject = nextAE;
 
-                const prevVal: pathObject | breakIdentifier | undefined = breakCreated.path.at(-2); //the second to last element of a break path can never be another break
+                let prevVal: pathObject | number = breakCreated.path.at(-2)!;
+                let breakEntry: currentPathData[] | undefined = breaks.at(valuesToAdd[1] as number)!;
 
-                if (!prevVal || typeof prevVal === "string") {
-                    console.log("FATAL ERROR");
+                if (typeof prevVal === "number") {
+                    breakEntry = breaks.at(prevVal);
+
+                    if (!breakEntry) {
+                        console.log("RECEIVED CORRUPTED DATA - MAIN")
+
+                        return;
+                    }
+
+                    prevVal = breakEntry[0].path.at(-1)!;
+                }
+                
+                if (typeof prevVal === "number") {
+                    console.log("FATAL ERROR - MAIN");
 
                     return;
                 }
 
-                const prevElement: HTMLElement = prevVal.element;
+                let prevElement: HTMLElement = prevVal.element;
+
+                if (prevElement === nextElement) {
+                    prevVal = breakEntry[0].path.at(-2)!;
+
+                    if (typeof prevVal === "number") {
+                        console.log("THIS ALGORITHM CANNOT GRAPH THIS TOPOLOGY");
+
+                        return;
+                    }
+
+                    prevElement = prevVal.element;
+                }
 
                 currentSide = nextAE.connections.left.has(prevElement) ? "right" : "left";
             }            
         }
+
+        console.warn(mainPath.path);
+        console.warn(breaks);
 
         return mainPath;
     }
@@ -222,325 +249,391 @@ export function findMainPath(voltageSources: any): currentPathData | undefined {
     return;
 }
 
-export const breaks: Map<breakIdentifier, currentPathData[]> = new Map();
-let breakCounter: number = 0;
+function findBreakPaths(originalPath: currentPathData, splitOrigin: HTMLElement, splitStarts: Set<HTMLElement>, mainOrigin: HTMLElement): (number | pathObject)[] | undefined {
+    const splitPaths: Map<currentColor, currentPathData> = new Map();
+    const openSplitPaths: Set<currentColor> = new Set();
+    const pathMergePointsFound: Map<currentColor, Set<HTMLElement>> = new Map();
 
-function findBreakPaths(
-    originalPathData: currentPathData,
-    elementsFound: Set<HTMLElement>,
-    originElement: HTMLElement,
-    startingElement: HTMLElement
-): (pathObject | breakIdentifier)[] | undefined {
-    let connectionsFound: Set<HTMLElement>[] = [];
-    let newPaths: currentPathData[] = [];
-    let indexesFinished: Set<number> = new Set();
+    const lastValues: Map<currentColor, HTMLElement> = new Map(); //Reduces the complexity of the program by trading memory efficiency
 
-    let shouldSkip: boolean = false;
+    for (const splitStart of splitStarts) {
+        const splitAE: AE | undefined = allElements.get(splitStart);
 
-    elementsFound.forEach(element => {
-        connectionsFound.push(new Set<HTMLElement>);
-
-        const AEToAdd : AE | undefined = allElements.get(element);
-
-        if (!AEToAdd) {
-            console.log("FATAL ERROR");
+        if (!splitAE) {
+            console.log("CORRUPTED DATA");
 
             return;
         }
 
-        newPaths.push({
+        const splitPathData: currentPathData = {
             color: findColor(),
-            path: [{ element: originElement, point: "actualPoint" }, { element: element, point: element.matches(".connection, .amperometer") ? "actualPoint" :  AEToAdd.connections.left.has(originElement) ? "leftPoint" : "rightPoint" }],
+            path: [{ point: "actualPoint", element: splitOrigin }, { point: splitAE.element.matches(".connection, .amperometer") ? "actualPoint" : splitAE.connections.left.has(splitOrigin) ? "leftPoint" : "rightPoint", element: splitStart }],
             isClosed: false,
-            descendantOf: originalPathData.color
-        })
+            descendantOf: originalPath.color,
+        };
 
-        const newPath: currentPathData = newPaths.at(-1)!;
-        
-        allPaths.set(newPath.color, newPath);
-    });
+        splitPaths.set(splitPathData.color, splitPathData);
+        allPaths.set(splitPathData.color, splitPathData);
 
-    let count = 100; //for debugging
+        pathMergePointsFound.set(splitPathData.color, new Set());
 
-    while (newPaths.length > 1 && indexesFinished.size < newPaths.length && count-- > 0) {
-        for (let i: number = newPaths.length - 1; i >= 0; i--) {
-            if (indexesFinished.has(i)) {
+        lastValues.set(splitPathData.color, splitOrigin);
+    }
+
+    while (splitPaths.size > 1 + openSplitPaths.size) {
+        for (const splitPath of splitPaths.values()) {
+            if (openSplitPaths.has(splitPath.color)) {
                 continue;
-            } else if (shouldSkip) { //allows the newly created mergedpath to move one step forward and catch up
-                if (i !== newPaths.length - 1) {
-                    if (i === 0) {
-                        shouldSkip = false;
-                    }
-
-                    continue;                
-                } 
             }
 
-            let breakFromLoop: boolean = false;
+            let foundAMergePoint = false;
 
-            let shouldStop: boolean = false;
+            const mergePointsFound : Set<HTMLElement> | undefined = pathMergePointsFound.get(splitPath.color);
 
-            while (!shouldStop) {
-                const val : pathObject | breakIdentifier | undefined = newPaths[i].path.at(-1);
-                
-                if (typeof val !== "string" && val) { //a path can never end on a break
-                    const key: HTMLElement = val.element;
+            if (!mergePointsFound) {
+                console.log("MISHANDLED DATA");
 
-                    const AEObject: AE | undefined = allElements.get(key);
+                //Tag this path as a dead end
+                openSplitPaths.add(splitPath.color);
+                lastValues.delete(splitPath.color); //free memory
 
-                    if (!AEObject) {
-                        console.log("CORRUPTED DATA");
+                break; //exit the inner while loop
+            }
 
-                        return;
-                    }
+            while (!foundAMergePoint) {
+                const temporaryVal: pathObject | number | undefined = splitPath.path.at(-1);  
 
-                    const prevValue: pathObject | breakIdentifier | undefined = newPaths[i].path.at(-2);
-                    let prevElement: HTMLElement | undefined;
+                if (!temporaryVal || typeof temporaryVal === "number") {
+                    //The algorithm is made in a way so that the last entry can never be a number (i.e. split identifier)
+                    console.log("MISHANDLED DATA");
 
-                    if (typeof prevValue === "string") {
-                        let breakPath: currentPathData | undefined = breaks.get(prevValue)?.at(0);
+                    //Tag this path as a dead end
+                    openSplitPaths.add(splitPath.color);
+                    lastValues.delete(splitPath.color); //free memory
 
-                        if (!breakPath) {
-                            console.log("CORRUPTED DATA");
-
-                            return;
-                        }
-
-                        let lastObj: pathObject | breakIdentifier = breakPath.path.at(-2)!;
-
-                        while (typeof lastObj === "string") { 
-                            const obj : pathObject | breakIdentifier | undefined = breaks.get(lastObj)?.at(0)?.path.at(-2);
-
-                            if (!obj) {
-                                console.log("CORRUPTED DATA");
-
-                                return;
-                            }
-
-                            lastObj = obj;
-                        }
-
-
-                        prevElement = lastObj.element;
-
-                        if (!prevElement) {
-                            console.log("CORRUPTED DATA");
-
-                            return; 
-                        }
-                    } else {
-                        prevElement = prevValue?.element ?? originElement;
-                    }
-
-                    const nextSide: side = AEObject.connections.left.has(prevElement) ? "right" : "left";
-
-                    const elementsFoundRef: Set<HTMLElement> = AEObject.connections[nextSide];
-
-                    if (elementsFoundRef.size === 0) {
-                        console.log("NO PATH FOUND")
-
-                        //Remove paths that lead to a dead end
-                        indexesFinished.delete(i);
-                        newPaths.splice(i, 1);
-                        connectionsFound.splice(i, 1);
-
-                        break;
-                    } else if (elementsFoundRef.size === 1) {
-                        const nextElement: HTMLElement | undefined = addNextElement(newPaths[i].path, AEObject, nextSide);
-
-                        if (!nextElement) {
-                            console.log("FATAL ERROR");
-
-                            return;
-                        }
-
-                        const nextAE: AE | undefined = allElements.get(nextElement);
-
-                        if (!nextAE) {
-                            console.log("CORRUPTED DATA");
-
-                            return;
-                        }
-
-                        //No need to check if it is a connnection as only connections abide this check
-                        if (nextAE.connections[nextAE.connections.left.has(AEObject.element) ? "left" : "right"].size > 1) {
-                            shouldStop = true;
-                            connectionsFound[i].add(nextElement);
-
-                            if (i !== 0) {
-                                continue;
-                            }
-
-                            const indexesToMerge: Set<number> = new Set();
-
-                            for (let j: number = 0; j < connectionsFound.length; j++) {
-                                if (breakFromLoop) {
-                                    break;
-                                }
-
-                                for (const potentialMergeElement of connectionsFound[j]) {
-                                    for (let k: number = 0; k < connectionsFound.length; k++) {
-                                        if (connectionsFound[k].has(potentialMergeElement)) {
-                                            indexesToMerge.add(k);
-                                        }
-                                    }
-                                
-
-                                    if (indexesToMerge.size > 1) {
-                                        const mergeResult: { connectionsFound: Set<HTMLElement>[], newPaths: currentPathData[], indexesFinished: Set<number> } | undefined = mergeBreakPaths(indexesToMerge, newPaths, connectionsFound, indexesFinished, nextElement, originElement);
-                                    
-                                        if (!mergeResult) {
-                                            console.log("FATAL ERROR");
-
-                                            return;
-                                        }
-
-                                        connectionsFound = mergeResult.connectionsFound;
-                                        newPaths = mergeResult.newPaths;
-                                        indexesFinished = mergeResult.indexesFinished;
-
-                                        shouldSkip = true;
-
-                                        breakFromLoop = true;
-                                        break; //stop searching for new merges
-                                    } else {
-                                        indexesToMerge.clear();
-                                    }
-                                }    
-                            }
-
-                            break; //exits the while loop
-                        } else if (nextElement === startingElement) {
-                            indexesFinished.add(i);
-                        }
-                    } else {
-                        const valuesToAdd : (breakIdentifier | pathObject)[] | undefined = findBreakPaths(newPaths[i], elementsFoundRef, AEObject.element, startingElement);
-
-                        if (!valuesToAdd) {
-                            console.log("FATAL ERROR");
-
-                            return;
-                        }
-
-                        const [first, ...rest] = valuesToAdd;
-
-                        newPaths[i].path.push(...rest); //avoid duplicates 
-
-                        const commonConnectionObj : pathObject = valuesToAdd.at(-1)! as pathObject;
-
-                        connectionsFound[i].add(commonConnectionObj.element)
-                    }
+                    break; //exit the inner while loop
                 }
-            }
 
-            if (breakFromLoop) { 
-                break; //re evalautes the outer for loop if a merge occured
-            }
-        }
-    }
+                const lastAE: AE | undefined = allElements.get(temporaryVal.element);
 
-    return newPaths[0].path;
-}
+                if (!lastAE) {
+                    console.log("CORRUPTED DATA");
 
-function mergeBreakPaths(
-    indexesToMerge: Set<number>,
-    breakPaths: currentPathData[],
-    connectionsFound: Set<HTMLElement>[],
-    indexesFinished: Set<number>,
-    commonElement: HTMLElement,
-    originElement: HTMLElement
-): {
-    connectionsFound: Set<HTMLElement>[],
-    newPaths: currentPathData[],
-    indexesFinished: Set<number>
-} | undefined {
-    console.log(breakPaths)
-    const firstIndex: number | undefined = indexesToMerge.values().next().value;
+                    //Tag this path as a dead end
+                    openSplitPaths.add(splitPath.color);
+                    lastValues.delete(splitPath.color); //free memory
 
-    if (firstIndex === undefined) {
-        console.log("FATAL ERROR");
+                    break; //exit the inner while loop
+                }
 
-        return;
-    }
+                const secondToLastElement: HTMLElement | undefined = lastValues.get(splitPath.color);
 
-    const originalAncestor = breakPaths[firstIndex].descendantOf!;
+                if (!secondToLastElement) {
+                    console.log("MISHANDLED DATA");
 
-    const isLastMerge : boolean = indexesToMerge.size === breakPaths.length;
-    
-    const newColor: currentColor = isLastMerge ? originalAncestor : findColor(); //here originalAncestor will be the path that initially split
+                    //Tag this path as a dead end
+                    openSplitPaths.add(splitPath.color);
 
-    const pathsMerged : Set<currentColor> = new Set();
+                    break; //exit the inner while loop
+                }
 
-    indexesToMerge.forEach(index => {
-        const breakPath: currentPathData = breakPaths[index];
-        
-        if (isLastMerge) {
-            breakPath.isClosed = true;
+                const sideToCheck: side = lastAE.connections.left.has(secondToLastElement) ? "right" : "left";
+                const nextElements: Set<HTMLElement> = lastAE.connections[sideToCheck];
 
-            if (breakPath.splitsTo !== undefined) {
-                for (const currentColor of breakPath.splitsTo) {
-                    const pathData: currentPathData | undefined = allPaths.get(currentColor);
+                if (nextElements.size === 0) {
+                    //Tag this path as a dead end
+                    openSplitPaths.add(splitPath.color);
+                    lastValues.delete(splitPath.color); //free memory
 
-                    if (!pathData) {
+                    break; //exit the inner while loop
+                } else if (nextElements.size === 1) {
+                    //Simply add the element and then check if it is a potential merge point
+                    const nextElement: HTMLElement | undefined = addNextElement(splitPath.path, lastAE, sideToCheck)
+
+                    if (!nextElement) {
+                        console.log("ERROR (addNextElement)");
+                          
+                        //Tag this path as a dead end
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop
+                    } else if (nextElement === mainOrigin) {
+                        openSplitPaths.add(splitPath.color); //stop looking for new elements
+
+                        continue;
+                    }
+
+                    //Adjust the lastValues map
+                    lastValues.set(splitPath.color, temporaryVal.element);
+
+                    /*Now we check if the element is a potential merge point
+                      This is done by checking if the side we just entered from has 
+                      more elements attached to it.
+                      This assumes that paths merge on the same side of their common element, 
+                      users will be warned about this during the tutorial*/
+                    
+                    const nextAE: AE | undefined = allElements.get(nextElement);
+
+                    if (!nextAE) {
+                        console.log("CORRUPTED DATA");
+                          
+                        //Tag this path as a dead end
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop
+                    }
+
+                    if (nextAE.connections[nextAE.connections.left.has(temporaryVal.element) ? "left" : "right"].size > 1) {
+                        foundAMergePoint = true; //Stops the inner while loop
+                        
+                        mergePointsFound.add(nextElement);
+                    }
+                } else {
+                    const result: (number | pathObject)[] | undefined = findBreakPaths(splitPath, temporaryVal.element, nextElements, mainOrigin);
+                    console.warn(result);
+                    if (!result) {
                         console.log("FATAL ERROR");
 
-                        return;
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop
+                    }
+                    console.log("DEBUG", result); 
+
+                    const breakEntry: currentPathData[] | undefined = breaks.at(result[1] as number); //findBreakPaths will always output [originObject, number, mergeObject]
+                
+                    if (!breakEntry) {
+                        console.log("INNER BREAK FAILED");
+
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop 
                     }
 
-                    pathData.isClosed = true;
+                    //We need to add the generated data to the path
+                    splitPath.path.push(result[1], result[2]) //result[0] is the commonPathObject which was added in the previous iteration
+
+                    /*Now we need to decide whether or not this path should move on
+                      This will be done by checking if the mergeElement for the inner break path has
+                      room for more paths to merge to it.*/
+
+                    let randomBreakObject: pathObject | number = breakEntry[0].path.at(-2)!;
+
+                    if (typeof randomBreakObject === "number") {
+                        const innerBreakEntry: currentPathData[] | undefined = breaks.at(randomBreakObject);
+
+                        if (!innerBreakEntry) {
+                            console.log("INNER BREAK FAILED");
+
+                            openSplitPaths.add(splitPath.color);
+                            lastValues.delete(splitPath.color); //free memory
+
+                            break; //exit the inner while loop                             
+                        }
+
+                        randomBreakObject = innerBreakEntry[0].path.at(-1)!;
+                    }
+
+                    if (typeof randomBreakObject === "number") {
+                        console.log("FATAL ERROR - LOGIC FAILURE");
+
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop 
+                    }
+
+                    const randomBreakElement: HTMLElement = randomBreakObject.element;
+                    console.log(randomBreakElement)
+                    
+                    //randomBreakElement should also act as the new entry for lastValues
+                    lastValues.set(splitPath.color, randomBreakElement);
+
+                    const mergeObject: pathObject = result[2] as pathObject;
+                    const mergeElement: HTMLElement = mergeObject.element;
+                    const mergeAE: AE | undefined = allElements.get(mergeElement);
+
+                    if (!mergeAE) {
+                        console.log("CORRUPTED DATA");
+
+                        openSplitPaths.add(splitPath.color);
+                        lastValues.delete(splitPath.color); //free memory
+
+                        break; //exit the inner while loop                         
+                    }
+
+                    const pathsConnected: number = mergeAE.connections[mergeAE.connections.left.has(randomBreakElement) ? "left" : "right"].size;
+
+                    if (pathsConnected > breakEntry.length) { //this means that there is room for more paths, hence the path should stop here
+                        mergePointsFound.add(mergeElement);
+
+                        foundAMergePoint = true;
+
+                        break;
+                    }
                 }
             }
         }
 
-        pathsMerged.add(breakPath.color);
+        //After all paths have got a chance to find a merge point we check if two or more have met
+        //starts from the first merge points found in order to not miss anything, does this until no more merges can happen
+        let stopLooking: boolean = false;
 
-        let tracker: boolean = false;
+        while (!stopLooking) {
+            stopLooking = false;
 
-        breakPath.path.forEach((val, index) => {
-            if (tracker) {
-                return;
+            for (const [pathColor, mergePointsFound] of pathMergePointsFound.entries()) {
+                for (const mergePoint of mergePointsFound) {
+                    const pathsToMerge: Set<currentColor> = new Set([pathColor]);
+                    
+                    for (const [otherColor, otherMergePointsFound] of pathMergePointsFound.entries()) {
+                        if (otherMergePointsFound.has(mergePoint)) {
+                            pathsToMerge.add(otherColor);
+
+                            continue; 
+                        }
+                    }
+
+                    if (pathsToMerge.size > 1) {
+                        stopLooking = true; //resets the nested loops
+
+                        //initiate a merge
+                        const mergeResult: currentPathData | undefined = merge({ pathsToMerge, mergePointsFound: pathMergePointsFound }, { commonElement: splitOrigin, mergeElement: mergePoint }, originalPath.color);
+                        
+                        if (!mergeResult) {
+                            console.log("FATAL MERGE ERROR");
+
+                            return;
+                        }
+                        
+                        for (const mergedColor of pathsToMerge) {
+                            openSplitPaths.delete(mergedColor);
+                            lastValues.delete(mergedColor);
+                            splitPaths.delete(mergedColor);
+
+                            //pathMergePointsFound was handled during merge
+                        }
+
+                        //we need to create an entries for the new path for everything except pathMergePointsFound
+                        splitPaths.set(mergeResult.color, mergeResult);
+
+                        const breakEntry: currentPathData[] | undefined = breaks.at(mergeResult.path[1] as number);
+
+                        if (!breakEntry) {
+                            console.log("MISHANDLED DATA (merge)");
+
+                            openSplitPaths.add(mergeResult.color);
+
+                            break;
+                        }
+
+                        const randomBreakObject: pathObject = breakEntry[0].path.at(-1)! as pathObject;
+                        const randomBreakElement: HTMLElement = randomBreakObject.element;
+
+                        lastValues.set(mergeResult.color, randomBreakElement);
+
+                        break; //reset the nested loops
+                    }
+                }
+
+                if (stopLooking) {
+                    break;
+                }
+            }   
+
+            stopLooking = !stopLooking; //if a merge happened then we should look for more merges, otherwise stop
+        }
+    }
+
+    //We need to return the only non-open path
+    for (const splitPath of splitPaths.values()) {
+        if (!openSplitPaths.has(splitPath.color)) {
+            return splitPath.path;
+        }
+    }
+
+    console.log("ALL PATHS WERE OPEN");
+
+    return; 
+}
+
+function merge(
+    pathData: { pathsToMerge: Set<currentColor>, mergePointsFound: Map<currentColor, Set<HTMLElement>> },
+    points: { commonElement: HTMLElement, mergeElement: HTMLElement },
+    ancestor: currentColor
+): currentPathData | undefined {
+    /*We first need to determine which list of mergePoints we will keep.
+      This will be done by simply choosing the one that goes further.*/
+    
+    let listToKeep: Set<HTMLElement> | undefined;
+    
+    //Register a new entry on the breaks array
+    const newBreak: currentPathData[] = [];
+
+    const isFullMerge: boolean = pathData.pathsToMerge.size === pathData.mergePointsFound.size;
+    const newColor: currentColor = isFullMerge ? ancestor : findColor();
+
+
+    for (const mergeColor of pathData.pathsToMerge) {
+        const specificMergePoints: Set<HTMLElement> | undefined = pathData.mergePointsFound.get(mergeColor);
+
+        if (!specificMergePoints) {
+            console.log("RECEIVED CORRUPTED DATA (pathMergePointsFound)");
+
+            pathData.mergePointsFound.delete(mergeColor);
+            continue; // we try to finish the rest of the paths
+        }
+
+        //Delete all previous points found
+        for (const mergePoint of specificMergePoints) {
+            if (mergePoint !== points.mergeElement) {
+                specificMergePoints.delete(mergePoint);
+            } else {
+                break;
             }
+        }
 
-            if (typeof val !== "string" && val.element === commonElement) {
-                breakPath.path.splice(index + 1);
-                tracker = true;
-            }
-        })
+        if (!listToKeep || specificMergePoints.size > listToKeep.size) {
+            listToKeep = specificMergePoints;
+        }
 
-        if (breakPath.parallelTo === undefined) {
-            breakPath.parallelTo = new Set();
-        } 
+        //We now delete the old data 
+        pathData.mergePointsFound.delete(mergeColor);
 
-        breakPath.descendantOf = newColor;
+        //We also need to update the isClosed variable for the merge paths and register the path to the break entry
+        const pathToMerge : currentPathData | undefined = allPaths.get(mergeColor);
 
-        indexesToMerge.forEach(otherIndex => {
-            if (otherIndex !== index) {
-                breakPath.parallelTo?.add(breakPaths[otherIndex].color);
-            }
-        })
-    })
+        if (!pathToMerge) {
+            console.log("MISHANDLED DATA (allPaths), FATAL");
 
-    const breakIdentifier : breakIdentifier = `break-${breakCounter++}`;
+            return;
+        }
 
-    breaks.set(breakIdentifier, breakPaths.filter(pathData => pathData.descendantOf === newColor));
+        newBreak.push(pathToMerge);
+        pathToMerge.isClosed = true;
+        pathToMerge.descendantOf = newColor; //covers both cases
+    }
 
-    const mergedPath: currentPathData = {
-        color: newColor,
-        path: [{ element: originElement, point: "actualPoint" }, breakIdentifier, { element: commonElement, point: "actualPoint" }],
+    breaks.push(newBreak); //we add the entry to the breaks data array
+
+    const mergePathData: currentPathData = {
         isClosed: false,
-        descendantOf: originalAncestor,
-        splitsTo: pathsMerged
+        path: [{ element: points.commonElement, point: "actualPoint" }, breakCounter++, { element: points.mergeElement, point: "actualPoint" }],
+        color: newColor,
+        descendantOf: ancestor
     }
 
-    if (!isLastMerge) {
-        allPaths.set(mergedPath.color, mergedPath);
+    if (!isFullMerge) {
+        allPaths.set(mergePathData.color, mergePathData);
     }
 
-    return {
-        connectionsFound: [...connectionsFound.filter((set, index) => !indexesToMerge.has(index)), new Set()],
-        newPaths: [...breakPaths.filter(pathData => pathData.descendantOf !== newColor), mergedPath],
-        indexesFinished: new Set(Array.from(indexesFinished).filter(index => !indexesToMerge.has(index)))
-    };
+    pathData.mergePointsFound.set(mergePathData.color, listToKeep!);
+
+    return mergePathData;
 }
 
 function findColor() : currentColor {
@@ -567,8 +660,10 @@ function findColor() : currentColor {
 
 
             color = `rgb(${red}, ${green}, ${blue})`
-        } while (!pathColors.add(color))
+        } while (pathColors.has(color))
     }
+
+    pathColors.add(color);
 
     return color
 }

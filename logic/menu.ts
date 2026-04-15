@@ -159,17 +159,15 @@ for (let i = 0; i < buttons.length; i++) {
     }
 
     buttons[i].addEventListener("click", function () {
-        const styles = window.getComputedStyle(buttons[i])
-
-        if (styles.borderColor === "rgb(0, 0, 0)") {
+        if (!this.classList.contains("enabled")) {
             if (lastButton) {
                 const index = buttons.findIndex(button => button === lastButton)
                 
-                lastButton.style.borderColor = "black"
+                lastButton.classList.remove("enabled");
                 handles[index]() //removes the event listener
             }
 
-           this.style.borderColor = "white" //highlights the clicked button
+           this.classList.add("enabled"); //highlights the clicked button
            lastButton = this //stores the latest clicked button
            funcNames[i]() //adds the event listener corresponding to that button
         } else {
