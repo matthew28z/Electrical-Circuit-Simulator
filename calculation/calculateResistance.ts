@@ -1,7 +1,7 @@
 import { allPaths, currentPathData } from "../logic/paths";
 import { data, simData } from "./data";
 
-//This function does not attempt anything more than to directly apply Ohm's Law
+//This function does not attempt anything more than to directly apply Ohm's Law, it returns true only if every path under it has been mapped
 export function applyOhmLawResistance(pathData: currentPathData): boolean {
     const simData: simData = data.get(pathData.color)!; //this function is only called once the data has been initialised
     
@@ -13,6 +13,7 @@ export function applyOhmLawResistance(pathData: currentPathData): boolean {
         simData.pathResistance = simData.pathVoltage / simData.pathCurrent;
 
         let everythingMapped: boolean = true;
+
         simData.splitsTo.forEach(color => {
             everythingMapped = everythingMapped && applyOhmLawResistance(allPaths.get(color)!);
         })

@@ -49,6 +49,8 @@ const handleClick = (event) => {
                         clickedElements[otherIndex].rightPoint = isConnection;
                     }
                 })
+
+                Array.from(document.querySelectorAll(`[data-wire-group="${wires[index].wireGroup}"]`)).forEach(marker => marker.remove());
             }
 
             //Highlights all the wires/bridges relates to the deleted element
@@ -65,8 +67,6 @@ const handleClick = (event) => {
                     wires[lastIndex].notConnected = true
                 }
             })
-
-
         } else { //userCreated
             //Updates the allElements array
             const leftConnectedElements = allElements.get(element).connections.left
@@ -94,21 +94,14 @@ const handleClick = (event) => {
             wireGroupNumberSet.forEach(number => {
                 loopWireGroup(number, element)
             })
+
+            //updates the specific array that represents the category of the element
+            const array = allObject[element.dataset.belongsTo];
+            const elementIndex = array.findIndex(object => object.element === element)
+
+            array.splice(elementIndex, 1)
         }
-
-        //updates the specific array that represents the category of the element
-        const classList = element.classList.value
-        const classes = classList.split(" ")
-
-        const wantedClass = classes.filter(value => value !== "userCreated")[0] 
-        //adds an "s" (plural) to match the array's name
-        const arrayName = wantedClass + "s"
-
-        const array = allObject[arrayName]
-        const elementIndex = array.findIndex(object => object.element === element)
-
-        array.splice(elementIndex, 1)
-
+        
         element.remove()
     } else {
         const highlightedElements = document.querySelectorAll(".highlighted")

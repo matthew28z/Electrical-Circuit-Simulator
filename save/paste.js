@@ -59,8 +59,7 @@ function pasteHTML(circuitHTML) {
             child.setAttribute("transform", (relativeTransform.toString() + " " + child.getAttribute("transform")).replace("null", "").trim())
             document.adoptNode(child);
 
-            const wantedG = allG.node().querySelector(`.${gClass}`)
-            wantedG.appendChild(child)                   
+            allG.select(`.${gClass}`).node().appendChild(child);
         }
     })
 
@@ -241,7 +240,7 @@ export function pasteCircuit() {
         //We now add the new data to the old data
         wires.push(...newWires);
 
-        newAllElements.forEach((element, object) => {
+        newAllElements.forEach((object, element) => {
             allElements.set(element, object);
 
             const isNotConnection = !element.classList.contains("connection");

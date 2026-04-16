@@ -32,8 +32,13 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
 
             await user.click(document.getElementById("run"));
 
+            const dataIterator = data.values();
+            dataIterator.next();
+    
+            const mainPathData = dataIterator.next().value;
+    
             //Check the initial calculations
-            expect(data[0].pathResistance).toBe(10);
-            expect(data[0].pathVoltage).toBe(50);
-            expect(data[0].pathCurrent).toBe(5);
+            expect(mainPathData.pathResistance).toBe(10);
+            expect(mainPathData.pathVoltage).toBe(50);
+            expect(mainPathData.pathCurrent).toBe(5);
         })

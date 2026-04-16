@@ -1,7 +1,79 @@
 import { calculateParallelResistance, applyOhmLawResistance } from "./calculateResistance";
-import { pathColors, currentPathData, allPaths, breaks, currentColor } from "../logic/paths";
+import { applyOhmLawVoltage } from "./calculateVoltage";
+import { applyOhmLawCurrent } from "./calculateCurrent";
+import { pathColors, currentPathData, allPaths, breaks } from "../logic/paths";
 import { simData, data } from "./data";
 import { findSplits, getValueFromAO, findParallelPaths } from "./utilities";
+
+export default function calculate(mainPathData : currentPathData) : boolean {
+    iniateSimData();
+
+    //We first try to add every value we can to the data map
+    const getResults = getValues(mainPathData);
+
+    if (getResults.current === undefined) {
+        if (getResults.voltage === undefined) {
+            console.log("The Data Submitted Breaks The Laws Of Physics (Current, Voltage)");
+
+            return false;
+        }
+
+        console.log("The Data Submitted Breaks The Laws Of Physics (Current)");
+
+        return false;
+    } 
+
+    if (getResults.voltage === undefined) {
+        console.log("The Data Submitted Breaks The Laws Of Physics (Voltage)");
+
+        return false;      
+    }
+
+    //~~~~Data~Is~Valid~~~~
+    if (getResults.resistance && getResults.current && getResults.voltage) {
+        console.log("The Calculations Are Completed");
+
+        return true;
+    } 
+    //We first check the three easy scenarios 
+    const mainSimData: simData = data.get(mainPathData.color)!;
+
+    let finished: boolean = false;
+
+    if (getResults.resistance && getResults.current) {
+        const result = applyOhmLawVoltage(mainPathData);
+
+        if (result === undefined) {
+            console.log("The Data Submitted Breaks The Laws Of Physics (Voltage)");
+
+            return false;
+        }
+
+        finished = result;
+    } else if (getResults.resistance && getResults.voltage) {
+        const result = applyOhmLawCurrent(mainPathData);
+
+        if (result === undefined) {
+            console.log("The Data Submitted Breaks The Laws Of Physics (Current)");
+
+            return false;
+        }
+
+        finished = result;
+    } else if (getResults.voltage && getResults.current) {
+        finished = applyOhmLawResistance(mainPathData);
+    }
+
+    if (finished) {
+        console.log("The Calculations Are Completed");
+
+        return true;
+    }
+
+    //More Complicated Logic
+
+    return false;
+}
 
 function iniateSimData() : void {
     pathColors.forEach(color => {
@@ -80,7 +152,9 @@ function getValues(pathData: currentPathData): {
     let pathVoltage = 0;
 
     //Now we go element by element
-    for (const value of pathData.path) {
+    for (let i = 0; i < pathData.path.length - 1; i++) {
+        const value = pathData.path[i];
+
         if (typeof value !== "number") {
             //~~~~Resistance~~~~
             if (result.resistance) {
@@ -203,59 +277,3 @@ function getValues(pathData: currentPathData): {
 
     return result;
 }  
-
-export default function calculate(mainPathData : currentPathData) : boolean {
-    iniateSimData();
-
-    //We first try to add every value we can to the data map
-    const getResults = getValues(mainPathData);
-
-    if (getResults.current !== undefined) {
-        if (getResults.voltage !== undefined) {
-            console.log("The Data Submitted Breaks The Laws Of Physics (Current, Voltage)");
-
-            return false;
-        }
-
-        console.log("The Data Submitted Breaks The Laws Of Physics (Current)");
-
-        return false;
-    } 
-
-    if (getResults.voltage !== undefined) {
-        console.log("The Data Submitted Breaks The Laws Of Physics (Voltage)");
-
-        return false;      
-    }
-
-    //~~~~Data~Is~Valid~~~~
-    if (getResults.resistance && getResults.current && getResults.voltage) {
-        console.log("The Calculations Are Completed");
-
-        return true;
-    } 
-    //We first check the three easy scenarios 
-    const mainSimData: simData = data.get(mainPathData.color)!;
-
-    let finished: boolean = false;
-
-    if (getResults.resistance && getResults.current) {
-        mainSimData.pathVoltage = mainSimData.pathResistance! * mainSimData.pathCurrent!;
-
-        //solve for the rest
-    } else if (getResults.resistance && getResults.voltage) {
-        mainSimData.pathCurrent = mainSimData.pathVoltage! / mainSimData.pathResistance!;
-
-        //solve for the rest
-    } else if (getResults.voltage && getResults.current) {
-        mainSimData.pathResistance = mainSimData.pathVoltage! / mainSimData.pathCurrent!;
-
-        finished = applyOhmLawResistance(mainPathData);
-    }
-
-    if (!finished) {
-        //More Complicated Logic
-    }
-
-    return false;
-}

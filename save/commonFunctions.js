@@ -2,19 +2,13 @@ export function processAllElementsId(allElementsId) {
     const newAllElements = new Map();
     
     allElementsId.forEach(objectID => {
-        const newObject = { element: document.getElementById(objectID.id), connections: { left: new Set(), right: new Set() } };
-
-        objectID.connections.left.forEach(elementID => {
-            const element = document.getElementById(elementID);
-
-            newObject.connections.left.add(element);
-        })
-
-        objectID.connections.right.forEach(elementID => {
-            const element = document.getElementById(elementID);
-            
-            newObject.connections.right.add(element);
-        })
+        const newObject = {
+            element: document.getElementById(objectID.id),
+            connections: {
+                left: new Set(objectID.connections.left.map(elementID => document.getElementById(elementID))),
+                right: new Set(objectID.connections.right.map(elementID => document.getElementById(elementID)))
+            }
+        };
 
         newAllElements.set(newObject.element, newObject);
     })

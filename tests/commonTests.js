@@ -63,7 +63,7 @@ export async function simpleCircuit() {
         const simulateButton = document.getElementById("run");
 
         await user.click(simulateButton);
-        
+    
         const mainPathData = data.values().next().value;
     
         //Check the initial calculations

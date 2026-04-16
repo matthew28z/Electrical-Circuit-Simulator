@@ -33,34 +33,6 @@ export function loadData(name) {
     return null
 }
 
-function loadUptestData() {
-    const circuitNames = ["Basic Resistor Test", "Ohm’s Playground", "Simple Voltage Divider", "Series Resistance Chain", "Parallel Resistance Bank", "RC Charging Circuit",
-                          "RC Discharge Experiment", "RL Time Constant", "LC Oscillator", "RLC Resonance", "Half-Wave Rectifier", "Full-Wave Rectifier",
-                          "Bridge Rectifier", "LED Driver", "Light Sensor", "Voltage Amplifier", "Audio Amplifier", "Inverter Circuit",
-                          "NOT Gate Demo", "AND Gate Demo", "OR Gate Demo", "XOR Gate Demo", "Flip-Flop Memory", "555 Timer Blinker", "Pulse Generator",
-                          "Voltage Regulator", "Battery Charger", "Motor Driver", "Relay Control", "Transistor Switch"];  
-
-
-    const objectArray = circuitNames.map(name => {
-        return {name: name, description: "hi", data: null}
-    })
-    
-    localStorage.setItem("names", JSON.stringify(circuitNames))
-    
-    objectArray.forEach(object => {
-        localStorage.setItem(object.name, JSON.stringify(object))
-    })
-}
-
-//loadUptestData()
-//localStorage.clear()
-/*
-function clearScreen() { //removes all the children except the svg and g elements
-    const childrenToBeCleared = Array.from(screen.querySelectorAll("*")).filter(element => element.tagName !== "svg")
-
-    
-}*/
-
 //Logic for quick save
 const quickSave = (event) => {
     if (event.key.toLowerCase() === "s") {
@@ -191,8 +163,8 @@ function prepareData() {
         const id = object.element.id
         objectId.id = id
 
-        objectId.connections.left = object.connections.left.map(element => element.id)
-        objectId.connections.right = object.connections.right.map(element => element.id)
+        objectId.connections.left = Array.from(object.connections.left).map(element => element.id);
+        objectId.connections.right = Array.from(object.connections.right).map(element => element.id);
 
         return objectId
     })

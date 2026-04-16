@@ -3,8 +3,6 @@ import * as d3 from "d3";
 import { allG } from "../logic/management.js";
 import { changeTransform, transform } from "./move.js";
 
-const svg = d3.select(".screen.visible")
-
 const zoom = d3.zoom()
              .scaleExtent([0.25, 4])
              .on("zoom", (event) => {
@@ -13,6 +11,8 @@ const zoom = d3.zoom()
              })
 
 export function addZoom() {
+    const svg = d3.select(".screen.visible");
+
     svg.call(zoom)
 
     const screen = document.querySelector(".visible");
@@ -28,5 +28,5 @@ export function addZoom() {
 } 
 
 export function removeZoom() {
-    svg.on(".zoom", null)
+    d3.select(".screen.visible").on(".zoom", null)
 }

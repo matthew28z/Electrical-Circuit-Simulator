@@ -5,6 +5,12 @@ import { changeValues, allObject } from "../logic/management.js";
 import { changeAllElements, allElements } from "../logic/paths";
 import { wires, removeFakeWires } from "../logic/wires.js";
 import { changeTransform, transform } from "../camera/move.js";
+import { removeZoom, addZoom } from "../camera/zoom.js";
+
+const dynamicMenuButtons = new Set(["camera"]); //a set is used to allow for expandability
+const dynamicMenuFunctions = new Map([
+    ["camera", { clear: removeZoom, set: addZoom }]
+]);
 
 const screensButtons = Array.from(document.querySelectorAll(".screensDiv button"));
 const screensObject = {
@@ -123,29 +129,43 @@ function filterWires(screenNumber) {
 
 function changeScreen(screenNumber) {
     if (screenNumber === -1) { //creates a new screen
-        addScreen()
+        addScreen(true)
 
-        const newScreenNumber = Number(screensButtons.at(-1).id.split("-")[1])
+        return;
+    } 
 
-        changeScreen(newScreenNumber)
-    } else {
-        const oldScreen = body.querySelector(".visible.screen")
-        oldScreen.classList.remove("visible")
-        //Call this before reassigning operation
-        removeEventListeners(oldScreen);
+    let dynamicButton;
 
-        const newScreen = document.getElementById(`screen-${screenNumber}`)
+    const currentMenuButton = document.querySelector(".enabled");
 
-        changeOperation(newScreen)
-        addEventListeners(newScreen)
+    if (dynamicMenuButtons.has(currentMenuButton.id)) {
+        dynamicButton = currentMenuButton.id;
 
-        newScreen.classList.add("visible")
+        //clear the old screen
+        dynamicMenuFunctions.get(dynamicButton)?.clear();
+    }
 
-        changeValues(newScreen, d3.select(`#screen-${screenNumber} .overlay`), d3.select(`#screen-${screenNumber} .bridgeG`), d3.select(`#screen-${screenNumber} .cBridgeG`), d3.select(`#screen-${screenNumber} .currentG`), d3.select(`#screen-${screenNumber} .fakeWireG`), d3.select(`#screen-${screenNumber} .wireG`), d3.select(`#screen-${screenNumber} .allG`), screensObject[`screen_${screenNumber}`].allObject)
-        changeTransform(screensObject[`screen_${screenNumber}`].transform)
-        changeAllElements(screensObject[`screen_${screenNumber}`].allElements)
+    const oldScreen = body.querySelector(".visible.screen")
+    oldScreen.classList.remove("visible")
+    //Call this before reassigning operation
+    removeEventListeners(oldScreen);
 
-        removeFakeWires()
+    const newScreen = document.getElementById(`screen-${screenNumber}`)
+
+    changeOperation(newScreen)
+    addEventListeners(newScreen)
+
+    newScreen.classList.add("visible")
+
+    changeValues(newScreen, d3.select(`#screen-${screenNumber} .overlay`), d3.select(`#screen-${screenNumber} .bridgeG`), d3.select(`#screen-${screenNumber} .cBridgeG`), d3.select(`#screen-${screenNumber} .currentG`), d3.select(`#screen-${screenNumber} .fakeWireG`), d3.select(`#screen-${screenNumber} .wireG`), d3.select(`#screen-${screenNumber} .markerG`), d3.select(`#screen-${screenNumber} .allG`), screensObject[`screen_${screenNumber}`].allObject)
+    changeTransform(screensObject[`screen_${screenNumber}`].transform)
+    changeAllElements(screensObject[`screen_${screenNumber}`].allElements)
+
+    removeFakeWires()
+
+    if (dynamicButton) {
+        //Set the function to the correct screen
+        dynamicMenuFunctions.get(dynamicButton)?.set();
     }
 }
 
