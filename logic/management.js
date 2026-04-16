@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 
+/** @type { Object<string, any[]> } */
 export let allObject = { 
     voltageSources: [],
     resistors: [],

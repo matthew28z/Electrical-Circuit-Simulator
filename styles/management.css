@@ -43,3 +43,7 @@
 .enabled {
     border-color: white !important;
 }
+
+.markerG {
+    pointer-events: none;
+}

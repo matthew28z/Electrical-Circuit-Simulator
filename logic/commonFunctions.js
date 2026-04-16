@@ -23,6 +23,7 @@ export function handleAllClicks(elementID_Class, array, event, height = body.cli
         foreignObject.setAttribute("height", height + 16);
 
         const createdElement = document.createElement("div");
+        createdElement.dataset.belongsTo = elementID_Class + "s"; //adds meta data
         createdElement.classList.add(elementID_Class, "userCreated")
 
         foreignObject.appendChild(createdElement)
@@ -389,6 +390,6 @@ export function replaceValueInAllElements(element, oldValue, newValue) {
 
     //Replaces the old value
     object.connections[side].delete(oldValue);
-    object.connections[side].set(newValue, newValue);
+    object.connections[side].add(newValue);
     
 }

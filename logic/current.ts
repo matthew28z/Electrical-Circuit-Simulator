@@ -162,12 +162,12 @@ function choosePoint(mainElement: HTMLElement, connectedElement: HTMLElement): "
 function handleClick(event: MouseEvent): void {
     const amperometerButton: HTMLElement = document.getElementById("amperometer")!;
     
-    if (event.target instanceof HTMLElement) {
+    if (event.target instanceof SVGPathElement) {
         if (!amperometerButton.classList.contains("enabled") || !event.target.matches(".wire:not(.bridge)")) {
             return;
         }
 
-        const wire: HTMLElement = event.target;
+        const wire: SVGPathElement= event.target;
         
         const wireData: any = wires.find(object => object.element === wire);
 
@@ -177,8 +177,34 @@ function handleClick(event: MouseEvent): void {
             return;
         }
 
+        //Finds the related markers via their class
+        Array.from(document.querySelectorAll(`[data-wire-group="${wireData.wireGroup}"]`)).forEach(markerPath => markerPath.remove());
+
+        let groupMembers = 0;
+
+        for (const object of wires) {
+            if (object.wireGroup !== wireData.wireGroup) {
+                if (groupMembers > 0) {
+                    break;
+                }
+
+                continue;
+            }
+
+            object.element.remove();
+            groupMembers++;
+        }
         //Delete the old wire-group and create a new one
-        wires.splice(wires.findIndex(object => object.wireGroup === wireData.wireGroup), wires.filter(object => object.wireGroup === wireData.wireGroup).length);
+        wires.splice(wires.findIndex(object => object.wireGroup === wireData.wireGroup), wires.filter(object => {
+            if (object.wireGroup !== wireData.wireGroup) {
+                return false;
+            }
+
+            //We also need to delete the element
+            object.element.remove();
+
+            return true;
+        }).length);
 
         const c = d3.pointer(event, allG.node())
 
@@ -190,6 +216,7 @@ function handleClick(event: MouseEvent): void {
 
         const amperometer : HTMLElement = document.createElement("div");
         amperometer.classList.add("amperometer", "userCreated");
+        amperometer.dataset.belongsTo = "amperometers";
 
         foreignObject.appendChild(amperometer);
         allG.node()!.appendChild(foreignObject);  
@@ -207,8 +234,36 @@ function handleClick(event: MouseEvent): void {
         }
 
         //Draw the new wires
-        drawWirePointToPoint(getPoints(wireData.connections[0])[startPoint], amperometerPoint);
-        drawWirePointToPoint(amperometerPoint, getPoints(wireData.connections[1])[endPoint]);
+        const leftIsConnection = wireData.connections[0].classList.contains("connection");
+        const rightIsConnection = wireData.connections[1].classList.contains("connection");
+
+        const firstMarker: undefined | d3.Selection<SVGPathElement, unknown, SVGGElement, unknown> = drawWirePointToPoint(getPoints(wireData.connections[0])[startPoint], amperometerPoint, leftIsConnection ? wireData.wireGroup : null)?.firstWire! as any;
+        const lastMarker: undefined | d3.Selection<SVGPathElement, unknown, SVGGElement, unknown> = drawWirePointToPoint(amperometerPoint, getPoints(wireData.connections[1])[endPoint], rightIsConnection ? wireData.wireGroup : null)?.lastWire! as any;
+        
+        //add the markers back on
+        if (firstMarker) { 
+            const leftAE : AE | undefined = allElements.get(wireData.connections[0]);
+
+            if (!leftAE) {
+                console.log("CORRUPTED DATA (allElements)");
+
+                return;
+            }
+
+            firstMarker.attr("marker-start", `url(#${leftAE.connections.left.has(wireData.connections[1]) ? "yellow" : "purple"}Mark)`);
+        }
+
+        if (lastMarker) {
+            const rightAE : AE | undefined = allElements.get(wireData.connections[1]);
+
+            if (!rightAE) {
+                console.log("CORRUPTED DATA (allElements)");
+
+                return;
+            }
+
+            lastMarker.attr("marker-end", `url(#${rightAE.connections.left.has(wireData.connections[0]) ? "yellow" : "purple"}Mark)`);
+        }
 
         //Adjust the data of the new wires
         wireData.connections.push(amperometer); //we add the amperometer as the path finding algorithm will treat these wires as distinct 
@@ -227,7 +282,7 @@ function handleClick(event: MouseEvent): void {
         replaceValueInAllElements(wireData.connections[1], wireData.connections[0], amperometer);
 
         //we update the allObject data
-        amperometers().push({ element: amperometer, connectedPath: null, resistance: { value: 0, UM: "(Ω)" } });
+        amperometers().push({ element: amperometer, current: { value: 0, UM: "(A)" }, resistance: { value: 0, UM: "(Ω)" } });
     }
 }
 

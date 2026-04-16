@@ -1,71 +1,26 @@
-import { breaks, allPaths, currentPathData } from "../logic/paths";
+import { allPaths, currentPathData } from "../logic/paths";
 import { data, simData } from "./data";
-import { findValue } from "./commonFunctions.js";
 
-export function getResistance(pathData: currentPathData): boolean {
-    //We first try to get the nested paths (if they exist)
-    if (pathData.splitsTo !== undefined) {
-        for (const color of pathData.splitsTo) {
-            const splitPathData = allPaths.get(color);
-
-            if (!splitPathData) {
-                console.log("BAD DATA");
-
-                return false;
-            }
-
-            if (!getResistance(splitPathData)) {
-                return false;
-            }
-        }
+//This function does not attempt anything more than to directly apply Ohm's Law
+export function applyOhmLawResistance(pathData: currentPathData): boolean {
+    const simData: simData = data.get(pathData.color)!; //this function is only called once the data has been initialised
+    
+    if (simData.pathResistance) {
+        return true; //it is impossible for the inner paths to not have their data calculated if this is true
     }
 
-    let pathResistance = 0;
+    if (simData.pathVoltage && simData.pathCurrent) {
+        simData.pathResistance = simData.pathVoltage / simData.pathCurrent;
 
-    //Now we go element by element
-    for (const value of pathData.path) {
-        if (typeof value !== "string") { 
-            const resValue: number | null = findValue("resistance", value.element);
+        let everythingMapped: boolean = true;
+        simData.splitsTo.forEach(color => {
+            everythingMapped = everythingMapped && applyOhmLawResistance(allPaths.get(color)!);
+        })
 
-            if (resValue === null) {
-                console.log("MISSING VALUES");
-
-                return false;
-            }
-
-            pathResistance += resValue;
-        } else { // a new branch is detected
-            const breakData: currentPathData[] | undefined = breaks.get(value);
-
-            if (!breakData) {
-                console.log("CORRUPTED DATA");
-
-                return false;
-            }
-
-            const parallelResistance: number | null = calculateParallelResistance(breakData);
-
-            if (parallelResistance === null) {
-                console.log("MISSING VALUES");
-
-                return false;
-            }
-
-            pathResistance += parallelResistance;
-        }
+        return everythingMapped;
     }
 
-    const pathSimData: simData | undefined = data.get(pathData.color);
-
-    if (!pathSimData) {
-        console.log("UNINITIALISED DATA");
-
-        return false;
-    }
-
-    pathSimData.pathResistance = pathResistance;
-
-    return true;
+    return false;
 }
 
 export function calculateParallelResistance(breakData: currentPathData[]): number | null {

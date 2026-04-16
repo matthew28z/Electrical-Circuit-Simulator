@@ -9,9 +9,9 @@ import { findMainPath } from "./paths";
 import { screen } from "./management.js";
 import { drawCurrent, addAmperometer, removeAmperometer } from "./current";
 import { addZoom, removeZoom} from "../camera/zoom.js";
-import { getResistance } from "../calculation/calculateResistance";
-import { calculateVoltage } from "../calculation/calculateVoltage.js";
-import { calculateCurrent } from "../calculation/calculateCurrent.js";
+//import { getResistance } from "../calculation/calculateResistance";
+//import { calculateVoltage } from "../calculation/calculateVoltage.js";
+//import { calculateCurrent } from "../calculation/calculateCurrent.js";
 import { adjustMenu } from "../save/saveMenu.js";
 import { addScreen, addClickLogic } from "../save/toggleScreens.js";
 import { pasteCircuit } from "../save/paste.js";
@@ -221,18 +221,11 @@ function simulate() {
         }
     }
 
-
-        
-    
-
     drawCurrent(mainPathData)
 
-    console.log(getResistance(mainPathData))
-    console.log(calculateVoltage(mainPathData))
-    console.log(calculateCurrent(mainPathData))
-    
-    const elementData = screen.innerHTML
-    //localStorage.setItem("test", JSON.stringify(elementData))
+    //console.log(getResistance(mainPathData))
+    //console.log(calculateVoltage(mainPathData))
+    //console.log(calculateCurrent(mainPathData))
 }
 
 const run = document.getElementById("run");
