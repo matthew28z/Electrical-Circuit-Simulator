@@ -39,4 +39,30 @@ beforeEach(async () => {
     await new Promise(requestAnimationFrame);
 
     await import("../logic/menu.js");
+    
+    let tracker = 0;
+
+    //The observer should be applied
+    const observer = new MutationObserver((mutationList) => {
+        for (const mutation of mutationList) {
+            if (mutation.type === "childList" && mutation.addedNodes.length > 0) {
+                mutation.addedNodes.forEach(el => {
+                    console.log(el, "test")
+                    if (el instanceof SVGForeignObjectElement) {
+                        console.log("subtest")
+                        el.querySelector("div").dataset.testid = `element-${tracker++}`;
+                        console.log(el)
+                    } else if (el instanceof HTMLElement && el.classList.contains("element")) {
+                        el.dataset.testid = `element-${tracker++}`;
+                    }
+                })
+            }
+        }
+    });
+
+    observer.observe(document.body, { 
+        childList: true,  
+        subtree: true,    
+        attributes: false 
+    });
 }) 

@@ -31,17 +31,23 @@ function pasteHTML(circuitHTML) {
     const circuit = parser.parseFromString(circuitHTML, "text/html"); //This represents the circuit as HTML
    
     const circuitAllG = circuit.querySelector(".allG");
-    const oldTransform = d3.zoomTransform(circuitAllG);
+    console.warn(circuitAllG)
 
-    /*Some math I didn't get my head into that much, used AI and d3 to understand them
-      Basically the goal is to change the coords of each element to something that 
-      will fit perfectly in the new allG. I did not try to find a solution for how the zoom would 
-      accounted for as that is not really the focus of the project, and I have already resorted to D3 in the past*/
-    const newTransform = d3.zoomIdentity.translate(transform.x, transform.y).scale(transform.z);
-    //old coords -> world coords -> relative coords
-    const newZoom = newTransform.k / oldTransform.k;
-    const relativeTransform = d3.zoomIdentity.translate(newTransform.x - oldTransform.x * newZoom, newTransform.y - oldTransform.y * newZoom).scale(newZoom);
-    d3.select(circuitAllG).attr("transform", `translate(${transform.x}, ${transform.y}) scale(${transform.z})`)
+    const oldTransform = JSON.parse(circuitAllG.dataset.zoomObject);
+
+    /*
+    We want the elements copied to appear at exactly the same position (from the user's perspective)
+    in both screens (screen of origin & screen to paste). We will solve this problem by adding a specific 
+    value called ΔEO (ΔElement-Offset) to each element's transform attribute. representing the adjustment needed for 
+    this to be possible. Now to find what that value should be we should solve this equation:
+    Total Position(1) = Total Position(2)
+    Zoom-K(1)*Global-Coords(1) + Screen-Offset(1) + Element-Offset(1) = K(2)*G(2) + S(2) + EO(2) 
+    Yet, Global-Coords are the svg coordinates passed on each SVG Element, which are copied, thus G(1) = G(2) = G <=>
+    ΔEO = ΔK * G + ΔS
+    */
+    
+    const zoomDiff = transform.z - oldTransform.z;
+    const screenDiff = { x: transform.x - oldTransform.x, y: transform.y - oldTransform.y };
 
     //This is only for wires and bridges
     const circuitGs = circuitAllG.querySelectorAll("g:not(.currentG, .cBridgeG)");
@@ -55,8 +61,8 @@ function pasteHTML(circuitHTML) {
 
             addedElements.push(child);
 
-            //const finalTransform = d3.zoomIdentity //merges relative transform with preexisting ones
-            child.setAttribute("transform", (relativeTransform.toString() + " " + child.getAttribute("transform")).replace("null", "").trim())
+            const EODiff = { x:  Number(child.getAttribute("x")) * zoomDiff + screenDiff.x, y: Number(child.getAttribute("y")) * zoomDiff + screenDiff.y };
+            child.setAttribute("transform", `${((child.getAttribute("transform") ?? "") + ` translate(${EODiff.x}, ${EODiff.y})`).trim()}`)
             document.adoptNode(child);
 
             allG.select(`.${gClass}`).node().appendChild(child);
@@ -68,7 +74,8 @@ function pasteHTML(circuitHTML) {
         addedElements.push(element);
         addedElements.push(...element.querySelectorAll("*")) //adds the elements and their container (foreignObject)
 
-        element.setAttribute("transform", ((relativeTransform.toString() + " " + element.getAttribute("transform")).replace("null", "").trim()));
+        const EODiff = { x:  Number(element.getAttribute("x")) * zoomDiff + screenDiff.x, y: Number(element.getAttribute("y")) * zoomDiff + screenDiff.y };
+        element.setAttribute("transform", `${((element.getAttribute("transform") ?? "") + ` translate(${EODiff.x}, ${EODiff.y})`).trim()}`)
 
         document.adoptNode(element);
         allG.node().appendChild(element);
@@ -93,7 +100,7 @@ function findElements(a, b, constant, isVertical) {
     for (a; a < b; a += step) {
         const point = isVertical ? {x: constant, y: a} : {x: a, y: constant};
         const foundElements = Array.from(document.elementsFromPoint(point.x, point.y)).filter(element => {
-            const child = element.classList.contains(".userCreated");
+            const child = element.classList.contains("userCreated");
 
             return child;
         })

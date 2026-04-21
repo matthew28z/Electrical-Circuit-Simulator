@@ -18,13 +18,28 @@ export default defineConfig({
         mouseUp: async ({ page }) => {
           await page.mouse.up();
         },
-        mouseMove: async ({ page }, x, y) => {
-          await page.mouse.move(x, y);
+        mouseMove: async ({ page }, frameBox, x, y) => {
+          const viewport = await page.evaluate(() => {
+            return {
+              width: window.innerWidth,
+              height: window.innerHeight,
+            }
+          });
+
+          const pointInFrame = { x: frameBox.x + x * frameBox.width / viewport.width, y: frameBox.y + y * frameBox.height / viewport.height }
+          
+          await page.mouse.move(pointInFrame.x, pointInFrame.y);
+
+          return pointInFrame;
         },
-        boundingBox: async ({ page }, testID = "temp") => { //this function expects the element to have a unique test-id which defaults to "temp"
-          const { x, y } = await page.getByTestId(testID).boundingBox();
+        getPositionGlobal: async ({ page }, testID) => { 
+          //We need to specifically target the iframe
+          const { x, y } = await page.frameLocator('iframe').getByTestId(testID).boundingBox({ timeout: 1000 });
 
           return { x, y };
+        },
+        getBoxOfFrame: async ({ page }) => {
+          return await page.locator('iframe').boundingBox();
         }
       }
     },

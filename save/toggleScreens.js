@@ -138,7 +138,7 @@ function changeScreen(screenNumber) {
 
     const currentMenuButton = document.querySelector(".enabled");
 
-    if (dynamicMenuButtons.has(currentMenuButton.id)) {
+    if (currentMenuButton &&dynamicMenuButtons.has(currentMenuButton.id)) {
         dynamicButton = currentMenuButton.id;
 
         //clear the old screen

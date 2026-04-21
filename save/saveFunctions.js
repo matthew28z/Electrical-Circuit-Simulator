@@ -1,4 +1,7 @@
-import { allObject } from "../logic/management.js";
+import * as d3 from "d3";
+
+import { transform as tObject} from "../camera/move.js";
+import { allObject, allG } from "../logic/management.js";
 import { allElements } from "../logic/paths";
 import { wires } from "../logic/wires.js";
 
@@ -86,6 +89,8 @@ export function saveCircuit(name, description, boolean = false) {
         window.addEventListener("keydown", confirmFunc)                  
     } else {
         const preparedData = prepareData() 
+
+        allG.node().dataset.zoomObject = JSON.stringify(tObject);
 
         localStorage.setItem(`${name}-wiresId`, JSON.stringify(prepareWires()))
         localStorage.setItem(`${name}-allElementsId`, JSON.stringify(preparedData.allElementsId))

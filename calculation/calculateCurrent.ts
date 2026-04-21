@@ -10,7 +10,7 @@ export function applyOhmLawCurrent(pathData: currentPathData): boolean | undefin
 
         let everythingMapped: boolean = true;
 
-        simData.splitsTo.forEach(color => {
+        for (const color of simData.splitsTo) {
             const result = applyOhmLawCurrent(allPaths.get(color)!);
 
             if (result === undefined) {
@@ -45,7 +45,7 @@ export function applyOhmLawCurrent(pathData: currentPathData): boolean | undefin
             } else {
                 everythingMapped = false; // simply flag that the inner calculations failed at some point
             }
-        })
+        }
 
         return everythingMapped;
     }

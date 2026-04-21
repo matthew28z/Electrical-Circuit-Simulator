@@ -7,6 +7,9 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
     and then use the camera feature before saving and ultimately copying it. Then, we will proceed by creating
     a new screen just before using the camera feature once more. Finally we will paste the copied circuit,
     and check if the coordinates are correct.`, async () => {
+    const frameBox = await commands.getBoxOfFrame();
+    console.log(frameBox, "fffff")
+    
             //Create the circuit
             await simpleCircuit();
     
@@ -14,72 +17,75 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
 
             const { allElements } = await import("../logic/paths");
 
-            let coordinates = []; 
+            const coordinates = []; 
     
-            for (const object of allElements) {
-                const { element } = object;
+            for (const [element, object] of allElements.entries()) {
+                const coords = await commands.getPositionGlobal(element.dataset.testid); 
 
-                element.setAttribute("data-testid", "temp");
-                console.log(element, "DEBUG");
-                //const coords = await commands.boundingBox();
-
-                element.removeAttribute("data-testid");
-
-                //coordinates.push({ element, ...coords }); 
+                coordinates.push({ element, ...coords }); 
             }
 
             //Move the camera
             await user.click(document.getElementById("camera"));
     
-            await commands.mouseMove(140, 315);
+            let firstPoint = await commands.mouseMove(frameBox, 140, 315);
+            //await commands.showPoint({ x: frameBox.x + 140, y: framePosition.y + 315 }) //the coordinates are wrong
             await commands.mouseDown();
-            await commands.mouseMove(370, 145);
+            let secondPoint = await commands.mouseMove(frameBox, 370, 145);
             await commands.mouseUp();
 
             //Check how accurate the initial camera movement was
             for (const object of coordinates) {
-                object.element.setAttribute("data-testid", "temp");
+                const coords = await commands.getPositionGlobal(object.element.dataset.testid);
 
-                //const coords = await commands.boundingBox(object.element);
+                console.log(coords);
 
-                object.element.removeAttribute("data-testid");
-
-                //expect(coords.x).toBeCloseTo(object.x + 230);
-                //expect(coords.y).toBeCloseTo(object.y - 170);                
+                expect(coords.x).toBeCloseTo(object.x + secondPoint.x - firstPoint.x, 0);
+                expect(coords.y).toBeCloseTo(object.y + secondPoint.y - firstPoint.y, 0); 
+                
+                object.x = coords.x;
+                object.y = coords.y;
             }
 
             //Save the circuit
             await saveCircuit("test");
             
-            for (let object of coordinates) {
-                object.element.setAttribute("data-testid", "temp");
+            for (const object of coordinates) {
+                const coords = await commands.getPositionGlobal(object.element.dataset.testid);
 
-                const coords = await commands.boundingBox(object.element);
-
-                object.element.removeAttribute("data-testid");
-
-                object = { element: object.element, ...coords };                 
+                object.x = coords.x;
+                object.y = coords.y;               
             }
 
             //Copy the circuit
             await copyCircuit("test");
 
             //Paste the circuit after moving the camera
-            await commands.mouseMove({ x: 310, y: 125 });
+            firstPoint = await commands.mouseMove(frameBox, 310, 125);
             await commands.mouseDown();
-            await commands.mouseMove({ x: 140, y: 325 });
+            secondPoint = await commands.mouseMove(frameBox, 140, 325);
             await commands.mouseUp();
 
             await page.elementLocator(document.querySelector(".addScreen")).click({ button: "right" }); //create a new screen and change to it
             await page.elementLocator(document.getElementById("paste")).click(); //paste the circuit
 
+            const { allElements: newAllElements } = await import("../logic/paths");
+    
+            /*since the elements get copy pasted their initial position would be the same without the offset of the new screen
+              thus we only need to check if the offset was calculated correctly for the elements to appear in the same spot in both screens*/
+            const comparisonArray = Array.from(newAllElements.values()).map((object, index) => {
+                object.x = coordinates[index].x;
+                object.y = coordinates[index].y;
+
+                return object;
+            }) 
             //Check the final calculated offsets
-            for (const object of coordinates) {
-                object.element.setAttribute("data-testid", "temp");
+            for (const object of comparisonArray) {
+                console.log(object.element.dataset.testid, "kkkkkkkkk")
+                const coords = await commands.getPositionGlobal(object.element.dataset.testid);
 
-                const coords = await commands.boundingBox(object.element);
-
-                expect(coords.x).toBeCloseTo(object.x - 170);
-                expect(coords.y).toBeCloseTo(object.y + 190);                
+                console.log(object, coords, "ggggg")
+                expect(coords.x).toBeCloseTo(object.x, 0); //we check if the element stayed put
+                expect(coords.y).toBeCloseTo(object.y, 0);                
             }
     })
