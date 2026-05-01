@@ -138,7 +138,7 @@ function changeScreen(screenNumber) {
 
     const currentMenuButton = document.querySelector(".enabled");
 
-    if (currentMenuButton &&dynamicMenuButtons.has(currentMenuButton.id)) {
+    if (currentMenuButton && dynamicMenuButtons.has(currentMenuButton.id)) {
         dynamicButton = currentMenuButton.id;
 
         //clear the old screen
@@ -166,29 +166,5 @@ function changeScreen(screenNumber) {
     if (dynamicButton) {
         //Set the function to the correct screen
         dynamicMenuFunctions.get(dynamicButton)?.set();
-    }
-}
-
-//Under Development
-function loadCircuit(name) {
-    const entry = localStorage.getItem(name)
-
-    if (entry) {
-        const allElementsId = JSON.parse(localStorage.getItem(name + "-allElementsId"))
-        const allObjectId = JSON.parse(localStorage.getItem(name + "-allObjectId"))
-        const circuitHTML = JSON.parse(localStorage.getItem(name + "-circuitHTML"))
-
-        changeScreen(-1)
-    }
-}
-
-//Under Development
-function copyCircuit(name) {
-    const savedData = localStorage.getItem(name)
-
-    if (savedData) {
-        const usableData = JSON.parse(savedData)
-
-
     }
 }

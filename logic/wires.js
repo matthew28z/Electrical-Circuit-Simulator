@@ -314,7 +314,7 @@ function checkIntersection(start, end) {
     for (let i = 0; i < intersectedElements.length; i++) {
         const element = intersectedElements[i]
 
-        if (element.classList.contains("wire")) {
+        if (element.matches(".wire:not(.bridge)")) {
             intersection = true
 
             intersectionPoints.push(points[i])

@@ -31,7 +31,6 @@ function pasteHTML(circuitHTML) {
     const circuit = parser.parseFromString(circuitHTML, "text/html"); //This represents the circuit as HTML
    
     const circuitAllG = circuit.querySelector(".allG");
-    console.warn(circuitAllG)
 
     const oldTransform = JSON.parse(circuitAllG.dataset.zoomObject);
 
@@ -44,6 +43,7 @@ function pasteHTML(circuitHTML) {
     Zoom-K(1)*Global-Coords(1) + Screen-Offset(1) + Element-Offset(1) = K(2)*G(2) + S(2) + EO(2) 
     Yet, Global-Coords are the svg coordinates passed on each SVG Element, which are copied, thus G(1) = G(2) = G <=>
     ΔEO = ΔK * G + ΔS
+    Through tests I have realised that we need the opposite of ΔEO.
     */
     
     const zoomDiff = transform.z - oldTransform.z;
@@ -62,7 +62,7 @@ function pasteHTML(circuitHTML) {
             addedElements.push(child);
 
             const EODiff = { x:  Number(child.getAttribute("x")) * zoomDiff + screenDiff.x, y: Number(child.getAttribute("y")) * zoomDiff + screenDiff.y };
-            child.setAttribute("transform", `${((child.getAttribute("transform") ?? "") + ` translate(${EODiff.x}, ${EODiff.y})`).trim()}`)
+            child.setAttribute("transform", `${((child.getAttribute("transform") ?? "") + ` translate(${-EODiff.x}, ${-EODiff.y})`).trim()}`)
             document.adoptNode(child);
 
             allG.select(`.${gClass}`).node().appendChild(child);
@@ -75,7 +75,7 @@ function pasteHTML(circuitHTML) {
         addedElements.push(...element.querySelectorAll("*")) //adds the elements and their container (foreignObject)
 
         const EODiff = { x:  Number(element.getAttribute("x")) * zoomDiff + screenDiff.x, y: Number(element.getAttribute("y")) * zoomDiff + screenDiff.y };
-        element.setAttribute("transform", `${((element.getAttribute("transform") ?? "") + ` translate(${EODiff.x}, ${EODiff.y})`).trim()}`)
+        element.setAttribute("transform", `${((element.getAttribute("transform") ?? "") + ` translate(${-EODiff.x}, ${-EODiff.y})`).trim()}`)
 
         document.adoptNode(element);
         allG.node().appendChild(element);
