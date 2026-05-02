@@ -9,7 +9,7 @@ const handleClick = (event) => {
     const goodClick = handleAllClicks("connection", connections(), event, body.clientHeight * 0.02)
 
     if (goodClick) { //new element was added
-        connections()[connections().length - 1] = {element: connections().at(-1), state: "socket", resistance: 0}
+        connections()[connections().length - 1] = {element: connections().at(-1), state: "socket", resistance: { value: 0, UM: "(Ω)" }}
         //The function above adds the newest element to the connections array
         const connection = connections().at(-1).element
 

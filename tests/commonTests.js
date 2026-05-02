@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from "vitest/browser";
 
 const user = userEvent.setup();
 
@@ -13,21 +13,20 @@ export async function simpleCircuit() {
 
         await user.click(voltageSourceButton);
 
-        await user.pointer([{ target: screen, coords: { x: 255, y: 102 }, keys: "[MouseLeft]" }]) //create the voltage source
+        await user.click(screen, { position: { x: 255, y: 510 } }); //create the voltage source
+
         const voltageSource = document.querySelector(".voltageSource");
 
         await user.click(connectionButton);
 
-        await user.pointer([
-            { target: screen, coords: { x: 182, y: 288 }, keys: "[MouseLeft]" },
-            { coords: { x: 398, y: 288 }, keys: "[MouseLeft]" }
-        ]) // create the connections
+        await user.click(screen, { position: { x: 182, y: 550} });
+        await user.click(screen, { position: { x: 398, y: 550} }); // create the connections
 
         const connections = document.querySelectorAll(".connection");
 
-        await user.click(resistorButton)
+        await user.click(resistorButton);
 
-        await user.pointer([{ target: screen, coords: { x: 255, y: 333 }, keys: "[MouseLeft]" }])
+        await user.click(screen, { position: { x: 255, y: 600} }); //create the resistor
 
         const resistor = document.querySelector(".resistor");
 
@@ -36,21 +35,19 @@ export async function simpleCircuit() {
 
         await user.click(wireButton);
 
-        await user.pointer([
-            { target: voltageSource, keys: "[MouseLeft]" }, //select the voltage-source
-            { target: connections[0], keys: "[MouseLeft]" }, //connect it to a connection
-            { keys: "[MouseRight]" }, //change the state of the connection
-            { target: resistor, keys: "[MouseLeft]" }, //connect that connection to the resistor
-            { target: connections[1], keys: "[MouseLeft]" }, //connect the resistor to the other connection
-            { keys: "[MouseRight]" }, //change the other connection's state
-            { target: voltageSource, keys: "[MouseLeft]" }, //close the circuit
-        ])
+        await user.click(voltageSource); //select the voltage-source
+        await user.click(connections[0]); //connect it to a connection
+        await user.click(connections[0], { button: "right" }); //change the state of the connection
+        await user.click(resistor); //connect that connection to the resistor
+        await user.click(connections[1]); //connect the resistor to the other connection
+        await user.click(connections[1], { button: "right" }); //change the other connection's state
+        await user.click(voltageSource); //close the circuit 
 
-        await user.pointer([{ target: voltageSource, keys: "[MouseRight]" }]) //open the VS' tab
+        await user.click(voltageSource, { button: "right" }); //open the VS' tab
 
-        await addValues([50, 0]);
+        await addValues([50, 0]); //add the voltage and the internal resistance
 
-        await user.pointer([{ target: resistor, keys: "[MouseRight]" }]) //open the resistor's tab
+        await user.click(resistor, { button: "right" }); //open the resistor's tab
 
         await addValues([10]);
 
@@ -61,28 +58,30 @@ export async function simpleCircuit() {
         expect(allObject.voltageSources[0].voltage.value).toBe(50);
         expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-        const { data } = await import("../calculation/data.js");
+        const { data } = await import("../calculation/data");
 
         const simulateButton = document.getElementById("run");
 
         await user.click(simulateButton);
-
+    
+        const mainPathData = data.values().next().value;
+    
         //Check the initial calculations
-        expect(data[0].pathResistance).toBe(10);
-        expect(data[0].pathVoltage).toBe(50);
-        expect(data[0].pathCurrent).toBe(5);
+        expect(mainPathData.pathResistance).toBe(10);
+        expect(mainPathData.pathVoltage).toBe(50);
+        expect(mainPathData.pathCurrent).toBe(5);
 
 }
 
 export async function saveCircuit(name) {
-    await user.click(document.getElementById("save"));
+    await document.getElementById("save").click();
 
     const saveMenu = document.querySelector(".saveMenu");
     const nameInput = saveMenu.querySelector(".subSaveMenu input");
 
-    await user.type(nameInput, name);
+    await user.fill(nameInput, name);
 
-    const saveButton = nameInput.parentElement.querySelector("button");
+    const saveButton = nameInput.parentElement.querySelector("button:not(.delete)");
 
     await user.click(saveButton);
 
@@ -96,17 +95,15 @@ export async function saveCircuit(name) {
 export async function addValues(values) {
     const allG = document.querySelector(".screen.visible .allG");
 
-    const tab = allG.querySelector(".popUp"); //find the open tab
+    const tab = allG.querySelector(".popUp");
 
     const rows = tab.querySelectorAll(".subTab");
 
     for (let i = 0; i < rows.length && i < values.length; i++) {
         const input = rows[i].querySelector("input");
     
-        await user.clear(input); //clears the defaults
-        await user.type(input, `${values[i]}`); //adds the wanted changes
-
-        console.log(input.value)
+        await user.fill(input, ""); //clears the defaults
+        await user.fill(input, String(values[i])); //adds the wanted changes
     }
 
     await user.click(tab.querySelector(".Xbutton")); //closes the tab
@@ -121,7 +118,7 @@ export async function copyCircuit(name) {
 
     expect(savedSlot).toBeTruthy();
 
-    await user.click(savedSlot.querySelectorAll("button:not(.delete")[1])
+    await user.click(savedSlot.querySelectorAll("button:not(.delete)")[1]);
 
     //Check if the data got copied
     expect(sessionStorage.getItem("circuitHTML")).toBeTruthy();

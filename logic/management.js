@@ -1,5 +1,6 @@
 import * as d3 from "d3";
 
+/** @type { Object<string, any[]> } */
 export let allObject = { 
     voltageSources: [],
     resistors: [],
@@ -35,15 +36,19 @@ fakeWireG.classed("fakeWireG", true);
 export let wireG = allG.append("g");
 wireG.classed("wireG", true);
 
+export let markerG = allG.append("g");
+markerG.classed("markerG", true);
+
 //Creates the correct stack order
 wireG.lower()
 fakeWireG.raise()
 currentG.raise()
 bridgeG.raise()
 cBridgeG.raise()
+markerG.raise();
 allG.lower()
 
-export function changeValues(newScreen, newSVG, newBridgeG, newCBridgeG, newCurrentG, newFakeWireG, newWireG, newAllG, newAllObject) {
+export function changeValues(newScreen, newSVG, newBridgeG, newCBridgeG, newCurrentG, newFakeWireG, newWireG, newMarkerG, newAllG, newAllObject) {
     screen = newScreen
     svg = newSVG
     bridgeG = newBridgeG
@@ -51,6 +56,7 @@ export function changeValues(newScreen, newSVG, newBridgeG, newCBridgeG, newCurr
     currentG = newCurrentG
     fakeWireG = newFakeWireG
     wireG = newWireG
+    markerG = newMarkerG;
     allG = newAllG
     allObject = newAllObject
 }

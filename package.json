@@ -1,14 +1,15 @@
 {
-  "name": "Zimaris Lab",
-  "version": "0.0.5",
+  "name": "zimaris-lab",
+  "version": "0.0.6",
   "type": "module",
-  "main": "logic/menu.js",
+  "main": "logic/menu.ts",
   "scripts": {
-    "test": "vitest",
-    "test:ui": "vitest --ui",
+    "test": "vitest --browser",
+    "test:ui": "vitest --ui --browser",
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:browser": "vitest --config=vitest.browser.config.js"
   },
   "keywords": [
     "circuits",
@@ -24,11 +25,12 @@
     "d3": "^7.9.0"
   },
   "devDependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/user-event": "^14.6.1",
+    "@types/d3": "^7.4.3",
+    "@types/node": "^25.5.0",
     "@vitest/browser": "^4.1.0",
     "@vitest/browser-playwright": "^4.1.0",
     "playwright": "^1.58.2",
+    "typescript": "^6.0.2",
     "vite": "^7.3.1",
     "vite-plugin-inspect": "^11.3.3",
     "vitest": "^4.1.0"

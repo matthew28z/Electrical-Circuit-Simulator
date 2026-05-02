@@ -1,19 +1,18 @@
 import * as d3 from "d3";
 
 import { allObject } from "../logic/management.js";
-import { allElements } from "../logic/paths.js";
 import { changeTransform } from "../camera/move.js";
 import { changeValues } from "../logic/management.js";
-import { changeAllElements } from "../logic/paths.js";
+import { changeAllElements, allElements } from "../logic/paths";
 import { addScreen } from "../save/toggleScreens.js";
 import { wires } from "../logic/wires.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
 
-export function loadCircuit(name, isCopy = false) {
+export function loadCircuit(name) {
     console.log(wires)
     const allElementsId = JSON.parse(localStorage.getItem(`${name}-allElementsId`));
     const allObjectId = JSON.parse(localStorage.getItem(`${name}-allObjectId`));
-    const wiresId = JSON.parse(localStorage.getItem(`${name}-wiresId`))
+    const wiresId = JSON.parse(localStorage.getItem(`${name}-wiresId`));
 
     addScreen(true); //adds a new screen and changes to it
 
@@ -43,6 +42,7 @@ function processLoadedData(allObjectId, allElementsId) {
     const currentG = allG.select(".currentG");
     const fakeWireG = allG.select(".fakeWireG");
     const wireG = allG.select(".wireG");
+    const markerG = allG.select(".markerG");
 
     //Creates a usable allElements from allElementsId
     const newAllElements = processAllElementsId(allElementsId);
@@ -52,7 +52,7 @@ function processLoadedData(allObjectId, allElementsId) {
     //Creates a usable allObject from allObjectId
     const newAllObject = processAllObjectId(allObjectId);
 
-    changeValues(screen, svg, bridgeG, cBridgeG, currentG, fakeWireG, wireG, allG, newAllObject);
+    changeValues(screen, svg, bridgeG, cBridgeG, currentG, fakeWireG, wireG, markerG, allG, newAllObject);
     changeAllElements(newAllElements);
     changeTransform({x: 0, y: 0, z: 1});
 }

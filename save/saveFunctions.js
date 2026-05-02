@@ -1,5 +1,8 @@
-import { allObject } from "../logic/management.js";
-import { allElements } from "../logic/paths.js";
+import * as d3 from "d3";
+
+import { transform as tObject} from "../camera/move.js";
+import { allObject, allG } from "../logic/management.js";
+import { allElements } from "../logic/paths";
 import { wires } from "../logic/wires.js";
 
 const screen = document.querySelector(".screen.visible");
@@ -16,7 +19,6 @@ export function fetchNames() {
         return usableNames
     }
 
-    console.log("failed")
     return []
 }
 
@@ -33,34 +35,6 @@ export function loadData(name) {
 
     return null
 }
-
-function loadUptestData() {
-    const circuitNames = ["Basic Resistor Test", "Ohm’s Playground", "Simple Voltage Divider", "Series Resistance Chain", "Parallel Resistance Bank", "RC Charging Circuit",
-                          "RC Discharge Experiment", "RL Time Constant", "LC Oscillator", "RLC Resonance", "Half-Wave Rectifier", "Full-Wave Rectifier",
-                          "Bridge Rectifier", "LED Driver", "Light Sensor", "Voltage Amplifier", "Audio Amplifier", "Inverter Circuit",
-                          "NOT Gate Demo", "AND Gate Demo", "OR Gate Demo", "XOR Gate Demo", "Flip-Flop Memory", "555 Timer Blinker", "Pulse Generator",
-                          "Voltage Regulator", "Battery Charger", "Motor Driver", "Relay Control", "Transistor Switch"];  
-
-
-    const objectArray = circuitNames.map(name => {
-        return {name: name, description: "hi", data: null}
-    })
-    
-    localStorage.setItem("names", JSON.stringify(circuitNames))
-    
-    objectArray.forEach(object => {
-        localStorage.setItem(object.name, JSON.stringify(object))
-    })
-}
-
-//loadUptestData()
-//localStorage.clear()
-/*
-function clearScreen() { //removes all the children except the svg and g elements
-    const childrenToBeCleared = Array.from(screen.querySelectorAll("*")).filter(element => element.tagName !== "svg")
-
-    
-}*/
 
 //Logic for quick save
 const quickSave = (event) => {
@@ -115,6 +89,8 @@ export function saveCircuit(name, description, boolean = false) {
         window.addEventListener("keydown", confirmFunc)                  
     } else {
         const preparedData = prepareData() 
+
+        allG.node().dataset.zoomObject = JSON.stringify(tObject);
 
         localStorage.setItem(`${name}-wiresId`, JSON.stringify(prepareWires()))
         localStorage.setItem(`${name}-allElementsId`, JSON.stringify(preparedData.allElementsId))
@@ -186,14 +162,14 @@ function prepareData() {
     })
 
     //Processes the allElements array
-    const allElementsId = allElements.map(object => {
+    const allElementsId = Array.from(allElements.values()).map(object => {
         const objectId = {id: null, connections: { left: [], right: [] }}
 
         const id = object.element.id
         objectId.id = id
 
-        objectId.connections.left = object.connections.left.map(element => element.id)
-        objectId.connections.right = object.connections.right.map(element => element.id)
+        objectId.connections.left = Array.from(object.connections.left).map(element => element.id);
+        objectId.connections.right = Array.from(object.connections.right).map(element => element.id);
 
         return objectId
     })

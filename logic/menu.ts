@@ -1,19 +1,19 @@
+//@ts-nocheck temporary
+
 import { addVoltage, removeVoltage, voltageSources } from "./voltage.js";
 import { removeElement as remove, removeDelete as remove2 } from "./delete.js";
 import { addResistor, removeResistor } from "./resistor.js";
 import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
-import { findAllPaths } from "./paths.js";
-import { svg, screen } from "./management.js";
-import { drawCurrent, addAmperometer, removeAmperometer } from "./current.js";
-//import { addMove, removeMove } from "../camera/move.js";
+import { findMainPath } from "./paths";
+import { screen } from "./management.js";
+import { drawCurrent, addAmperometer, removeAmperometer } from "./current";
 import { addZoom, removeZoom} from "../camera/zoom.js";
-import { calculateResistance } from "../calculation/calculateResistance.js";
-import { calculateVoltage } from "../calculation/calculateVoltage.js";
-import { calculateCurrent } from "../calculation/calculateCurrent.js";
 import { adjustMenu } from "../save/saveMenu.js";
 import { addScreen, addClickLogic } from "../save/toggleScreens.js";
 import { pasteCircuit } from "../save/paste.js";
+
+import calculate from "../calculation/calculate";
 
 //function names
 const funcNames = [addVoltage, addWire, addResistor, addConnection, addAmperometer, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage,
@@ -26,7 +26,7 @@ const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "amperome
 const iconNames2 = ["save", "paste", "run", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
 
 //extra logic buttons
-const IDs = ["save", "currentFlow", "paste", "run"];
+const IDs = new Set(["save", "currentFlow", "paste", "run"]);
 
 const root = document.documentElement;
 const body = document.body;
@@ -153,25 +153,24 @@ showMenu.addEventListener("click", function () {
 let lastButton;
 
 for (let i = 0; i < buttons.length; i++) {
-    if (IDs.includes(buttons[i].id)) { //these specific buttons require different logic
+    if (IDs.has(buttons[i].id)) { //these specific buttons require different logic
         continue
     }
 
     buttons[i].addEventListener("click", function () {
-        const styles = window.getComputedStyle(buttons[i])
-
-        if (styles.borderColor === "rgb(0, 0, 0)") {
+        if (!this.classList.contains("enabled")) {
             if (lastButton) {
                 const index = buttons.findIndex(button => button === lastButton)
                 
-                lastButton.style.borderColor = "black"
+                lastButton.classList.remove("enabled");
                 handles[index]() //removes the event listener
             }
 
-           this.style.borderColor = "white" //highlights the clicked button
+           this.classList.add("enabled"); //highlights the clicked button
            lastButton = this //stores the latest clicked button
            funcNames[i]() //adds the event listener corresponding to that button
         } else {
+            this.classList.remove("enabled");
             this.style.borderColor = "black" //resets the button
             handles[i]()
             
@@ -204,16 +203,33 @@ const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);
 
 function simulate() {
-    const path = findAllPaths(voltageSources())
+    const VS = voltageSources();
 
-    drawCurrent(path)
+    let mainPathData;
 
-    console.log(calculateResistance(path))
-    console.log(calculateVoltage(path))
-    console.log(calculateCurrent(path))
-    
-    const elementData = screen.innerHTML
-    //localStorage.setItem("test", JSON.stringify(elementData))
+    try { 
+        mainPathData = findMainPath(VS);
+    } catch (error) {
+        console.log("Path Algorithm Failed, trying again");
+
+        try {
+            mainPathData = findMainPath(VS, true);
+            //this is a not so efficient solution to avoid changing the highly efficient current algorithm
+            mainPathData.path.reverse(); 
+        } catch (innerError) {
+            throw new Error("The Algorithm is incapable of graphing this topology.");
+        }
+    }
+
+    drawCurrent(mainPathData);
+
+    const calculationResult = calculate(mainPathData);
+
+    if (!calculationResult) {
+        console.log("Calculation Failed");
+
+        return;
+    }
 }
 
 const run = document.getElementById("run");

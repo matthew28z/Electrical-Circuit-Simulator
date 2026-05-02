@@ -1,6 +1,6 @@
-import * as d3 from "../node_modules/d3/src/index.js";
+import * as d3 from "d3";
 
-import { updateAllElements as update, allElements } from "./paths.js";
+import { updateAllElements as update, allElements } from "./paths";
 import { minimumValues, screen, allG } from "./management.js";
 import { transform } from "../camera/move.js";
 
@@ -8,9 +8,8 @@ const body = document.body;
 
 export function handleAllClicks(elementID_Class, array, event, height = body.clientHeight * 0.1) {
     const button = document.getElementById(elementID_Class);
-    const styles = window.getComputedStyle(button);
 
-    if (event.target.classList.contains("screen") && styles.borderColor === "rgb(255, 255, 255)") { //fail safe mechanism checking for border color
+    if (event.target.classList.contains("screen") && button.classList.contains("enabled")) { //fail safe mechanism checking for border color
         
         const c = d3.pointer(event, allG.node())
 
@@ -24,6 +23,7 @@ export function handleAllClicks(elementID_Class, array, event, height = body.cli
         foreignObject.setAttribute("height", height + 16);
 
         const createdElement = document.createElement("div");
+        createdElement.dataset.belongsTo = elementID_Class + "s"; //adds meta data
         createdElement.classList.add(elementID_Class, "userCreated")
 
         foreignObject.appendChild(createdElement)
@@ -194,8 +194,6 @@ export function getCenter(element) {
 
 export function getPoints(element) {
     const rect = element.getBoundingClientRect()
-    console.log(rect)
-    console.log(element.closest(".screen"))
 
     const x1 = rect.left + window.scrollX
     const x2 = rect.left + window.scrollX + rect.width 
@@ -219,14 +217,19 @@ export function getPoints(element) {
  
     return { leftPoint: { x: c1[0], y: c1[1] }, rightPoint: { x: c2[0], y: c2[1] }, actualPoint: { x: c3[0], y: c3[1] } }
 }
-
+/**
+ * Generates a random int
+ * @param {number} min 
+ * @param {number} max 
+ * @returns {number}
+ */
 
 export function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function userCreatedTab(element, array) {
-    const object = array.find(object => object.element === element)
+export function userCreatedTab(element, array) { 
+    const object = array.find(object => object.element === element);
     const hasTab = object.hasTab
 
     if (!hasTab) {
@@ -373,21 +376,20 @@ function fillTab(tab, rect, closeButton, element, array, object) {
 
 export function replaceValueInAllElements(element, oldValue, newValue) {
     //Determines the location of the old value
-    const object = allElements.find(obj => obj.element === element)
+    const object = allElements.get(element);
 
     let side;
     let index;
 
     //It is possible to avoid the .includes() but it makes the program less readable
-    if (object.connections.left.includes(oldValue)) {
-        side = "left"
+    if (object.connections.left.has(oldValue)) {
+        side = "left";
     } else {
-        side = "right"
+        side = "right";
     }
 
-    //Finds the specific index of the old value
-    index = object.connections[side].findIndex(value => value === oldValue)
-
     //Replaces the old value
-    object.connections[side][index] = newValue 
+    object.connections[side].delete(oldValue);
+    object.connections[side].add(newValue);
+    
 }

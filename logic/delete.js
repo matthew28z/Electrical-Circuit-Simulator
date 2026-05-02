@@ -1,6 +1,6 @@
 import { removeAllClicks } from "./commonFunctions.js";
 import { wires, clickedElements } from "./wires.js";
-import { allElements } from "./paths.js";
+import { allElements } from "./paths";
 import { allObject, screen } from "./management.js";
 
 const body = document.body;
@@ -20,11 +20,16 @@ const handleClick = (event) => {
 
                 connectedElements.forEach(connectedElement => {
                     //Updates the allElements array
-                    const newIndex = allElements.findIndex(object => object.element === connectedElement)
-                   
-                    const otherElement = connectedElements.filter(value => value !== connectedElement)[0]
-                
-                    const leftIndex = allElements[newIndex].connections.left.findIndex(value => value === otherElement)
+                    const newObject = allElements.get(connectedElement);
+                    
+                    let otherElement;
+
+                    for (const el of connectedElements) {
+                        if (el !== connectedElement) {
+                            otherElement = el;
+                            break;
+                        }
+                    }
             
                     //Updates the clickedElements array
                     const otherIndex = clickedElements.findIndex(object => object.element === connectedElement)
@@ -34,20 +39,18 @@ const handleClick = (event) => {
                     we want to change the values to false. Hence, assigning the value of isConnection works in both 
                     scenarios.
                     */
-                   const isConnection = connectedElement.classList.contains("connection")
+                    const isConnection = connectedElement.classList.contains("connection");
 
-                    if (leftIndex !== -1) { 
-                        allElements[newIndex].connections.left.splice(leftIndex, 1)
-                        
-                        clickedElements[otherIndex].leftPoint = isConnection
+                    if (newObject.connections.left.delete(otherElement)) { 
+                        clickedElements[otherIndex].leftPoint = isConnection;
                     } else {
-                        const rightIndex = allElements[newIndex].connections.right.findIndex(value => value === otherElement)
-                        
-                        allElements[newIndex].connections.right.splice(rightIndex, 1)
+                        newObject.connections.right.delete(otherElement);
 
-                        clickedElements[otherIndex].rightPoint = isConnection
+                        clickedElements[otherIndex].rightPoint = isConnection;
                     }
                 })
+
+                Array.from(document.querySelectorAll(`[data-wire-group="${wires[index].wireGroup}"]`)).forEach(marker => marker.remove());
             }
 
             //Highlights all the wires/bridges relates to the deleted element
@@ -64,20 +67,16 @@ const handleClick = (event) => {
                     wires[lastIndex].notConnected = true
                 }
             })
-
-
         } else { //userCreated
             //Updates the allElements array
-            const aEIndex = allElements.findIndex(object => object.element === element)
-            
-            const leftConnectedElements = allElements[aEIndex].connections.left
-            const rightConnectedElements = allElements[aEIndex].connections.right
+            const leftConnectedElements = allElements.get(element).connections.left
+            const rightConnectedElements = allElements.get(element).connections.right
 
             loopAndUpdate(leftConnectedElements, element)
             loopAndUpdate(rightConnectedElements, element)
 
             //We can assign a midPoint if the user does not delete the wire, although this is not yet implemented
-            allElements.splice(aEIndex, 1)
+            allElements.delete(element);
 
             //updates the clickedElements array
             const cEIndex = clickedElements.findIndex(object => object.element === element)
@@ -95,21 +94,14 @@ const handleClick = (event) => {
             wireGroupNumberSet.forEach(number => {
                 loopWireGroup(number, element)
             })
+
+            //updates the specific array that represents the category of the element
+            const array = allObject[element.dataset.belongsTo];
+            const elementIndex = array.findIndex(object => object.element === element)
+
+            array.splice(elementIndex, 1)
         }
-
-        //updates the specific array that represents the category of the element
-        const classList = element.classList.value
-        const classes = classList.split(" ")
-
-        const wantedClass = classes.filter(value => value !== "userCreated")[0] 
-        //adds an "s" (plural) to match the array's name
-        const arrayName = wantedClass + "s"
-
-        const array = allObject[arrayName]
-        const elementIndex = array.findIndex(object => object.element === element)
-
-        array.splice(elementIndex, 1)
-
+        
         element.remove()
     } else {
         const highlightedElements = document.querySelectorAll(".highlighted")
@@ -135,11 +127,9 @@ const deleteAll = (event) => {
     }
 }
 
-function loopAndUpdate(arrayToLoop, deletedElement) {
-    arrayToLoop.forEach(connectedElement => {
-        const newAEIndex = allElements.findIndex(object => object.element === connectedElement)
-
-        const rightIndex = allElements[newAEIndex].connections.right.findIndex(value => value === deletedElement)
+function loopAndUpdate(setToLoop, deletedElement) {
+    setToLoop.forEach(connectedElement => {
+        const newObject = allElements.get(connectedElement);
             
         //updates the clickedElements array
         const newCEIndex = clickedElements.findIndex(object => object.element === connectedElement)
@@ -147,14 +137,10 @@ function loopAndUpdate(arrayToLoop, deletedElement) {
         const isConnection = connectedElement.classList.contains("connection")
 
         //removes the deleted element from the listed connections of other elements
-        if (rightIndex !== -1) {
-            allElements[newAEIndex].connections.right.splice(rightIndex, 1)
-
+        if (newObject.connections.right.delete(deletedElement)) {
             clickedElements[newCEIndex].rightPoint = isConnection
         } else {
-            const leftIndex = allElements[newAEIndex].connections.left.findIndex(value => value === deletedElement)
-                
-            allElements[newAEIndex].connections.left.splice(leftIndex, 1)
+            newObject.connections.left.delete(deletedElement);
 
             clickedElements[newCEIndex].leftPoint = isConnection
         }

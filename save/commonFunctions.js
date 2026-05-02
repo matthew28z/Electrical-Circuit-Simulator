@@ -1,12 +1,19 @@
 export function processAllElementsId(allElementsId) {
-    return allElementsId.map(object => {
-        const newObject = {element: document.getElementById(object.id), connections: { left: [], right: [] }}
+    const newAllElements = new Map();
+    
+    allElementsId.forEach(objectID => {
+        const newObject = {
+            element: document.getElementById(objectID.id),
+            connections: {
+                left: new Set(objectID.connections.left.map(elementID => document.getElementById(elementID))),
+                right: new Set(objectID.connections.right.map(elementID => document.getElementById(elementID)))
+            }
+        };
 
-        newObject.connections.left = object.connections.left.map(elementId => document.getElementById(elementId)).filter(element => element !== null)
-        newObject.connections.right = object.connections.right.map(elementId => document.getElementById(elementId)).filter(element => element !== null)
+        newAllElements.set(newObject.element, newObject);
+    })
 
-        return newObject;
-    });
+    return newAllElements;
 }
 
 export function processAllObjectId(allObjectId) {
