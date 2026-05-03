@@ -87,7 +87,7 @@ function findPathStart(voltageSources: any): HTMLElement | undefined {
     return startingElement;
 }
 
-function addNextElement(pathToAdd: (pathObject | number)[], AEObject: AE, side: side): HTMLElement | undefined {
+function addNextElement(pathToAdd: (pathObject | number)[], AEObject: AE, side: side, startingElement: HTMLElement | undefined = undefined): HTMLElement | undefined {
     if (AEObject.connections[side].size > 1) {
         return;
     }
@@ -106,7 +106,7 @@ function addNextElement(pathToAdd: (pathObject | number)[], AEObject: AE, side: 
 
     pathToAdd.push({
         element: elementToAdd,
-        point: AEToAdd.element.matches(".connection, .amperometer") ? "actualPoint" :  AEToAdd.connections.left.has(AEObject.element) ? "leftPoint" : "rightPoint"
+        point: AEToAdd.element.matches(".connection, .amperometer") ? "actualPoint" : AEToAdd.element == startingElement ? "rightPoint" :  AEToAdd.connections.left.has(AEObject.element) ? "leftPoint" : "rightPoint"
     });
 
     return elementToAdd;
@@ -153,7 +153,7 @@ export function findMainPath(voltageSources: any, goOpposite: boolean = false): 
 
                 return;
             } else if (elementsFound === 1) {
-                const valueAdded: HTMLElement | undefined = addNextElement(mainPath.path, currentAEObject, currentSide) 
+                const valueAdded: HTMLElement | undefined = addNextElement(mainPath.path, currentAEObject, currentSide, startingElement) 
 
                 if (!valueAdded) {
                     console.log("CORRUPTED DATA");
