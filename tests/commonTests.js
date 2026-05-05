@@ -51,14 +51,14 @@ export async function simpleCircuit() {
 
         await addValues([10]);
 
-        const { allObject } = await import("../logic/management.js");
+        const { allObject } = await import("../src/app/logic/management.js");
 
         //Check if the data was passed correctly
         expect(allObject.resistors[0].resistance.value).toBe(10);
         expect(allObject.voltageSources[0].voltage.value).toBe(50);
         expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-        const { data } = await import("../calculation/data");
+        const { data } = await import("../src/app/calculation/data.js");
 
         const simulateButton = document.getElementById("run");
 

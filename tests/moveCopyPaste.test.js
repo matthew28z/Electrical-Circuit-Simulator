@@ -15,7 +15,7 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
     
             const user = userEvent.setup();
 
-            const { allElements } = await import("../logic/paths");
+            const { allElements } = await import("../src/app/logic/paths.js");
 
             const coordinates = []; 
     
@@ -69,7 +69,7 @@ test(`In this test we will be testing the accuracy of the pasting logic. We will
             await page.elementLocator(document.querySelector(".addScreen")).click({ button: "right" }); //create a new screen and change to it
             await page.elementLocator(document.getElementById("paste")).click(); //paste the circuit
 
-            const { allElements: newAllElements } = await import("../logic/paths");
+            const { allElements: newAllElements } = await import("../src/app/logic/paths.js");
     
             /*since the elements get copy pasted their initial position would be the same without the offset of the new screen
               thus we only need to check if the offset was calculated correctly for the elements to appear in the same spot in both screens*/

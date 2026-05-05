@@ -21,14 +21,14 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
             await user.click(document.querySelector(".addScreen"), { button: "right" });//create a new screen and change to it
             await user.click(document.getElementById("paste")); //paste the circuit
 
-            const { allObject } = await import("../logic/management.js");
+            const { allObject } = await import("../src/app/logic/management.js");
 
             //Check if the data was pasted correctly
             expect(allObject.resistors[0].resistance.value).toBe(10);
             expect(allObject.voltageSources[0].voltage.value).toBe(50);
             expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-            const { data } = await import("../calculation/data.js");
+            const { data } = await import("../src/app/calculation/data.js");
 
             await user.click(document.getElementById("run"));
 

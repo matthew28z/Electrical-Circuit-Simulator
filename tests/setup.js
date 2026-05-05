@@ -1,9 +1,9 @@
 import { vi, beforeEach } from "vitest"
 
-import "../styles/menu.css";
-import "../styles/circuit.css";
-import "../styles/management.css";
-import "../styles/save.css";
+import "./src/styles/menu.css";
+import "./src/styles/circuit.css";
+import "./src/styles/management.css";
+import "./src/styles/save.css";
 
 beforeEach(async () => {
     document.body.innerHTML =  `<svg style="position: absolute; width: 0; height: 0">
@@ -38,7 +38,7 @@ beforeEach(async () => {
 
     await new Promise(requestAnimationFrame);
 
-    await import("../logic/menu.js");
+    await import("../src/app/logic/menu.js");
     
     let tracker = 0;
 

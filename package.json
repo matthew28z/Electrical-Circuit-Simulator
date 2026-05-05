@@ -2,7 +2,7 @@
   "name": "zimaris-lab",
   "version": "0.0.7",
   "type": "module",
-  "main": "logic/menu.ts",
+  "main": "src/app/logic/menu.ts",
   "scripts": {
     "test": "vitest --browser",
     "test:ui": "vitest --ui --browser",
@@ -22,7 +22,8 @@
   "license": "CC BY-NC 4.0",
   "description": "Zimaris Lab is a software that helps visualise circuits and is mainly targeted for students.",
   "dependencies": {
-    "d3": "^7.9.0"
+    "d3": "^7.9.0",
+    "mongodb": "^7.2.0"
   },
   "devDependencies": {
     "@types/d3": "^7.4.3",

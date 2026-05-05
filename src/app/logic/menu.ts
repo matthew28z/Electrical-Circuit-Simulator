@@ -5,9 +5,9 @@ import { removeElement as remove, removeDelete as remove2 } from "./delete.js";
 import { addResistor, removeResistor } from "./resistor.js";
 import { addWire, removeWire } from "./wires.js";
 import { addConnection, removeConnection } from "./connection.js";
-import { findMainPath } from "./paths";
+import { findMainPath } from "./paths.js";
 import { screen } from "./management.js";
-import { drawCurrent, addAmperometer, removeAmperometer } from "./current";
+import { drawCurrent, addAmperometer, removeAmperometer } from "./current.js";
 import { addZoom, removeZoom} from "../camera/zoom.js";
 import { adjustMenu } from "../save/saveMenu.js";
 import { addScreen, addClickLogic } from "../save/toggleScreens.js";
@@ -107,14 +107,14 @@ for (let i = 0; i < numberOfSubmenus; i++) {
         }
 
         if (i === 0) {
-            button.style.backgroundImage = `url("../icons/${iconNames1[x]}Text.svg")`
+            button.style.backgroundImage = `url("src/icons/${iconNames1[x]}Text.svg")`
             button.id = iconNames1[x] 
         } else {
             if (x < 3) { //these specific buttons have more complex icons that use the png format
-                button.style.backgroundImage = `url("../icons/${iconNames2[x]}.png")`
+                button.style.backgroundImage = `url("src/icons/${iconNames2[x]}.png")`
                 button.style.border = "none"
             } else {
-                button.style.backgroundImage = `url("../icons/${iconNames2[x]}Text.svg")`
+                button.style.backgroundImage = `url("src/icons/${iconNames2[x]}Text.svg")`
             }
 
             button.id = iconNames2[x]

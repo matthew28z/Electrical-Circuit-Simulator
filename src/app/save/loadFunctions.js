@@ -4,7 +4,7 @@ import { allObject } from "../logic/management.js";
 import { changeTransform } from "../camera/move.js";
 import { changeValues } from "../logic/management.js";
 import { changeAllElements, allElements } from "../logic/paths";
-import { addScreen } from "../save/toggleScreens.js";
+import { addScreen } from "./toggleScreens.js";
 import { wires } from "../logic/wires.js";
 import { processAllElementsId, processAllObjectId, processWiresId } from "./commonFunctions.js";
 
