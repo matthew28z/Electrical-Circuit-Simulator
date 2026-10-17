@@ -18,6 +18,10 @@ export default defineConfig({
         mouseUp: async ({ page }) => {
           await page.mouse.up();
         },
+        mouseDownElement: async ({ page }, selector) => {
+          const frame = page.frameLocator('iframe');
+          await frame.locator(selector).dispatchEvent('mousedown', { button: 0 });
+        },
         mouseMove: async ({ page }, frameBox, x, y) => {
           const viewport = await page.evaluate(() => {
             return {

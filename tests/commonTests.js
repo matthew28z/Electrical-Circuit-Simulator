@@ -1,5 +1,5 @@
 import { expect } from 'vitest';
-import { userEvent } from "vitest/browser";
+import { userEvent, commands } from "vitest/browser";
 
 const user = userEvent.setup();
 
@@ -74,14 +74,7 @@ export async function simpleCircuit() {
 }
 
 export async function saveCircuit(name) {
-    const saveBtn = document.getElementById("save");
-    const mousedownEvent = new MouseEvent('mousedown', {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        button: 0 // Left click
-    });
-    saveBtn.dispatchEvent(mousedownEvent);
+    await commands.mouseDownElement("#save");
 
     const saveMenu = document.querySelector(".saveMenu");
     const nameInput = saveMenu.querySelector(".subSaveMenu input");
