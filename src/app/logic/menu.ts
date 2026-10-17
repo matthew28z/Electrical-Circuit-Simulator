@@ -197,7 +197,12 @@ currentFlow.addEventListener("click", () => {
 
 //This section is dedicated to assigning functions to special buttons
 const save = document.getElementById("save");
-save.addEventListener("click", adjustMenu);
+save.addEventListener("mousedown", (e) => {
+    if (e.button === 0)
+        adjustMenu();
+    else
+        adjustMenu(true);
+});
 
 const paste = document.getElementById("paste");
 paste.addEventListener("click", pasteCircuit);

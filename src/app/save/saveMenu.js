@@ -46,10 +46,11 @@ function addCloseButton() {
 function addText() {
     const text = document.createElement("p")
     saveMenu.appendChild(text)
-    text.innerHTML = "This menu stores all your saved Electrical Circuits. You can remove any one of them by clicking them, or add more by clicking the save button."
+
+    text.innerHTML = `This menu stores all your saved Electrical Circuits. You can remove any one of them by clicking them, or add more by clicking the save button.`
 }
 
-function addSubMenu(boolean = false, otherElement = null) {
+function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false) {
     const subMenu = document.createElement("div") 
     if (boolean) {
         saveMenu.insertBefore(subMenu, otherElement)
@@ -60,7 +61,7 @@ function addSubMenu(boolean = false, otherElement = null) {
     subMenu.classList.add("subSaveMenu")
 
     const text = document.createElement("p")
-    text.innerHTML = "<b><u>Saved Circuits:</b></u>"
+    text.innerHTML = `<b><u>Saved ${isProjectMenu ? "Projects" : "Circuits"}:</b></u>`
     subMenu.appendChild(text)
 
     text.style.width = "80%"
@@ -71,18 +72,18 @@ function addSubMenu(boolean = false, otherElement = null) {
     subMenu.appendChild(scrollDiv)
     scrollDiv.classList.add("scrollArea")
 
-    const names = fetchNames()
+    const names = fetchNames(isProjectMenu)
 
     if (names.length > 0) {
         names.forEach(name => {
-            const data = loadData(name)
+            const data = loadData(name, isProjectMenu)
 
             const slot = document.createElement("div")
             scrollDiv.appendChild(slot)
             slot.classList.add("slot")
             
             
-            let t = `<b><u>Electrical Circuit Name:</u></b> <br> ${name} <br> `
+            let t = `<b><u>${isProjectMenu ? "Project" : "Electrical Circuit"} Name:</u></b> <br> ${name} <br> `
 
             if (data.description) {
                 t += `<b><u>Description:</u></b> <br> ${data.description}`
@@ -113,7 +114,7 @@ function addSubMenu(boolean = false, otherElement = null) {
         })
     } else {
         const alertP = document.createElement("p")
-        alertP.innerHTML = "<b>NO CIRCUITS HAVE BEEN SAVED</b>"
+        alertP.innerHTML = `<b>NO ${isProjectMenu ? "PROJECTS" : "CIRCUITS"} HAVE BEEN SAVED</b>`
         scrollDiv.appendChild(alertP)
         alertP.classList.add("alertP")
     }
@@ -143,7 +144,7 @@ function addSave() {
     subMenu.appendChild(nameInput)
 
     nameInput.type = "text"
-    nameInput.placeholder = "Type in the name of the circuit"
+    nameInput.placeholder = `Type in the name of the Circuit`;
 
     const descriptionP = document.createElement("p")
     descriptionP.innerHTML = "<b><u>Description:</b></u>"
@@ -154,7 +155,7 @@ function addSave() {
     const descriptionInput = document.createElement("textArea")
     subMenu.appendChild(descriptionInput)
     descriptionInput.style.flex = "1"
-    descriptionInput.placeholder = "Describe this circuit so you can better differentiate it from the rest"
+    descriptionInput.placeholder = `Describe this Circuit so you can better differentiate it from the rest`
     
     const save = document.createElement("button")
     subMenu.appendChild(save)
@@ -164,7 +165,6 @@ function addSave() {
 
 saveMenu.addEventListener("click", (event) => {
     const target = event.target
-
 
     if (target.classList.contains("saveButton")) {
         const nameInput = document.querySelector("input")
@@ -212,18 +212,36 @@ saveMenu.addEventListener("click", (event) => {
     }
 })
 
-export function adjustMenu() {
+export function adjustMenu(isProjectMenu = false) {
     if (saveMenu.classList.contains("visible")) {
         saveMenu.classList.remove("visible")
     } else {
-        const parsed = JSON.parse(localStorage.getItem("names"));
-        const usableNames = parsed ? parsed : [];
+        const lastMenu = sessionStorage.getItem("lastMenu");
+        sessionStorage.setItem("lastMenu", isProjectMenu ? "project" : "circuit");
+        
+        saveMenu.querySelector("p").innerHTML = `This menu stores all your saved 
+        ${isProjectMenu ? "Projects" : "Electrical Circuits"}. You can remove any one of them by clicking them, or add more by clicking 
+        the save button.`
 
-        const entries = document.querySelectorAll(".slot")
+        const subs = saveMenu.querySelectorAll(".subSaveMenu");
+        subs[0].querySelector("p").innerHTML = `Saved ${isProjectMenu ? "Projects" : "Circuits"}`;
+        subs[1].querySelector("p").innerHTML = `Save This ${isProjectMenu ? "Project" : "Circuit"}`;
+        subs[1].querySelector("input").placeholder = `Type in the name of this ${isProjectMenu ? "Project" : "Circuit"}`;
+        subs[1].querySelector("textarea").placeholder = `Describe this ${isProjectMenu ? "Project" : "Circuit"} so you can better differentiate it from the rest`;
 
-        if (entries.length <= usableNames.length) { //a new entry was added
-            reRenderSubMenu()
-        } 
+        if (lastMenu && ((lastMenu === "project" && !isProjectMenu) || (lastMenu === "circuit" && isProjectMenu))) {
+            reRenderSubMenu(isProjectMenu);
+            console.log(lastMenu, isProjectMenu)
+        } else {
+            const parsed = JSON.parse(localStorage.getItem(isProjectMenu ? "projects" : "names"));
+            const usableNames = parsed ? parsed : [];
+
+            const entries = document.querySelectorAll(".slot")
+
+            if (entries.length <= usableNames.length) { //a new entry was added
+                reRenderSubMenu()
+            } 
+        }
 
         const input = document.querySelector("input")
         const textArea = document.querySelector("textarea")
@@ -244,7 +262,7 @@ function determineName(target) {
     return name
 }
 
-export function reRenderSubMenu() {
+export function reRenderSubMenu(isProjectMenu) {
     const subMenu = Array.from(document.querySelectorAll(".subSaveMenu")).filter(element => {
         const children = Array.from(element.querySelectorAll("*"))
 
@@ -255,5 +273,5 @@ export function reRenderSubMenu() {
 
     subMenu.remove()
 
-    addSubMenu(true, otherMenu)
+    addSubMenu(true, otherMenu, isProjectMenu)
 }

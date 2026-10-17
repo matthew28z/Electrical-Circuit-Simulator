@@ -10,8 +10,8 @@ const saveMenu = document.querySelector(".saveMenu");
 
 //localStorage.setItem("names", JSON.stringify(JSON.parse(localStorage.getItem("names")).pop()))
 
-export function fetchNames() {
-    const dataNames = localStorage.getItem("names") 
+export function fetchNames(isProjectMenu = false) {
+    const dataNames = localStorage.getItem(isProjectMenu ? "projects" : "names") 
 
     if (dataNames) {
         const usableNames = JSON.parse(dataNames)
@@ -22,8 +22,9 @@ export function fetchNames() {
     return []
 }
 
-export function loadData(name) {
-    const storedData = localStorage.getItem(name)
+export function loadData(name, isProjectMenu = false) { //fetches the stored circuit-data regarding a specific key
+    //Needs a check when creating a project or a circuit
+    const storedData = localStorage.getItem(name + (isProjectMenu ? "-P" : "")) //project names have this tag to avoid collisions
 
     if (storedData) {
         const usableData = JSON.parse(storedData)
@@ -50,7 +51,7 @@ const quickSave = (event) => {
 window.addEventListener("keydown", quickSave)
 
 const lastParams = {name: null, description: null};
-const keywords = ["names", "allElementsId", "allObjectId", "wiresId", "quickSave", "circuitHTML"];
+const keywords = ["names", "allElementsId", "allObjectId", "wiresId", "quickSave", "circuitHTML", "projects"];
 
 export function saveCircuit(name, description, boolean = false) {
     if (lastParams.name === name) {
