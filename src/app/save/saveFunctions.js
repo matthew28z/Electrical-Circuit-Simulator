@@ -22,7 +22,7 @@ export function fetchNames() {
     return []
 }
 
-export function loadData(name) {
+export function loadData(name) { //fetches the stored circuit-data regarding a specific key
     const storedData = localStorage.getItem(name)
 
     if (storedData) {
