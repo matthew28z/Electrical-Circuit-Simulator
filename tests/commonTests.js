@@ -74,7 +74,14 @@ export async function simpleCircuit() {
 }
 
 export async function saveCircuit(name) {
-    await user.click(document.getElementById("save"));
+    const saveBtn = document.getElementById("save");
+    const mousedownEvent = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        button: 0 // Left click
+    });
+    saveBtn.dispatchEvent(mousedownEvent);
 
     const saveMenu = document.querySelector(".saveMenu");
     const nameInput = saveMenu.querySelector(".subSaveMenu input");
