@@ -1,9 +1,9 @@
 import { vi, beforeEach } from "vitest"
 
-import "./src/styles/menu.css";
-import "./src/styles/circuit.css";
-import "./src/styles/management.css";
-import "./src/styles/save.css";
+import "../src/styles/menu.css";
+import "../src/styles/circuit.css";
+import "../src/styles/management.css";
+import "../src/styles/save.css";
 
 beforeEach(async () => {
     document.body.innerHTML =  `<svg style="position: absolute; width: 0; height: 0">
