@@ -1,3 +1,5 @@
+import { bootApp } from "./utilities";
+
 const bootDiv = document.getElementById('boot');
 
 if (bootDiv) {
@@ -66,6 +68,8 @@ if (bootDiv) {
     btnNew.id = 'btn-new-project';
     btnNew.textContent = 'New Project';
     btnNew.classList.add('splash-btn');
+
+    btnNew.addEventListener("click", bootApp)
 
     const btnOpen = document.createElement('button');
     btnOpen.id = 'btn-open-project';
