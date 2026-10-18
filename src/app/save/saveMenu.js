@@ -1,5 +1,6 @@
-import { loadData, fetchNames, saveCircuit, flagInput, deleteCircuit } from "./saveFunctions.js";
+import { loadData, fetchNames, saveData, flagInput, deleteCircuit } from "./saveFunctions.js";
 import { loadCircuit } from "./loadFunctions.js";
+import { screen } from "../logic/management.js";
 //import { pasteCircuit } from "./paste.js";
 
 const body = document.body;
@@ -33,7 +34,7 @@ styleMenu()
 function styleMenu() {
     addCloseButton()
     addText()
-    addSubMenu()
+    addSubMenu() 
     addSave()
 }
 
@@ -51,6 +52,7 @@ function addText() {
 }
 
 function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false) {
+    console.log(isProjectMenu, "s")
     const subMenu = document.createElement("div") 
     if (boolean) {
         saveMenu.insertBefore(subMenu, otherElement)
@@ -107,10 +109,11 @@ function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false)
             slot.appendChild(load)
             load.innerHTML = "LOAD"
 
-            const copy = document.createElement("button")
-            slot.appendChild(copy)
-            copy.innerHTML = "COPY"
-
+            if (!isProjectMenu) {
+                const copy = document.createElement("button")
+                slot.appendChild(copy)
+                copy.innerHTML = "COPY"
+            }
         })
     } else {
         const alertP = document.createElement("p")
@@ -172,16 +175,24 @@ saveMenu.addEventListener("click", (event) => {
 
         if (nameInput.value) {
             if (nameInput.value.length <= 25) {
-                saveCircuit(nameInput.value, descriptionInput.value)
+                saveData(nameInput.value, descriptionInput.value)
 
                 //Removes all the added element IDs
-                for (const element of document.querySelectorAll(".screen.visible .userCreated,.wire")) {
-                    element.removeAttribute("id");
+                if (sessionStorage.getItem("lastMenu") === "project") { //all screens
+                    Array.from(document.querySelectorAll(".screen")).forEach(screenToFix => {
+                        for (const element of screenToFix.querySelectorAll(".userCreated,.wire")) {
+                            element.removeAttribute("id");
+                        }
+                    })
+                } else { //just the visible screen
+                    for (const element of screen.querySelectorAll(".userCreated,.wire")) {
+                        element.removeAttribute("id");
+                    }
                 }
 
                 //Forces the submenu to update
                 //Quite inefficient as it rerenders the whole submenu instead of just updating the specific entry
-                reRenderSubMenu()
+                reRenderSubMenu(sessionStorage.getItem("lastMenu") === "project");
             } else {
                 nameInput.value = "Names must be no more than 25 characters"
 
@@ -196,18 +207,28 @@ saveMenu.addEventListener("click", (event) => {
         const name = determineName(target)
 
         const buttonType = target.innerHTML //Either LOAD or COPY
+        const isProjectMenu = sessionStorage.getItem("lastMenu") === "project";
 
         if (buttonType === "LOAD") { //LOAD
+            if (isProjectMenu) {
+
+            } else {
+                loadCircuit(name);
+            }
             console.log("LOAD", name)
-            loadCircuit(name);
         } else if (buttonType === "COPY") { //COPY
             console.log("COPY", name)
-            //Here we only need to store the associated data in the session storage so that
-            //the paste functions will work later on, there is also a visual cue given
-            sessionStorage.setItem("allElementsId", localStorage.getItem(`${name}-allElementsId`));
-            sessionStorage.setItem("allObjectId", localStorage.getItem(`${name}-allObjectId`));
-            sessionStorage.setItem("wiresId", localStorage.getItem(`${name}-wiresId`));
-            sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
+            
+            if (isProjectMenu) {
+
+            } else {
+                //Here we only need to store the associated data in the session storage so that
+                //the paste functions will work later on, there is also a visual cue given
+                sessionStorage.setItem("allElementsId", localStorage.getItem(`${name}-allElementsId`));
+                sessionStorage.setItem("allObjectId", localStorage.getItem(`${name}-allObjectId`));
+                sessionStorage.setItem("wiresId", localStorage.getItem(`${name}-wiresId`));
+                sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
+            }
         }
     }
 })
@@ -238,8 +259,8 @@ export function adjustMenu(isProjectMenu = false) {
 
             const entries = document.querySelectorAll(".slot")
 
-            if (entries.length <= usableNames.length) { //a new entry was added
-                reRenderSubMenu()
+            if (entries.length <= usableNames.length || (!lastMenu && isProjectMenu)) { //a new entry was added
+                reRenderSubMenu(isProjectMenu) //this is an inefficient way of reusing the same menu for both projects and circuits
             } 
         }
 

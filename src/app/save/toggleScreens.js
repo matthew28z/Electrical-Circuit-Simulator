@@ -13,7 +13,9 @@ const dynamicMenuFunctions = new Map([
 ]);
 
 const screensButtons = Array.from(document.querySelectorAll(".screensDiv button"));
-const screensObject = {
+
+/**@type { Object<string, any> }*/
+export const screensObject = {
     screen_0: { allObject, allElements, transform } //accounts for mutations but not for reassignments just like its intention
 }
 const body = document.body;
