@@ -1,4 +1,5 @@
 import { bootApp } from "./utilities";
+import { openProjectMenu } from "./open";
 
 const bootDiv = document.getElementById('boot');
 
@@ -10,14 +11,16 @@ if (bootDiv) {
     // --- Background animation ---
     const bgSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     bgSvg.classList.add('splash-bg-svg');
+    bgSvg.setAttribute('viewBox', '0 0 100 100');
+    bgSvg.setAttribute('preserveAspectRatio', 'none');
     // Draw some stylized circuit traces
     const paths = [
-        "M 5% 50% L 15% 50% L 20% 30% L 35% 30%",
-        "M 95% 20% L 85% 20% L 80% 40% L 65% 40%",
-        "M 10% 80% L 20% 80% L 25% 65% L 40% 65%",
-        "M 90% 85% L 80% 85% L 75% 70% L 60% 70%",
-        "M 30% 10% L 40% 10% L 45% 25% L 60% 25%",
-        "M 70% 90% L 60% 90% L 55% 75% L 40% 75%"
+        "M 5 50 L 15 50 L 20 30 L 35 30",
+        "M 95 20 L 85 20 L 80 40 L 65 40",
+        "M 10 80 L 20 80 L 25 65 L 40 65",
+        "M 90 85 L 80 85 L 75 70 L 60 70",
+        "M 30 10 L 40 10 L 45 25 L 60 25",
+        "M 70 90 L 60 90 L 55 75 L 40 75"
     ];
     paths.forEach(d => {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
@@ -75,6 +78,7 @@ if (bootDiv) {
     btnOpen.id = 'btn-open-project';
     btnOpen.textContent = 'Open Project';
     btnOpen.classList.add('splash-btn');
+    btnOpen.addEventListener('click', openProjectMenu);
 
     const btnTutorial = document.createElement('button');
     btnTutorial.id = 'btn-tutorial';
