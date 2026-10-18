@@ -113,6 +113,8 @@ function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false)
                 const copy = document.createElement("button")
                 slot.appendChild(copy)
                 copy.innerHTML = "COPY"
+            } else {
+                load.classList.add("projectButton");
             }
         })
     } else {
@@ -175,7 +177,8 @@ saveMenu.addEventListener("click", (event) => {
 
         if (nameInput.value) {
             if (nameInput.value.length <= 25) {
-                saveData(nameInput.value, descriptionInput.value)
+                const isProjectMenu = sessionStorage.getItem("lastMenu") === "project";
+                saveData(nameInput.value, descriptionInput.value, false,isProjectMenu)
 
                 //Removes all the added element IDs
                 if (sessionStorage.getItem("lastMenu") === "project") { //all screens
@@ -192,7 +195,7 @@ saveMenu.addEventListener("click", (event) => {
 
                 //Forces the submenu to update
                 //Quite inefficient as it rerenders the whole submenu instead of just updating the specific entry
-                reRenderSubMenu(sessionStorage.getItem("lastMenu") === "project");
+                reRenderSubMenu(isProjectMenu);
             } else {
                 nameInput.value = "Names must be no more than 25 characters"
 

@@ -103,7 +103,7 @@ export function saveData(name, description, boolean = false, isProjectMenu = fal
         window.addEventListener("keydown", confirmFunc)                  
     } else { //save the data
         if (isProjectMenu) {
-            saveProject();
+            saveProject(name);
 
             input.placeholder = "Project Data Saved";
         } else {
