@@ -6,6 +6,7 @@ import { changeAllElements, allElements } from "../logic/paths";
 import { wires, removeFakeWires } from "../logic/wires.js";
 import { changeTransform, transform } from "../camera/move.js";
 import { removeZoom, addZoom } from "../camera/zoom.js";
+import { showRenameModal } from "./renameModal.js";
 
 const dynamicMenuButtons = new Set(["camera"]); //a set is used to allow for expandability
 const dynamicMenuFunctions = new Map([
@@ -29,11 +30,15 @@ export function addScreen(change = false, isFirstScreen = false) {
     const screenButton = document.createElement("button")
     screensDiv.insertBefore(screenButton, addScreenButton)
 
-    const clickFunc = () => {
-        addClickLogic(screenButton)
+    const clickFunc = (event) => {
+        if (event.button === 0) {
+            addClickLogic(screenButton);
+        } else if (event.button === 2) {
+            showRenameModal(screenButton);
+        }
     }
 
-    screenButton.addEventListener("click", clickFunc)
+    screenButton.addEventListener("mousedown", clickFunc);
 
     numberOfScreens++
 
