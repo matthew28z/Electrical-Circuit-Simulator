@@ -18,10 +18,9 @@
 
 ## 3. Tool Execution & Build Verification
 - **Test execution rule:** NEVER invoke `npm test` or run the entire test suite. Execute only targeted tests covering the changed files (e.g., `npx vitest run path/to/target.test.ts`).
-- **Pre-completion gate:** A task is not complete until you verify:
-  1. `npx tsc --noEmit` exits with status 0.
-  2. `npm run build` completes with zero errors.
-
+- **Pre-completion gate:**
+  - Run `npx tsc --noEmit` to verify type safety.
+  - If running `npm run build`, ensure artifacts in `dist/` are neither committed nor staged. Never use `git add .`—stage only explicitly modified source files.
 ## 4. Git & Branching
 - Never commit directly to `main` or `master`.
 - Work exclusively inside a dedicated feature branch created for the task.

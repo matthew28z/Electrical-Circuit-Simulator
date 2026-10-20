@@ -67,4 +67,4 @@ function updateAllElements(
 
 ***Mutating the data in any other way should generally be avoided***
 
-Finally, the purpose of the **allElements** map is to help the pathfinding algorithm map the user's circuit. It is updated every time a new element is created and functions like `findPathStart`, `addNextElement`, `findMainPath`, `findBreakPaths` and `merge` from `logic/paths.ts` representing the pathfinding algorithm, are all inseperable from **allElements'** current structure.
+Finally, the purpose of the **allElements** map is to help the pathfinding algorithm map the user's circuit. It is updated every time a new element is created and functions like `findPathStart`, `addNextElement`, `findMainPath`, `findBreakPaths` and `merge` from `logic/paths.ts` representing the pathfinding algorithm, are all inseperable from **allElements'** current structure. Note that any file that includes a function who's purpose is to add an element to the user's screen (except src/app/logic/wires.js) depends on allElements and will break if allElements is refactored.

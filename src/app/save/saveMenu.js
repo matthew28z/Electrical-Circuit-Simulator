@@ -1,6 +1,7 @@
 import { loadData, fetchNames, saveData, flagInput, deleteCircuit } from "./saveFunctions.js";
 import { loadCircuit } from "./loadFunctions.js";
 import { screen } from "../logic/management.js";
+import { loadProject } from "./loadProject.js";
 //import { pasteCircuit } from "./paste.js";
 
 const body = document.body;
@@ -214,7 +215,7 @@ saveMenu.addEventListener("click", (event) => {
 
         if (buttonType === "LOAD") { //LOAD
             if (isProjectMenu) {
-
+                loadProject(name);
             } else {
                 loadCircuit(name);
             }

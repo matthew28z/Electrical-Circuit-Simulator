@@ -1,27 +1,36 @@
 import { allObject } from "../logic/management";
 import { prepareData, prepareWires } from "./saveFunctions";
 import { screensObject } from "./toggleScreens";
+import { wires } from "../logic/wires.js";
 
 interface CircuitData {
-    wiresId: any[];
     allElementsId: any[];
     allObjectId: any;
     circuitHTML: string;
 }
 
-interface Circuit {
+export interface Circuit {
     name: string;
     index: number; //must be >= 0
     data: CircuitData;
 }
 
+export interface Project {
+    circuits: Circuit[];
+    wiresId: any[];
+}
 const projectData = localStorage.getItem("projectData");
 
-const projects: Record<string, Circuit[]> = projectData ? JSON.parse(projectData) : {};
+const projects: Record<string, Project> = projectData ? JSON.parse(projectData) : {};
 
 export function saveProject(name: string): void {
     //This function does not check for duplicates, if one exists it will erase the old one
-    projects[name] = []; //deletes all prior data or creates a new entry
+    projects[name].wiresId = wires.map(object => {
+        const { element, connections, ...rest } = object;
+
+        return { id: element.id, connections: (connections as any[]).map(el => el.id), ...rest };
+    });
+    projects[name].circuits.length = 0; //deletes all prior data or creates a new entry
 
     Array.from(document.querySelectorAll<HTMLElement>(".screen")).forEach((screen, index) => {
         const allG = screen.querySelector<HTMLElement>(".allG");
@@ -33,11 +42,10 @@ export function saveProject(name: string): void {
 
         const preparedData = prepareData(screen);
 
-        projects[name].push({
-            name: screen.dataset.circuit!,
+        projects[name].circuits.push({
+            name: screen.dataset.circuit ?? screen.id,
             index: Number(index),
             data: {
-                wiresId: prepareWires(screen),
                 allElementsId: preparedData.allElementsId,
                 allObjectId: preparedData.allObjectId,
                 circuitHTML: screen.innerHTML
