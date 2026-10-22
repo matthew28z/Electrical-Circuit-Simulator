@@ -253,8 +253,8 @@ export function deleteCircuit(name, button, boolean = false) {
         lastSlot = null
     }
 
-    const input = document.querySelector("input")
-    const textArea = document.querySelector("textarea")
+    const input = document.querySelector(".saveMenu input")
+    const textArea = document.querySelector(".saveMenu textarea")
 
     const confirmFunc = (e) => {
         if (e.key === "Enter") {

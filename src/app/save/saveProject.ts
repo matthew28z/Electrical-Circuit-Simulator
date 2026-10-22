@@ -19,18 +19,16 @@ export interface Project {
     circuits: Circuit[];
     wiresId: any[];
 }
-const projectData = localStorage.getItem("projectData");
-
-const projects: Record<string, Project> = projectData ? JSON.parse(projectData) : {};
 
 export function saveProject(name: string): void {
-    //This function does not check for duplicates, if one exists it will erase the old one
-    projects[name].wiresId = wires.map(object => {
-        const { element, connections, ...rest } = object;
+    const projectData = localStorage.getItem("projectData");
+    const projects: Record<string, Project> = projectData ? JSON.parse(projectData) : {};
 
-        return { id: element.id, connections: (connections as any[]).map(el => el.id), ...rest };
-    });
-    projects[name].circuits.length = 0; //deletes all prior data or creates a new entry
+    //This function does not check for duplicates, if one exists it will erase the old one
+    projects[name] = {
+        circuits: [],
+        wiresId: []
+    };
 
     Array.from(document.querySelectorAll<HTMLElement>(".screen")).forEach((screen, index) => {
         const allG = screen.querySelector<HTMLElement>(".allG");

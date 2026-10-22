@@ -31,7 +31,7 @@ export function loadCircuit(name) {
     console.log(wires)
 }
 
-export function processLoadedData(allObjectId, allElementsId) {
+function processLoadedData(allObjectId, allElementsId) {
     const screen = document.querySelector(".screen.visible");
 
     const svg = d3.select(screen.querySelector(".overlay"));

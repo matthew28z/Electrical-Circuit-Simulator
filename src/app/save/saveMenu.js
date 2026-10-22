@@ -100,11 +100,7 @@ function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false)
             deleteButton.classList.add("delete")
             slot.appendChild(deleteButton)
 
-            const deleteFunc = () => {
-                deleteCircuit(name, deleteButton)
-            }
-
-            deleteButton.addEventListener("click", deleteFunc)
+            deleteButton.dataset.name = name;
 
             const load = document.createElement("button")
             slot.appendChild(load)
@@ -210,7 +206,7 @@ saveMenu.addEventListener("click", (event) => {
     } else if (Array.from(document.querySelectorAll(".slot button")).includes(target)) {
         const name = determineName(target)
 
-        const buttonType = target.innerHTML //Either LOAD or COPY
+        const buttonType = target.textContent //Either LOAD or COPY (it can also be empty signaling a delete button)
         const isProjectMenu = sessionStorage.getItem("lastMenu") === "project";
 
         if (buttonType === "LOAD") { //LOAD
@@ -221,17 +217,20 @@ saveMenu.addEventListener("click", (event) => {
             }
             console.log("LOAD", name)
         } else if (buttonType === "COPY") { //COPY
-            console.log("COPY", name)
+            console.log("COPY", name) 
+            //No need to check circuit or project as it only exists for circuits
             
+            //Here we only need to store the associated data in the session storage so that
+            //the paste functions will work later on, there is also a visual cue given
+            sessionStorage.setItem("allElementsId", localStorage.getItem(`${name}-allElementsId`));
+            sessionStorage.setItem("allObjectId", localStorage.getItem(`${name}-allObjectId`));
+            sessionStorage.setItem("wiresId", localStorage.getItem(`${name}-wiresId`));
+            sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
+        } else { //delete button
             if (isProjectMenu) {
 
             } else {
-                //Here we only need to store the associated data in the session storage so that
-                //the paste functions will work later on, there is also a visual cue given
-                sessionStorage.setItem("allElementsId", localStorage.getItem(`${name}-allElementsId`));
-                sessionStorage.setItem("allObjectId", localStorage.getItem(`${name}-allObjectId`));
-                sessionStorage.setItem("wiresId", localStorage.getItem(`${name}-wiresId`));
-                sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
+                deleteCircuit(target.dataset.name, target)
             }
         }
     }

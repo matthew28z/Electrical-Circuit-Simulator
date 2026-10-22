@@ -1,9 +1,12 @@
-import { allElements } from "../logic/paths";
+import { changeAllElements } from "../logic/paths";
 import { wires } from "../logic/wires";
 //import { allObject, allG, screen } from "../logic/management";
 import { screensObject, addScreen } from "./toggleScreens";
 import { Project, Circuit } from "./saveProject";
-import { processWires, processLoadedData } from "./loadFunctions";
+import { processWires } from "./loadFunctions";
+import { smartValues } from "../logic/management";
+import { changeTransform } from "../camera/move";
+import { processAllElementsId, processAllObjectId } from "./commonFunctions";
 
 function emptyScreens(): void {
     /* This will be useful if I ever add a delete screen feature
@@ -56,13 +59,12 @@ function emptyScreens(): void {
     }
     */
     wires.length = 0;
-    screensObject.length = 1;
-    screensObject[0].allElements.length = 0; //empty allElements via a mutation
-    Object.values(screensObject[0].allObject).forEach(array => (array as any[]).length = 0); //empty allObject via a mutation
-    screensObject[0].x = 0;
-    screensObject[0].y = 0; //Mutate transform back to the original
-    screensObject[0].z = 1;
 
+    Object.values(screensObject).forEach(obj => {
+        obj.allElements.length = 0;
+        Object.values(obj.allObject).forEach(arr => (arr as any[]).length = 0);
+        obj.transform = { x: 0, y: 0, z: 1 };
+    })
 
     //Now all the data stored is corrected and we move on to deleting everything on the screen
     Array.from(document.querySelectorAll<SVGElement>(".markerG > *, .bridgeG > *, .wireG > *, .currentG > *, .cBridgeG > *, foreignObject")).forEach(el => el.remove());
@@ -80,7 +82,14 @@ function loadOnScreen(screen: HTMLElement, circuit: Circuit): void {
 
     //The wires are common for the project and this function doesnt handle them
     screen.innerHTML = circuit.data.circuitHTML; 
-    processLoadedData(circuit.data.allObjectId, circuit.data.allElementsId);
+
+    //Updates the screen's data
+    const key = "screen_" + index;
+
+    screensObject[key].allElements = processAllElementsId(circuit.data.allElementsId);
+    screensObject[key].allObject = processAllObjectId(circuit.data.allObjectId);
+
+    //screensObject["screen_" + index].transform = 
 }
 
 function prepareForLoad(data: Project) : void  {
@@ -92,6 +101,13 @@ function prepareForLoad(data: Project) : void  {
             addScreen();
         }
     } else if (data.circuits.length < screens.length) {
+        //Delete the excess screens data
+        const keys: string[] = Object.keys(screensObject);
+
+        for (let i = data.circuits.length; i < screens.length; i++) {
+            delete screensObject[keys[i]];
+        }
+
         //correctly removes excess screens
         Array.from(document.querySelectorAll<HTMLElement>(".screen")).forEach((screenToDelete, index) => {
             if (index >= data.circuits.length)
@@ -103,8 +119,6 @@ function prepareForLoad(data: Project) : void  {
                 screenButton.remove();
         });
     }
-
-    emptyScreens(); //Now we have just enough screens
 
     return;
 }
@@ -129,21 +143,16 @@ export function loadProject(name: string, justBooted: boolean = false): void {
         throw new Error("ALL PROJECT DATA HAVE BEEN LOST");
 
     //Gets the specific project's data
-    const projectSavedData: string | null = JSON.parse(allProjectSavedData)[name];
+    const data: Project | null = JSON.parse(allProjectSavedData)[name];
 
-    if (!projectSavedData)
+    if (!data)
         throw new Error(`PROJECT'S ${name} DATA HAS BEEN CORRUPTED`);
 
-    const data: Project = JSON.parse(projectSavedData);
+    console.log(data)
+    prepareForLoad(data);
 
     if (!justBooted) {
-        try {
-            prepareForLoad(data);
-        } catch (e) {
-            console.log(e);
-
-            return;
-        }
+        emptyScreens();
     }
 
     processWires(data.wiresId); //handles the wires as of V0.0.8 they are common across  screens
@@ -156,4 +165,22 @@ export function loadProject(name: string, justBooted: boolean = false): void {
 
         loadOnScreen(screens[i], circuit);
     }
+
+    //Reset back to the starting screen
+    changeAllElements(screensObject["screen_0"].allElements);
+    smartValues({ nScreen: screens[0], nAllObject: screensObject["screen_0"].allObject });
+    changeTransform(screensObject["screen_0"].transform);
+
+    //Checks to see if the last active screen was deleted
+    const lastActiveScreenButton = document.querySelector<HTMLElement>(".currentScreenButton");
+
+    if (lastActiveScreenButton) { // it wasnt
+        lastActiveScreenButton.classList.remove("currentScreenButton");
+        
+        const index : string = lastActiveScreenButton.id.slice(-1);
+        document.getElementById("screen-" + index);
+    }
+
+    screens[0].classList.add("visible");
+    document.getElementById("ScreenButton-0")?.classList.add("currentScreenButton");
 }
