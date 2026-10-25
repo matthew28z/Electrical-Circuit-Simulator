@@ -2,6 +2,7 @@ import { loadData, fetchNames, saveData, flagInput, deleteCircuit } from "./save
 import { loadCircuit } from "./loadFunctions.js";
 import { screen } from "../logic/management.js";
 import { loadProject } from "./loadProject.js";
+import { deleteProject } from "./deleteProject.js";
 //import { pasteCircuit } from "./paste.js";
 
 const body = document.body;
@@ -228,7 +229,7 @@ saveMenu.addEventListener("click", (event) => {
             sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
         } else { //delete button
             if (isProjectMenu) {
-
+                deleteProject(target.dataset.name, target)
             } else {
                 deleteCircuit(target.dataset.name, target)
             }
@@ -278,12 +279,7 @@ export function adjustMenu(isProjectMenu = false) {
 }
 
 function determineName(target) {
-    //Determines which button was pressed
-    const parent = target.parentElement
-
-    const name = parent.querySelector("p").innerHTML.split(" <br> ")[1]
-
-    return name
+    return target.parentElement.querySelector(".delete")?.dataset.name;
 }
 
 export function reRenderSubMenu(isProjectMenu) {

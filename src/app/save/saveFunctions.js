@@ -313,5 +313,12 @@ export function deleteCircuit(name, button, boolean = false) {
         if (sessionStorage.getItem("quickSave") === name) {
             sessionStorage.removeItem("quickSave")
         }
+
+        if (usableData.length === 0) {
+            const alertP = document.createElement("p");
+            alertP.innerHTML = "<b>NO CIRCUITS HAVE BEEN SAVED</b>";
+            document.querySelector(".saveMenu .scrollArea").appendChild(alertP);
+            alertP.classList.add("alertP");
+        }
     }
 }
