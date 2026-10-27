@@ -19,20 +19,19 @@ export function resetEngineData() {
     allElements.clear();
     data.clear();
 
-    allObject.voltageSources = [];
-    allObject.resistors = [];
-    allObject.connections = [];
-    allObject.amperometers = [];
+    allObject.values.forEach(array => array.length = 0);
 }
 
 // Helper to mock user values in allObject
 export function addComponentValue(type, element, ...keyValues) {
-    let obj = allObject[type].find(o => o.element === element);
-    if (!obj) {
+    let obj = allObject[type].find(o => o.element === element); //finds the element's entry
+
+    if (!obj) { //or creates one
         obj = { element };
         allObject[type].push(obj);
     }
-    for (const {key, value} of keyValues) {
+
+    for (const {key, value} of keyValues) { //assigns the values
         obj[key] = { value };
     }
 }

@@ -8,7 +8,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Mixed Circuit: VS, 1 Resistor in series with 2 Parallel Resistors", () => {
+test("Mixed Circuit: VS, 1 Resistor in series with 2 Parallel Resistors", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 36 }, { key: "resistance", value: 0 });
 

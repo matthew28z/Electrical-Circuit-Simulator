@@ -7,7 +7,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Edge Case 2: Impossible Voltage Drop Data", () => {
+test("Edge Case 2: Impossible Voltage Drop Data", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 10 }, { key: "resistance", value: 0 });
 

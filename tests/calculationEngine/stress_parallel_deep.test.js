@@ -7,7 +7,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Stress Test 2: Deeply Nested Parallel Branches", () => {
+test("Stress Test 2: Deeply Nested Parallel Branches", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 48 }, { key: "resistance", value: 0 });
 

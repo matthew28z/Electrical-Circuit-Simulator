@@ -7,7 +7,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Edge Case 1: Contradictory Amperometer Reading in a Series Circuit", () => {
+test("Edge Case 1: Contradictory Amperometer Reading in a Series Circuit", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 12 }, { key: "resistance", value: 0 });
 

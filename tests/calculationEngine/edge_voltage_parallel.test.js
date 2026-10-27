@@ -7,7 +7,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Edge Case 3: Conflicting Voltages in Parallel Branches", () => {
+test("Edge Case 3: Conflicting Voltages in Parallel Branches", () => {
     const vs1 = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs1, { key: "voltage", value: 12 }, { key: "resistance", value: 0 });
 

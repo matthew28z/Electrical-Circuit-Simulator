@@ -8,7 +8,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test.skip("Simple Parallel Circuit: 1 Voltage Source, 2 Parallel Resistors", () => {
+test("Simple Parallel Circuit: 1 Voltage Source, 2 Parallel Resistors", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 24 }, { key: "resistance", value: 0 });
 
