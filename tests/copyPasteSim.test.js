@@ -28,7 +28,7 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
             expect(allObject.voltageSources[0].voltage.value).toBe(50);
             expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-            const { data } = await import("../src/app/calculation/data.js");
+            const { data } = await import("../src/calculation/data.js");
 
             await user.click(document.getElementById("run"));
 

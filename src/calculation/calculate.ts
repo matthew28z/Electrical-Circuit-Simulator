@@ -1,7 +1,7 @@
 import { calculateParallelResistance, applyOhmLawResistance } from "./calculateResistance";
 import { applyOhmLawVoltage } from "./calculateVoltage";
 import { applyOhmLawCurrent } from "./calculateCurrent";
-import { pathColors, currentPathData, allPaths, breaks } from "../logic/paths";
+import { pathColors, currentPathData, allPaths, breaks } from "../app/logic/paths";
 import { simData, data } from "./data";
 import { findSplits, getValueFromAO, findParallelPaths } from "./utilities";
 

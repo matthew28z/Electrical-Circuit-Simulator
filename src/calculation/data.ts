@@ -1,4 +1,4 @@
-import { currentColor } from "../logic/paths";
+import { currentColor } from "../app/logic/paths";
 
 export interface simData {
     path: currentColor;

@@ -1,6 +1,6 @@
 import { allPaths, breaks, pathColors, allElements } from "../../src/app/logic/paths";
 import { allObject } from "../../src/app/logic/management";
-import { data } from "../../src/app/calculation/data";
+import { data } from "../../src/calculation/data";
 
 // Helper to create a fake DOM element
 let idCounter = 0;

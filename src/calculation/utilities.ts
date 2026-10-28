@@ -1,5 +1,5 @@
-import { allObject } from "../logic/management";
-import { currentColor, breaks, currentPathData } from "../logic/paths";
+import { allObject } from "../app/logic/management";
+import { currentColor, breaks, currentPathData } from "../app/logic/paths";
 
 export function findSplits(pathColor: currentColor): Set<currentColor> {
     const res: Set<currentColor> = new Set();

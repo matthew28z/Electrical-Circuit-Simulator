@@ -1,5 +1,5 @@
 import { expect, test, beforeEach } from 'vitest';
-import calculate from "../../src/app/calculation/calculate";
+import calculate from "../../src/calculation/calculate";
 import { allPaths, breaks, pathColors } from "../../src/app/logic/paths";
 import { createFakeElement, resetEngineData, addComponentValue } from "./utils";
 

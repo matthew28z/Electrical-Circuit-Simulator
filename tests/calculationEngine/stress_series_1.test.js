@@ -1,6 +1,6 @@
 import { expect, test, beforeEach } from 'vitest';
-import calculate from "../../src/app/calculation/calculate";
-import { data } from "../../src/app/calculation/data";
+import calculate from "../../src/calculation/calculate";
+import { data } from "../../src/calculation/data";
 import { allPaths, pathColors } from "../../src/app/logic/paths";
 import { createFakeElement, resetEngineData, addComponentValue } from "./utils";
 

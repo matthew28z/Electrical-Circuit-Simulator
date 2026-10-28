@@ -58,7 +58,7 @@ export async function simpleCircuit() {
         expect(allObject.voltageSources[0].voltage.value).toBe(50);
         expect(allObject.voltageSources[0].resistance.value).toBe(0);
 
-        const { data } = await import("../src/app/calculation/data.js");
+        const { data } = await import("../src/calculation/data.js");
 
         const simulateButton = document.getElementById("run");
 

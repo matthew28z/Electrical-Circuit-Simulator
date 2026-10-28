@@ -1,4 +1,4 @@
-import { allPaths, currentPathData } from "../logic/paths";
+import { allPaths, currentPathData } from "../app/logic/paths";
 import { simData, data } from "./data";
 
 //This function does not attempt anything more than to directly apply Ohm's Law, it returns true only if every path under it has been mapped
