@@ -37,7 +37,7 @@ test("Mixed Circuit: VS, 1 Resistor in series with 2 Parallel Resistors", () => 
         descendantOf: colorMain,
         path: [
             { element: c1, point: "actualPoint" },
-            { element: r1, point: "actualPoint" },
+            { element: r1, point: "leftPoint" },
             { element: c2, point: "actualPoint" }
         ]
     };
@@ -48,7 +48,7 @@ test("Mixed Circuit: VS, 1 Resistor in series with 2 Parallel Resistors", () => 
         descendantOf: colorMain,
         path: [
             { element: c1, point: "actualPoint" },
-            { element: r2, point: "actualPoint" },
+            { element: r2, point: "leftPoint" },
             { element: c2, point: "actualPoint" }
         ]
     };
@@ -63,12 +63,12 @@ test("Mixed Circuit: VS, 1 Resistor in series with 2 Parallel Resistors", () => 
         color: colorMain,
         isClosed: true,
         path: [
-            { element: vs, point: "actualPoint" },
-            { element: rs, point: "actualPoint" },
+            { element: vs, point: "leftPoint" },
+            { element: rs, point: "rightPoint" },
             { element: c1, point: "actualPoint" },
             0,
             { element: c2, point: "actualPoint" },
-            { element: vs, point: "actualPoint" }
+            { element: vs, point: "rightPoint" }
         ]
     };
 

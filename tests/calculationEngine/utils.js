@@ -19,7 +19,7 @@ export function resetEngineData() {
     allElements.clear();
     data.clear();
 
-    allObject.values.forEach(array => array.length = 0);
+    Object.values(allObject).forEach(array => array.length = 0);
 }
 
 // Helper to mock user values in allObject
