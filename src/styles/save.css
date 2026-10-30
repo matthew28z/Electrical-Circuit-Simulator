@@ -152,6 +152,10 @@
     border-radius: 4px;
 }
 
+.projectButton {
+    margin-left: 26% !important;
+}
+
 .slot button:hover {
     border-color: silver;
     color: silver;

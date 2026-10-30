@@ -1,14 +1,55 @@
+import { allObject } from "../logic/management";
+import { prepareData, prepareWires } from "./saveFunctions";
+import { screensObject } from "./toggleScreens";
+import { wires } from "../logic/wires.js";
+
 interface CircuitData {
-    name: string
-    index: number //must be >= 0
-    circuit: string
+    allElementsId: any[];
+    allObjectId: any;
+    circuitHTML: string;
 }
 
-interface Project {
-    name: string
-    data: CircuitData[]
+export interface Circuit {
+    name: string;
+    index: number; //must be >= 0
+    data: CircuitData;
 }
 
-export function saveProject(): void {
-    
+export interface Project {
+    circuits: Circuit[];
+    wiresId: any[];
+}
+
+export function saveProject(name: string): void {
+    const projectData = localStorage.getItem("projectData");
+    const projects: Record<string, Project> = projectData ? JSON.parse(projectData) : {};
+
+    //This function does not check for duplicates, if one exists it will erase the old one
+    projects[name] = {
+        circuits: [],
+        wiresId: []
+    };
+
+    Array.from(document.querySelectorAll<HTMLElement>(".screen")).forEach((screen, index) => {
+        const allG = screen.querySelector<HTMLElement>(".allG");
+
+        if (!allG)
+            throw new Error("Corrupted Circuit Data");
+
+        allG.dataset.zoomObject = JSON.stringify(screensObject[`screen_${index}`].transform);
+
+        const preparedData = prepareData(screen);
+
+        projects[name].circuits.push({
+            name: screen.dataset.circuit ?? screen.id,
+            index: Number(index),
+            data: {
+                allElementsId: preparedData.allElementsId,
+                allObjectId: preparedData.allObjectId,
+                circuitHTML: screen.innerHTML
+            }
+        })
+    })
+
+    localStorage.setItem("projectData", JSON.stringify(projects));
 }

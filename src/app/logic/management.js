@@ -60,3 +60,18 @@ export function changeValues(newScreen, newSVG, newBridgeG, newCBridgeG, newCurr
     allG = newAllG
     allObject = newAllObject
 }
+//A temporary more dynamic version that should work until this file's refactoring
+export function smartValues({ nScreen, nAllObject }) {
+    screen = nScreen;
+    svg = d3.select(nScreen.querySelector(".overlay")); //now svg is the correct element
+    
+    bridgeG = svg.select(".bridgeG");
+    cBridgeG = svg.select(".cBridgeG");
+    currentG = svg.select(".currentG");
+    fakeWireG = svg.select(".fakeWireG");
+    wireG = svg.select(".wireG");
+    markerG = svg.select(".markerG");
+    allG = svg.select(".allG");
+
+    allObject = nAllObject;
+}

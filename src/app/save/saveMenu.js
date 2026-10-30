@@ -1,5 +1,8 @@
-import { loadData, fetchNames, saveCircuit, flagInput, deleteCircuit } from "./saveFunctions.js";
+import { loadData, fetchNames, saveData, flagInput, deleteCircuit } from "./saveFunctions.js";
 import { loadCircuit } from "./loadFunctions.js";
+import { screen } from "../logic/management.js";
+import { loadProject } from "./loadProject.js";
+import { deleteProject } from "./deleteProject.js";
 //import { pasteCircuit } from "./paste.js";
 
 const body = document.body;
@@ -33,7 +36,7 @@ styleMenu()
 function styleMenu() {
     addCloseButton()
     addText()
-    addSubMenu()
+    addSubMenu() 
     addSave()
 }
 
@@ -51,6 +54,7 @@ function addText() {
 }
 
 function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false) {
+    console.log(isProjectMenu, "s")
     const subMenu = document.createElement("div") 
     if (boolean) {
         saveMenu.insertBefore(subMenu, otherElement)
@@ -97,20 +101,19 @@ function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false)
             deleteButton.classList.add("delete")
             slot.appendChild(deleteButton)
 
-            const deleteFunc = () => {
-                deleteCircuit(name, deleteButton)
-            }
-
-            deleteButton.addEventListener("click", deleteFunc)
+            deleteButton.dataset.name = name;
 
             const load = document.createElement("button")
             slot.appendChild(load)
             load.innerHTML = "LOAD"
 
-            const copy = document.createElement("button")
-            slot.appendChild(copy)
-            copy.innerHTML = "COPY"
-
+            if (!isProjectMenu) {
+                const copy = document.createElement("button")
+                slot.appendChild(copy)
+                copy.innerHTML = "COPY"
+            } else {
+                load.classList.add("projectButton");
+            }
         })
     } else {
         const alertP = document.createElement("p")
@@ -172,16 +175,25 @@ saveMenu.addEventListener("click", (event) => {
 
         if (nameInput.value) {
             if (nameInput.value.length <= 25) {
-                saveCircuit(nameInput.value, descriptionInput.value)
+                const isProjectMenu = sessionStorage.getItem("lastMenu") === "project";
+                saveData(nameInput.value, descriptionInput.value, false,isProjectMenu)
 
                 //Removes all the added element IDs
-                for (const element of document.querySelectorAll(".screen.visible .userCreated,.wire")) {
-                    element.removeAttribute("id");
+                if (sessionStorage.getItem("lastMenu") === "project") { //all screens
+                    Array.from(document.querySelectorAll(".screen")).forEach(screenToFix => {
+                        for (const element of screenToFix.querySelectorAll(".userCreated,.wire")) {
+                            element.removeAttribute("id");
+                        }
+                    })
+                } else { //just the visible screen
+                    for (const element of screen.querySelectorAll(".userCreated,.wire")) {
+                        element.removeAttribute("id");
+                    }
                 }
 
                 //Forces the submenu to update
                 //Quite inefficient as it rerenders the whole submenu instead of just updating the specific entry
-                reRenderSubMenu()
+                reRenderSubMenu(isProjectMenu);
             } else {
                 nameInput.value = "Names must be no more than 25 characters"
 
@@ -195,19 +207,32 @@ saveMenu.addEventListener("click", (event) => {
     } else if (Array.from(document.querySelectorAll(".slot button")).includes(target)) {
         const name = determineName(target)
 
-        const buttonType = target.innerHTML //Either LOAD or COPY
+        const buttonType = target.textContent //Either LOAD or COPY (it can also be empty signaling a delete button)
+        const isProjectMenu = sessionStorage.getItem("lastMenu") === "project";
 
         if (buttonType === "LOAD") { //LOAD
+            if (isProjectMenu) {
+                loadProject(name);
+            } else {
+                loadCircuit(name);
+            }
             console.log("LOAD", name)
-            loadCircuit(name);
         } else if (buttonType === "COPY") { //COPY
-            console.log("COPY", name)
+            console.log("COPY", name) 
+            //No need to check circuit or project as it only exists for circuits
+            
             //Here we only need to store the associated data in the session storage so that
             //the paste functions will work later on, there is also a visual cue given
             sessionStorage.setItem("allElementsId", localStorage.getItem(`${name}-allElementsId`));
             sessionStorage.setItem("allObjectId", localStorage.getItem(`${name}-allObjectId`));
             sessionStorage.setItem("wiresId", localStorage.getItem(`${name}-wiresId`));
             sessionStorage.setItem("circuitHTML", localStorage.getItem(`${name}-circuitHTML`));
+        } else { //delete button
+            if (isProjectMenu) {
+                deleteProject(target.dataset.name, target)
+            } else {
+                deleteCircuit(target.dataset.name, target)
+            }
         }
     }
 })
@@ -238,8 +263,8 @@ export function adjustMenu(isProjectMenu = false) {
 
             const entries = document.querySelectorAll(".slot")
 
-            if (entries.length <= usableNames.length) { //a new entry was added
-                reRenderSubMenu()
+            if (entries.length <= usableNames.length || (!lastMenu && isProjectMenu)) { //a new entry was added
+                reRenderSubMenu(isProjectMenu) //this is an inefficient way of reusing the same menu for both projects and circuits
             } 
         }
 
@@ -254,12 +279,7 @@ export function adjustMenu(isProjectMenu = false) {
 }
 
 function determineName(target) {
-    //Determines which button was pressed
-    const parent = target.parentElement
-
-    const name = parent.querySelector("p").innerHTML.split(" <br> ")[1]
-
-    return name
+    return target.parentElement.querySelector(".delete")?.dataset.name;
 }
 
 export function reRenderSubMenu(isProjectMenu) {
