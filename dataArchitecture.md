@@ -96,14 +96,14 @@ const breaks: currentPathData[][] = [];
 ```
 This data structure is complimentary to the previous one. In reality the two could simply be merged into one, yet the two way method makes for a better seperation of concerns. Each entry in this array is another array. It is important to remember that the entries of the inner arrays are paths just like the values in the <key, value> pair of the allPaths data type. All those paths are parallel to each other. Hence, parallel paths are easily accessible.
 
-Together these two data structures are used by the **ZiL Engine Basic** (v2.0.0) to make calculations. The aforementioned engine also has a custom data structure that is used both during the calculations but also as the final output of the engine.
+Together these two data structures are used by the **ZiL Engine Basic** (v2.2.1) to make calculations. The aforementioned engine also has a custom data structure that is used both during the calculations but also as the final output of the engine.
 ```Typescript
 interface simData {
     path: currentColor;
     pathResistance: number | null;
     pathVoltage: number | null;
     pathCurrent: number | null;
-    splitsTo: Set<currentColor>;
+    splitsTo: currentColor[][];
     parallelTo: Set<currentColor>;
     descendantOf: currentColor | undefined;
 }
