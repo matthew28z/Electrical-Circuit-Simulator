@@ -39,6 +39,7 @@ test(`In this test we put the save-copy-paste-sim mechanics under stress. We
     
             //Check the initial calculations
             expect(mainPathData.pathResistance).toBe(10);
-            expect(mainPathData.pathVoltage).toBe(50);
+            expect(mainPathData.pathVoltage).toBe(0);
+            expect(mainPathData.forcedVoltage).toBe(50);
             expect(mainPathData.pathCurrent).toBe(5);
         })

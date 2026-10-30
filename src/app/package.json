@@ -1,6 +1,7 @@
 {
     "name": "ZiLUI",
     "version": "3.0.0",
+    "private": true,
     "scripts": {
         "bump:patch": "npm version patch --no-git-tag-version",
         "bump:minor": "npm version minor --no-git-tag-version",

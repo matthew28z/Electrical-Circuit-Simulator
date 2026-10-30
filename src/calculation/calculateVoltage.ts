@@ -1,43 +1,21 @@
-import { allPaths, currentPathData } from "../app/logic/paths";
-import { simData, data } from "./data";
+import { currentPathData } from "../app/logic/paths";
+import { data } from "./data";
 
-//This function does not attempt anything more than to directly apply Ohm's Law, it returns true only if every path under it has been mapped
-export function applyOhmLawVoltage(pathData: currentPathData): boolean | undefined {
-    const simData: simData = data.get(pathData.color)!; //this function is only called once the data has been initialised
+//This function applies Millman's Theorem to calculate the equivalent Voltage Source of parallel branches
+export function applyMillmanThereom(breakData: currentPathData[], parallelResistance: number): number {
+    let equivalentVoltage: number = 0;
 
-    if (simData.pathVoltage && simData.pathCurrent) {
-        simData.pathResistance = simData.pathVoltage / simData.pathCurrent;
+    for (const pathData of breakData) {
+        const simData = data.get(pathData.color);
 
-        let everythingMapped: boolean = true;
+        if (!simData)
+            throw new Error("Uninitialised Data");
 
-        simData.splitsTo.forEach(color => {
-            const result = applyOhmLawVoltage(allPaths.get(color)!);
-
-            if (result === undefined) {
-                console.log("IMPOSSIBLE USER ASSOCIATED DATA");
-
-                return undefined;
-            }
-
-            const splitSimData: simData = data.get(color)!;
-            
-            if (result) {
-                for (const parallelColor of splitSimData.parallelTo) {
-                    const parallelSimData: simData = data.get(parallelColor)!;
-
-                    if (parallelSimData.pathVoltage !== null && parallelSimData.pathVoltage !== simData.pathVoltage) {
-                        console.log("IMPOSSIBLE USER ASSOCIATED DATA");                        
-
-                        return undefined;
-                    }
-                }
-            } else {
-                everythingMapped = false;
-            }
-        })
-
-        return everythingMapped;
+        if (simData.pathCurrent !== null) //the sub-branch has an active CS
+            equivalentVoltage += simData.pathCurrent;
+        else 
+            equivalentVoltage += simData.forcedVoltage / simData.pathResistance //forcedVoltage is always set at a value
     }
 
-    return false;
+    return equivalentVoltage * parallelResistance;
 }

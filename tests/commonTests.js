@@ -68,7 +68,8 @@ export async function simpleCircuit() {
     
         //Check the initial calculations
         expect(mainPathData.pathResistance).toBe(10);
-        expect(mainPathData.pathVoltage).toBe(50);
+        expect(mainPathData.forcedVoltage).toBe(50);
+        expect(mainPathData.pathVoltage).toBe(0);
         expect(mainPathData.pathCurrent).toBe(5);
 
 }

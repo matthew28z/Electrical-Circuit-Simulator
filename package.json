@@ -4,8 +4,8 @@
   "type": "module",
   "main": "src/app/logic/menu.ts",
   "workspaces": [
-    "ZiLE-Basic",
-    "ZiLUI"
+    "src/calculation",
+    "src/app"
   ],
   "scripts": {
     "test": "vitest --browser",

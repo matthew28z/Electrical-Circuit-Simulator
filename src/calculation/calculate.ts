@@ -1,80 +1,55 @@
-import { calculateParallelResistance, applyOhmLawResistance } from "./calculateResistance";
-import { applyOhmLawVoltage } from "./calculateVoltage";
-import { applyOhmLawCurrent } from "./calculateCurrent";
-import { pathColors, currentPathData, allPaths, breaks } from "../app/logic/paths";
+import { calculateParallelResistance } from "./calculateResistance";
+import { applyMillmanThereom } from "./calculateVoltage";
+import { pathColors, currentPathData, allPaths, breaks, currentColor, pathObject } from "../app/logic/paths";
 import { simData, data } from "./data";
-import { findSplits, getValueFromAO, findParallelPaths } from "./utilities";
+import { findSplits, getValueFromAO, findParallelPaths, isKnown, findParallelGroups } from "./utilities";
 
-export default function calculate(mainPathData : currentPathData) : boolean {
+export default function ZiLE_Basic(mainPathData: currentPathData): boolean {
+    //Processes the data produced from the pathfinding algorithm into something the engine can use directly
     iniateSimData();
 
-    //We first try to add every value we can to the data map
-    const getResults = getValues(mainPathData);
+    const validTopology = readConstraints(mainPathData);
 
-    if (getResults.current === undefined) {
-        if (getResults.voltage === undefined) {
-            console.log("The Data Submitted Breaks The Laws Of Physics (Current, Voltage)");
-
-            return false;
-        }
-
-        console.log("The Data Submitted Breaks The Laws Of Physics (Current)");
-
+    if (!validTopology)
         return false;
-    } 
 
-    if (getResults.voltage === undefined) {
-        console.log("The Data Submitted Breaks The Laws Of Physics (Voltage)");
+    const simData = data.get(mainPathData.color)!; //when this function is called prior checks for this will have been made
 
-        return false;      
-    }
+    calculate(simData);
 
-    //~~~~Data~Is~Valid~~~~
-    if (getResults.resistance && getResults.current && getResults.voltage) {
-        console.log("The Calculations Are Completed");
+    if (!assert(simData))
+        return false;    
 
-        return true;
-    } 
-    //We first check the three easy scenarios 
-    const mainSimData: simData = data.get(mainPathData.color)!;
-
-    let finished: boolean = false;
-
-    if (getResults.resistance && getResults.current) {
-        const result = applyOhmLawVoltage(mainPathData);
-
-        if (result === undefined) {
-            console.log("The Data Submitted Breaks The Laws Of Physics (Voltage)");
-
-            return false;
-        }
-
-        finished = result;
-    } else if (getResults.resistance && getResults.voltage) {
-        const result = applyOhmLawCurrent(mainPathData);
-
-        if (result === undefined) {
-            console.log("The Data Submitted Breaks The Laws Of Physics (Current)");
-
-            return false;
-        }
-
-        finished = result;
-    } else if (getResults.voltage && getResults.current) {
-        finished = applyOhmLawResistance(mainPathData);
-    }
-
-    if (finished) {
-        console.log("The Calculations Are Completed");
-
-        return true;
-    }
-
-    //More Complicated Logic
-
-    return false;
+    return true;
 }
 
+//Main helper
+function calculate(simData: simData): boolean {
+    if (!isKnown(simData)) { //avoids redoing calculations
+        //First check if there is an active CS in the branch that sets the current
+        if (simData.pathCurrent !== null) { 
+            //As of v2.1.0 this topology can only be solved if the branch has other branches parallel to it without a CS
+            if (simData.parallelTo.size === 0) {
+                console.log("Upgrade to ZiLE-Advanced");
+
+                return false;
+            }
+
+            //add logic here
+        } else {
+            simData.pathCurrent = simData.forcedVoltage / simData.pathResistance; //Ohm's Law
+
+            simData.pathVoltage = simData.forcedVoltage - simData.pathCurrent * simData.pathResistance; //KVL
+        }
+    }
+
+    for (const split of simData.splitsTo) //progresses from top down
+        calculate(data.get(split)!);
+    
+    return assert(simData); //checks for contradictions
+} 
+
+//Processes the data produced by the pathFinding algorithm such that it can be used by ZiLE-Basic
 function iniateSimData() : void {
     pathColors.forEach(color => {
         const AE = allPaths.get(color);
@@ -87,7 +62,8 @@ function iniateSimData() : void {
 
         data.set(color, {
             path: color,
-            pathResistance: null,
+            forcedVoltage: 0,
+            pathResistance: 0,
             pathVoltage: null,
             pathCurrent: null,
             splitsTo: findSplits(color),
@@ -96,184 +72,145 @@ function iniateSimData() : void {
         });
     })
 }
+//A helper function
+function callCheckForSplits(splits: Set<currentColor>): boolean {
+    return findParallelGroups(splits).every(group => checkInnerContradictions(group));
+}
 
-function getValues(pathData: currentPathData): {
-    resistance: boolean,
-    voltage: boolean | undefined,
-    current: boolean | undefined
-} { //This function checks if the data the user provided breaks any law of physics directly
-    const result: {
-        resistance: boolean,
-        voltage: boolean | undefined,
-        current: boolean | undefined
-    } = { resistance: true, voltage: true, current: false }; //current starts as false as it has special logic
+//Another helper
+function assert(simData: simData): boolean {
+    const groups = findParallelGroups(simData.splitsTo);
 
-    //We first try to get the nested paths (if they exist)
-    const splits = data.get(pathData.color)?.splitsTo;
+    //Check for KCL and KVL
+    for (const group of groups) {
+        if (!checkInnerContradictions(group)) //KVL
+            return false;
 
-    if (!splits) {
-        return { resistance: false, voltage: false, current: false };;
+        let subCurrent = 0;
+
+        for (const subColor of group) 
+            subCurrent += data.get(subColor)!.pathCurrent as number;
+        
+        if (subCurrent !== simData.pathCurrent) //KCL
+            return false;
     }
 
-    if (splits.size > 0) {
-        for (const color of splits) {
-            const splitPathData = allPaths.get(color);
+    return true;
+}
 
-            if (!splitPathData) { //there is no point to continue the calculations as the data is corrupted
-                console.log("BAD DATA");
+/*
+This function does two things
+it checks for contradictions and if they exist it returns false. For parallel paths contradictions can only be in regards to their voltage (KCL Elswhere)
+otherwise, it ensures all inner paths have their data up to date with what is currently known
+*/
+function checkInnerContradictions(parallelColors: currentColor[], skip: boolean = true): boolean {
+    let voltage: number | null = null;
 
-                return { resistance: false, voltage: false, current: false };
-            }
+    const colorsToUpdate: currentColor[] = [];
 
-            const innerResult = getValues(splitPathData);
+    for (const parallelColor of parallelColors) {
+        const simData: simData | undefined = data.get(parallelColor);
 
-            result.resistance = result.resistance && innerResult.resistance;
+        if (!simData)
+            throw new Error("Failed to initialise data");
 
-            if (innerResult.voltage === undefined) {
-                console.log("IMPOSSIBLE USER ASSOCIATED DATA");
-
-                result.voltage = undefined;
-            } else {
-                result.voltage = result.voltage && innerResult.voltage;
-            }
-
-            if (innerResult.current === undefined) {
-                console.log("IMPOSSIBLE USER ASSOCIATED DATA");
-
-                result.current = undefined;
-            } else {
-                result.current = result.current || innerResult.current; //we can now the path's current without knowing the inner paths' currents directly
-            }             
+        //This checks if it can calculate the path voltage, it filters out sub-branches with CS 
+        if (!skip && simData.pathVoltage === null && simData.pathCurrent === null) {
+            if (simData.pathResistance === 0)
+                simData.pathVoltage = simData.forcedVoltage; 
         }
+
+        if (simData.pathVoltage !== null) { //checks against null because 0 is falsy
+            if (voltage === null)
+                voltage = simData.pathVoltage; //found the first branch with a constraint in voltage
+            else if (voltage !== simData.pathVoltage) //checks to see if constraints are contradictory
+                return false; //exits the function
+        } else
+            colorsToUpdate.push(parallelColor); //stores the branch to update its data later on
     }
 
-    let pathResistance = 0;
-    let pathCurrent: number | undefined;
-    let pathVoltage = 0;
+    //If this point is reached it means that there are no contradictions
+    if (voltage !== null) { //checks to see if a constraint was found and updates the parallel paths to have it too
+        for (const color of colorsToUpdate) 
+            data.get(color)!.pathVoltage = voltage; //if they were undefined the previous loop would throw an error
+    }
 
-    //Now we go element by element
-    for (let i = 0; i < pathData.path.length - 1; i++) {
-        const value = pathData.path[i];
+    return true;
+}
 
-        if (typeof value !== "number") {
-            //~~~~Resistance~~~~
-            if (result.resistance) {
-                const resValue: number | null = getValueFromAO("resistance", value.element);
+//Reads the constraints given by the user and gives the greenlight if they are not contradictory
+export function readConstraints(pathData: currentPathData): boolean {
+    const simData: simData | undefined = data.get(pathData.color);
 
-                if (resValue === null) {
-                    console.log("MISSING VALUES");
+    if (!simData)
+        throw new Error("Missing Main Path Data");
 
-                    result.resistance = false;
-                } else {
-                    pathResistance += resValue;
-                }
-            }
+    const subColors: Set<currentColor> = simData.splitsTo;
 
-            //~~~~Voltage~~~~
-            if (result.voltage && value.element.dataset.belongsTo === "voltageSources") {
-                const voltValue: number | null = getValueFromAO("voltage", value.element);
-                
-                if (voltValue === null) {
-                    console.log("MISSING VALUES");
+    for (const subColor of subColors) { //Reads the inner constraints first
+        const subData: currentPathData | undefined = allPaths.get(subColor);
 
-                    result.voltage = false;
-                } else {
-                    pathVoltage += voltValue;
-                }
-            }
+        if (!subData)
+            throw new Error("Corrupted Path Algorithm Data");
 
-            //~~~~Current~~~~
-            if (value.element.dataset.belongsTo === "amperometer") { //No need to check for result.current as this is independent of the inner paths
-                const currValue: number | null = getValueFromAO("current", value.element);
+        readConstraints(subData);
+    }         
+    
+    //Ensures the inner constraints do not contain any contradictions
+    if (!callCheckForSplits(simData.splitsTo)) {
+        console.log("The constraints given are contradictory");
 
-                if (currValue === null) {
-                    console.log("Value Not Assigned");
-                } else if (pathCurrent === undefined){
-                    pathCurrent = currValue;
+        return false;
+    }
 
-                    result.current = true;
-                } else if (pathCurrent !== currValue) {
-                    console.log("IMPOSSIBLE USER ASSOCIATED DATA");
+    //Reads the constraints of this path, all the values of the inner paths should have been calculated already
+    const constraints: { res : number, volt: number, cur: number | null } = { res: 0, volt: 0, cur: null };
 
-                    result.current = undefined; //this is a flag for the end
-                }
-            }
+    for (let i = 0; i < pathData.path.length - 1; i++) { //The last element of a path is always either the starting VS, or just a connection, eitherway it should be skipped
+        const entry: pathObject | number = pathData.path[i];
 
-        } else { // a new branch is detected
-            const breakData: currentPathData[] | undefined = breaks.at(value);
+        if (typeof entry === "number") { //a split has been encountered
+            const breakEntry = breaks.at(entry);
 
-            if (!breakData) {
-                console.log("CORRUPTED DATA");
+            if (!breakEntry)
+                throw new Error("Corrupted Algorithm Data");
 
-                return { resistance: false, voltage: false, current: false };
-            }
+            //Add the equivalent resistance of the sub-branches to the branch.
+            const parallelRes = calculateParallelResistance(breakEntry);
 
-            //~~~~Resistance~~~~
-            if (result.resistance) {
-                //If result.resistance is still true then all the inner paths have been graphed correctly
-                //We need to check if all the parallel branches have the same voltage
-                pathResistance += calculateParallelResistance(breakData)!;
-            }
+            if (parallelRes === null)
+                throw new Error("UNKNOWN BUG"); //As of ZiLE-Basic 2.1.0 the engine is supposed to fill all the variables with zero, so this should not fail
 
-            //~~~~Voltage~~~~
-            if (result.voltage) {
-                //If result.resistance is still true then all the inner paths have been graphed correctly
-                //It is impossible for the data to have been mapped and not exist at the same time
-                
-                const parallelVoltage : number = data.get(breakData[0].color)!.pathVoltage!;
+            constraints.res += parallelRes;
 
-                //We need to check if all the parallel branches are equal
-                if (breakData.some(breakPathData => data.get(breakPathData.color)!.pathVoltage !== parallelVoltage)) {
-                    console.log("IMPOSSIBLE USER ASSOCIATED DATA");
+            //Sum the voltage that is forced from the sub-branches to the branch
+            constraints.volt += applyMillmanThereom(breakEntry, parallelRes);
+        } else { //just an element
+            if (entry.element.dataset.belongsTo !== "connections") { //filter out connections
+                if (entry.element.dataset.belongsTo === "currentSources") { //for future logic
+                    //here a check for contradictory current sources must happen
+                } else if (entry.element.dataset.belongsTo === "voltageSources") {
+                    const entryVoltage = getValueFromAO("voltage", entry.element);
 
-                    result.voltage = undefined;
-                } else {
-                    pathVoltage += parallelVoltage;
+                    if (entryVoltage === null)
+                        throw new Error("AO's Data is Corrupted");
+
+                    constraints.volt += entryVoltage;
                 }
 
-            }
+                const entryRes = getValueFromAO("resistance", entry.element);
 
-            //~~~~Current~~~~
-            if (result.current) { //this is dependnent on the inner paths
-                let calculatedCurrent = 0;
+                if (entryRes === null)
+                    throw new Error("AO's Data is Corrupted")
 
-                breakData.forEach(breakPathData => {
-                    //We apply Kirchoff's Current Law
-                    calculatedCurrent += data.get(breakPathData.color)!.pathCurrent!; //same logic as before
-                })
-
-                if (pathCurrent !== undefined) {
-                    if (pathCurrent !== calculatedCurrent) {
-                        console.log("IMPOSSIBLE USER ASSOCIATED DATA");
-
-                        result.current = undefined; //this is a flag for the end
-                    } 
-                } else {
-                    pathCurrent = calculatedCurrent;
-                } 
+                constraints.res += entryRes;
             }
         }
-    }
+    }   
 
-    const pathSimData: simData | undefined = data.get(pathData.color);
+    simData.forcedVoltage = constraints.volt;
+    simData.pathResistance = constraints.res;
+    simData.pathCurrent = constraints.cur; //either null or something set
 
-    if (!pathSimData) {
-        console.log("UNINITIALISED DATA");
-
-        return { resistance: false, voltage: false, current: false };
-    }
-
-    if (result.current) {
-        pathSimData.pathCurrent = pathCurrent!; //due to the way the data is handled
-    }
-
-    if (result.voltage) {
-        pathSimData.pathVoltage = pathVoltage;
-    }
-
-    if (result.resistance) {
-        pathSimData.pathResistance = pathResistance;
-    }
-
-    return result;
-}  
+    return true;
+}
