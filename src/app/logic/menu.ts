@@ -13,7 +13,7 @@ import { adjustMenu } from "../save/saveMenu.js";
 import { addScreen, addClickLogic } from "../save/toggleScreens.js";
 import { pasteCircuit } from "../save/paste.js";
 
-import calculate from "../calculation/calculate";
+import calculate from "../../calculation/calculate.js";
 
 //function names
 const funcNames = [addVoltage, addWire, addResistor, addConnection, addAmperometer, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage, addVoltage,

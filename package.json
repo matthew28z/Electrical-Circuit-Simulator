@@ -3,13 +3,29 @@
   "version": "0.0.8",
   "type": "module",
   "main": "src/app/logic/menu.ts",
+  "workspaces": [
+    "src/calculation",
+    "src/app"
+  ],
   "scripts": {
     "test": "vitest --browser",
     "test:ui": "vitest --ui --browser",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:browser": "vitest --config=vitest.browser.config.js"
+    "test:browser": "vitest --config=vitest.browser.config.js",
+
+    "bump:zileb:patch": "npm run bump:patch --workspace=ZiLE-Basic",
+    "bump:zileb:minor": "npm run bump:minor --workspace=ZiLE-Basic",
+    "bump:zileb:major": "npm run bump:major --workspace=ZiLE-Basic",
+
+    "bump:zilui:patch": "npm run bump:patch --workspace=ZiLUI",
+    "bump:zilui:minor": "npm run bump:minor --workspace=ZiLUI",
+    "bump:zilui:major": "npm run bump:major --workspace=ZiLUI",
+
+    "bump:zil:patch": "npm version patch --no-git-tag-version",
+    "bump:zil:minor": "npm version minor --no-git-tag-version",
+    "bump:zil:major": "npm version major --no-git-tag-version"
   },
   "keywords": [
     "circuits",

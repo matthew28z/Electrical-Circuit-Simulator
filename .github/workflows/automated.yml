@@ -1,12 +1,26 @@
 name: Run Automated Tests
-on: [push, pull_request] # Triggers the tests on every push
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: # Allows manual run button with an optional full-run toggle
+    inputs:
+      run_all:
+        description: 'Force run all tests'
+        type: boolean
+        default: false
 
 jobs:
   test-job:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Copies your code to the runner
+        uses: actions/checkout@v4
+        with:
+          # Required for Git history comparisons
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -14,10 +28,17 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run tests
-        run: npm test # This is where you point to your test command
+      # Full suite runs on merges to main or when manually forced
+      - name: Run all tests (main branch or manual force)
+        if: github.ref == 'refs/heads/main' || inputs.run_all == true
+        run: npm test
+
+      # Only tests touching modified files run on PRs / feature branches
+      - name: Run tests for changed files only
+        if: github.ref != 'refs/heads/main' && inputs.run_all != true
+        run: npx vitest run --changed origin/main
