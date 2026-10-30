@@ -2,14 +2,12 @@ import { allObject } from "../app/logic/management";
 import { currentColor, breaks, currentPathData } from "../app/logic/paths";
 import { simData, data } from "./data";
 
-export function findSplits(pathColor: currentColor): Set<currentColor> {
-    const res: Set<currentColor> = new Set();
+export function findGroups(pathColor: currentColor): currentColor[][] {
+    const res: currentColor[][] = [];
 
     breaks.forEach(breakEntry => {
         if (breakEntry[0].descendantOf === pathColor) {
-            breakEntry.forEach(pathData => {
-                res.add(pathData.color);
-            })
+            res.push(breakEntry.map(entry => entry.color));
         }
     })
 
@@ -36,29 +34,6 @@ export function isKnown(sData: simData): boolean {
     return sData.pathCurrent !== null && sData.pathVoltage !== null;
 }
 
-export function findParallelGroups(splits: Set<currentColor>): currentColor[][] {
-    const parallelGroups: currentColor[][] = [];
-
-    for (const split of splits) { //it checks every split and puts them in groups
-        const splitData: simData | undefined = data.get(split);
-
-        if (!splitData)
-            throw new Error("Failed to initialise data");
-
-        let tracker = true;
-
-        for (const group of parallelGroups) {
-            if (splitData.parallelTo.has(group[0])) { //it checks if the split is parallel to any group
-                group.push(split);
-                tracker = false;
-
-                break;
-            }
-        }
-
-        if (tracker)
-            parallelGroups.push([split]); //creates a new group
-    }
-
-    return parallelGroups;
+export function closeEnough(a: number, b: number, relativeTol: number = 1e-6, absoluteTol: number = 1e-9): boolean {
+    return Math.abs(a - b) <= Math.max(absoluteTol, relativeTol * (Math.abs(a) - Math.abs(b)));
 }

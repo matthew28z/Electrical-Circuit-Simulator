@@ -2,11 +2,11 @@ import { calculateParallelResistance } from "./calculateResistance";
 import { applyMillmanThereom } from "./calculateVoltage";
 import { pathColors, currentPathData, allPaths, breaks, currentColor, pathObject } from "../app/logic/paths";
 import { simData, data } from "./data";
-import { findSplits, getValueFromAO, findParallelPaths, isKnown, findParallelGroups } from "./utilities";
+import { findGroups, getValueFromAO, findParallelPaths, isKnown, closeEnough } from "./utilities";
 
 export default function ZiLE_Basic(mainPathData: currentPathData): boolean {
     //Processes the data produced from the pathfinding algorithm into something the engine can use directly
-    iniateSimData();
+    initiateSimData();
 
     const validTopology = readConstraints(mainPathData);
 
@@ -24,7 +24,10 @@ export default function ZiLE_Basic(mainPathData: currentPathData): boolean {
 }
 
 //Main helper
-function calculate(simData: simData): boolean {
+function calculate(
+    simData: simData,
+    { REQ, VEQ }: { REQ: number, VEQ: number } = { REQ: 0, VEQ: 0 }
+): boolean {
     if (!isKnown(simData)) { //avoids redoing calculations
         //First check if there is an active CS in the branch that sets the current
         if (simData.pathCurrent !== null) { 
@@ -36,21 +39,37 @@ function calculate(simData: simData): boolean {
             }
 
             //add logic here
-        } else {
+        } else if (simData.descendantOf) { //checks to see if it isnt the main path
+            if (VEQ !== 0) { //basically if there are any VS
+                //add more logic here
+            } else { //CDR
+                simData.pathCurrent = data.get(simData.descendantOf)!.pathCurrent! * REQ / simData.pathResistance;
+
+                simData.pathVoltage = -simData.pathResistance * simData.pathCurrent;
+            }
+        } else { //for the main path simple logic is enough
             simData.pathCurrent = simData.forcedVoltage / simData.pathResistance; //Ohm's Law
 
-            simData.pathVoltage = simData.forcedVoltage - simData.pathCurrent * simData.pathResistance; //KVL
+            simData.pathVoltage = simData.forcedVoltage - simData.pathCurrent * simData.pathResistance; //KVL 
         }
+
+        console.log(simData)
     }
 
-    for (const split of simData.splitsTo) //progresses from top down
-        calculate(data.get(split)!);
+    //progresses top down
+    for (const group of simData.splitsToGroups) {
+        const REQ: number = calculateParallelResistance(group)!;
+        const VEQ: number = applyMillmanThereom(group, REQ);
+
+        for (const subColor of group)
+            calculate(data.get(subColor)!, { REQ, VEQ });
+    }
     
     return assert(simData); //checks for contradictions
 } 
 
 //Processes the data produced by the pathFinding algorithm such that it can be used by ZiLE-Basic
-function iniateSimData() : void {
+function initiateSimData() : void {
     pathColors.forEach(color => {
         const AE = allPaths.get(color);
 
@@ -66,24 +85,22 @@ function iniateSimData() : void {
             pathResistance: 0,
             pathVoltage: null,
             pathCurrent: null,
-            splitsTo: findSplits(color),
+            splitsToGroups: findGroups(color),
             descendantOf: AE.descendantOf,
             parallelTo: findParallelPaths(color)
         });
     })
 }
 //A helper function
-function callCheckForSplits(splits: Set<currentColor>): boolean {
-    return findParallelGroups(splits).every(group => checkInnerContradictions(group));
+function callCheckForSplits(groups: currentColor[][]): boolean {
+    return groups.every(group => checkInnerContradictions(group));
 }
 
 //Another helper
 function assert(simData: simData): boolean {
-    const groups = findParallelGroups(simData.splitsTo);
-
     //Check for KCL and KVL
-    for (const group of groups) {
-        if (!checkInnerContradictions(group)) //KVL
+    for (const group of simData.splitsToGroups) {
+        if (!checkInnerContradictions(group, true)) //KVL
             return false;
 
         let subCurrent = 0;
@@ -91,7 +108,7 @@ function assert(simData: simData): boolean {
         for (const subColor of group) 
             subCurrent += data.get(subColor)!.pathCurrent as number;
         
-        if (subCurrent !== simData.pathCurrent) //KCL
+        if (!closeEnough(simData.pathCurrent!, subCurrent)) //KCL
             return false;
     }
 
@@ -123,7 +140,7 @@ function checkInnerContradictions(parallelColors: currentColor[], skip: boolean 
         if (simData.pathVoltage !== null) { //checks against null because 0 is falsy
             if (voltage === null)
                 voltage = simData.pathVoltage; //found the first branch with a constraint in voltage
-            else if (voltage !== simData.pathVoltage) //checks to see if constraints are contradictory
+            else if (!closeEnough(voltage, simData.pathVoltage)) //checks to see if constraints are contradictory
                 return false; //exits the function
         } else
             colorsToUpdate.push(parallelColor); //stores the branch to update its data later on
@@ -145,19 +162,19 @@ export function readConstraints(pathData: currentPathData): boolean {
     if (!simData)
         throw new Error("Missing Main Path Data");
 
-    const subColors: Set<currentColor> = simData.splitsTo;
+    for (const group of simData.splitsToGroups) { //Reads the inner constraints first
+        for (const subColor of group) {
+            const subData: currentPathData | undefined = allPaths.get(subColor);
 
-    for (const subColor of subColors) { //Reads the inner constraints first
-        const subData: currentPathData | undefined = allPaths.get(subColor);
+            if (!subData)
+                throw new Error("Corrupted Path Algorithm Data");
 
-        if (!subData)
-            throw new Error("Corrupted Path Algorithm Data");
-
-        readConstraints(subData);
+            readConstraints(subData);
+        }
     }         
     
     //Ensures the inner constraints do not contain any contradictions
-    if (!callCheckForSplits(simData.splitsTo)) {
+    if (!callCheckForSplits(simData.splitsToGroups)) {
         console.log("The constraints given are contradictory");
 
         return false;

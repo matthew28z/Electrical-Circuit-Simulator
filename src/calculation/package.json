@@ -1,6 +1,6 @@
 {
     "name": "ZiLE-Basic",
-    "version": "2.0.2",
+    "version": "2.2.1",
     "private": "true",
     "scripts": {
         "bump:patch": "npm version patch --no-git-tag-version",

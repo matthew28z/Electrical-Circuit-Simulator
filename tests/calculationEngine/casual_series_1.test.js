@@ -38,6 +38,7 @@ test("Simple Series Circuit: 1 Voltage Source, 2 Resistors", () => {
 
     const mainSimData = data.get(pathData.color);
     expect(mainSimData.pathResistance).toBe(6);
-    expect(mainSimData.pathVoltage).toBe(12);
+    expect(mainSimData.forcedVoltage).toBe(12);
+    expect(mainSimData.pathVoltage).toBe(0);
     expect(mainSimData.pathCurrent).toBe(2);
 });

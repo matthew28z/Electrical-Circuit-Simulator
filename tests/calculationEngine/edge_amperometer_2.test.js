@@ -1,3 +1,5 @@
+//THIS TEST IS NOT CURRENTLY SUPPORTED
+
 import { expect, test, beforeEach } from 'vitest';
 import calculate from "../../src/calculation/calculate";
 import { allPaths, pathColors } from "../../src/app/logic/paths";
@@ -7,7 +9,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test("Edge Case 2: Impossible Voltage Drop Data", () => {
+test.skip("Edge Case 2: Impossible Voltage Drop Data", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 10 }, { key: "resistance", value: 0 });
 

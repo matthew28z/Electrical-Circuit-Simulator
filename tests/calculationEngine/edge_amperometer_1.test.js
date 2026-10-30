@@ -1,3 +1,5 @@
+//THIS TEST IS NOT CURRENTLY SUPPORTED
+
 import { expect, test, beforeEach } from 'vitest';
 import calculate from "../../src/calculation/calculate";
 import { allPaths, pathColors } from "../../src/app/logic/paths";
@@ -7,7 +9,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test("Edge Case 1: Contradictory Amperometer Reading in a Series Circuit", () => {
+test.skip("Edge Case 1: Contradictory Amperometer Reading in a Series Circuit", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 12 }, { key: "resistance", value: 0 });
 

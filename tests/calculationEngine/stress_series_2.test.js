@@ -8,7 +8,7 @@ beforeEach(() => {
     resetEngineData();
 });
 
-test("Stress Test 3: Large Number of Branches", () => {
+test("Stress Test 3: Many Resistors In Series", () => {
     const vs = createFakeElement("voltageSources");
     addComponentValue("voltageSources", vs, { key: "voltage", value: 100 }, { key: "resistance", value: 0 });
 

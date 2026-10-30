@@ -6,7 +6,7 @@ export interface simData {
     forcedVoltage: number; //this number is set from the sum of active VS across a branch (basically Thevenin Equivalent)
     pathVoltage: number | null; //this is the actual ΔV at the ends of the branch
     pathCurrent: number | null; //this is the actual current flowing through with any CS
-    splitsTo: Set<currentColor>;
+    splitsToGroups: currentColor[][];
     parallelTo: Set<currentColor>;
     descendantOf: currentColor | undefined;
 }
