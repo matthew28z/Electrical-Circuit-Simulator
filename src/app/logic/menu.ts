@@ -230,6 +230,11 @@ function simulate() {
 
     const calculationResult = calculate(mainPathData);
 
+    // Refresh Inspector rendering whenever run is clicked to reflect any changes/updates
+    import("./inspector.js").then((module) => {
+        module.renderInspector();
+    }).catch(err => console.error(err));
+
     if (!calculationResult) {
         console.log("Calculation Failed");
 
