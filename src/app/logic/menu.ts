@@ -22,7 +22,7 @@ const handles = [removeVoltage, removeWire, removeResistor, removeConnection, re
                  null, null, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeVoltage, removeZoom, null, remove2];
 
 //icon names
-const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "amperometer", "placeholder3", "placeholder4", "placeholder5", "placeholder6", "placeholder7", "placeholder8", "placeholder9"];
+const iconNames1 = ["voltageSource", "wire", "resistor", "connection", "amperometer", "currentSource", "placeholder4", "placeholder5", "placeholder6", "placeholder7", "placeholder8", "placeholder9"];
 const iconNames2 = ["save", "paste", "run", "placeholder11", "placeholder12", "placeholder31", "placeholder14", "placeholder15", "placeholder16", "camera", "currentFlow", "delete"];
 
 //extra logic buttons

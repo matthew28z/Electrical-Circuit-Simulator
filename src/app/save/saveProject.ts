@@ -1,7 +1,5 @@
-import { allObject } from "../logic/management";
-import { prepareData, prepareWires } from "./saveFunctions";
+import { prepareData } from "./saveFunctions";
 import { screensObject } from "./toggleScreens";
-import { wires } from "../logic/wires.js";
 
 interface CircuitData {
     allElementsId: any[];
@@ -18,6 +16,7 @@ export interface Circuit {
 export interface Project {
     circuits: Circuit[];
     wiresId: any[];
+    date: string;
 }
 
 export function saveProject(name: string): void {
@@ -27,7 +26,8 @@ export function saveProject(name: string): void {
     //This function does not check for duplicates, if one exists it will erase the old one
     projects[name] = {
         circuits: [],
-        wiresId: []
+        wiresId: [],
+        date: new Date().toISOString() //When read must be converted to local time
     };
 
     Array.from(document.querySelectorAll<HTMLElement>(".screen")).forEach((screen, index) => {
@@ -47,7 +47,7 @@ export function saveProject(name: string): void {
                 allElementsId: preparedData.allElementsId,
                 allObjectId: preparedData.allObjectId,
                 circuitHTML: screen.innerHTML
-            }
+            },
         })
     })
 
