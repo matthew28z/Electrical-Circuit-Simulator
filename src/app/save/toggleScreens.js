@@ -34,11 +34,15 @@ export function addScreen(change = false, isFirstScreen = false) {
         if (event.button === 0) {
             addClickLogic(screenButton);
         } else if (event.button === 2) {
+            event.preventDefault();
             showRenameModal(screenButton);
         }
     }
 
     screenButton.addEventListener("mousedown", clickFunc);
+    screenButton.addEventListener("contextmenu", (event) => {
+        event.preventDefault();
+    });
 
     numberOfScreens++
 

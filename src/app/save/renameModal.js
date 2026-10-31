@@ -1,5 +1,6 @@
 let renameModal = null;
 let currentButton = null;
+let isClosing = false;
 
 function createRenameModal() {
     renameModal = document.createElement("div");
@@ -14,7 +15,15 @@ function createRenameModal() {
     nameInput.type = "text";
     renameModal.appendChild(nameInput);
 
+    // Prevent clicks inside modal container from stealing focus and triggering premature blur
+    renameModal.addEventListener("mousedown", (e) => {
+        if (e.target !== nameInput) {
+            e.preventDefault();
+        }
+    });
+
     const applyRename = () => {
+        if (isClosing) return;
         if (currentButton && nameInput.value.trim() !== "") {
             currentButton.innerHTML = nameInput.value.trim();
         }
@@ -25,6 +34,7 @@ function createRenameModal() {
         if (e.key === "Enter") {
             applyRename();
         } else if (e.key === "Escape") {
+            currentButton = null;
             closeRenameModal();
         }
     });
@@ -42,12 +52,23 @@ export function showRenameModal(button) {
     input.value = button.innerHTML;
 
     renameModal.classList.add("visible");
-    input.focus();
+    requestAnimationFrame(() => {
+        input.focus();
+        input.select();
+    });
 }
 
 function closeRenameModal() {
-    if (renameModal) {
+    if (renameModal && !isClosing) {
+        isClosing = true;
         renameModal.classList.remove("visible");
         currentButton = null;
+        const input = renameModal.querySelector("input");
+        if (input) {
+            input.blur();
+        }
+        isClosing = false;
     }
 }
+
+export { showRenameModal as renameModal };
