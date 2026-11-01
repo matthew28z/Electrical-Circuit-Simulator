@@ -1,4 +1,5 @@
 import { Project } from "../app/save/saveProject";
+import { bootApp } from "./utilities";
 
 export function openProjectMenu() {
     const bootDiv = document.getElementById('boot');
@@ -46,22 +47,30 @@ export function openProjectMenu() {
 
     const parsedData : Record<string, Project> = projectNames ? JSON.parse(localStorage.getItem("projectData")!) : [];
 
-    // Mock Projects Data
-    const mockProjects = [
-        { name: 'Introduction to Circuits', date: '2023-10-15' },
-        { name: 'Kirchhoff\'s Laws Lab', date: '2023-11-02' },
-        { name: 'Final Project - Amplifier', date: '2023-12-10' }
-    ];
-
     if (parsedNames.length === 0) {
         const noProjectsMsg = document.createElement('p');
         noProjectsMsg.textContent = 'No saved projects found.';
         noProjectsMsg.classList.add('no-projects-msg');
         projectsList.appendChild(noProjectsMsg);
     } else {
+        projectsList.addEventListener("click", async (e) => {
+            if (e.target instanceof HTMLElement) {
+                const projectButton = e.target.closest<HTMLElement>(".project-item-btn");
+
+                if (projectButton) {
+                    await bootApp(projectButton.dataset.projectName);
+
+                    //Close them in the background after the project has booted
+                    submenuContainer.remove();
+                    originalChildren.forEach(child => child.style.display = "");
+                }
+            }
+        })
+
         parsedNames.forEach(name => {
             const projectBtn = document.createElement('button');
             projectBtn.classList.add('project-item-btn');
+            projectBtn.dataset.projectName = name; //to help with the event listeners
 
             const projectName = document.createElement('span');
             projectName.textContent = name;

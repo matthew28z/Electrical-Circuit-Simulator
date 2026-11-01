@@ -72,7 +72,7 @@ if (bootDiv) {
     btnNew.textContent = 'New Project';
     btnNew.classList.add('splash-btn');
 
-    btnNew.addEventListener("click", bootApp)
+    btnNew.addEventListener("click", () => bootApp)
 
     const btnOpen = document.createElement('button');
     btnOpen.id = 'btn-open-project';

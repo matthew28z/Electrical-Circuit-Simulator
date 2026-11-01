@@ -1,4 +1,4 @@
-export async function bootApp(data: any): Promise<void> {
+export async function bootApp(data: string = ""): Promise<void> {
     await import("../app/logic/menu");
 
     const bootDiv = document.getElementById("boot");
