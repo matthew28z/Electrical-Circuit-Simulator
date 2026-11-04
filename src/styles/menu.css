@@ -113,6 +113,22 @@ body {
     align-items: center;
 }
 
+.backButton {
+    position: relative;
+    margin: 0 4px 0 auto;
+    padding: 2px 10px;
+    border: 1px solid black;
+    border-radius: 4px;
+    background-color: transparent;
+    color: black;
+    cursor: pointer;
+}
+
+.backButton:hover {
+    border-color: gold;
+    color: gold;
+}
+
 .showMenu {
     position: relative;
     width: fit-content;
@@ -127,6 +143,8 @@ body {
 
 .subMenu {
     display: inline-flex;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     background-color: aqua;
     align-items: center;

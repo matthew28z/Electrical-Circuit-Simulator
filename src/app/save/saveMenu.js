@@ -5,11 +5,11 @@ import { loadProject } from "./loadProject.js";
 import { deleteProject } from "./deleteProject.js";
 //import { pasteCircuit } from "./paste.js";
 
-const body = document.body;
+const app = document.getElementById("app");
 
 function createSaveMenu() { 
     const saveMenu = document.createElement("div")
-    body.appendChild(saveMenu)
+    app.appendChild(saveMenu)
     saveMenu.classList.add("saveMenu") 
 
     return saveMenu
@@ -79,42 +79,42 @@ function addSubMenu(boolean = false, otherElement = null, isProjectMenu = false)
     const names = fetchNames(isProjectMenu)
 
     if (names.length > 0) {
-        names.forEach(name => {
-            const data = loadData(name, isProjectMenu)
+        for (let i = names.length - 1; i >= 0; i--) {
+            const data = loadData(names[i], isProjectMenu);
 
-            const slot = document.createElement("div")
-            scrollDiv.appendChild(slot)
-            slot.classList.add("slot")
+            const slot = document.createElement("div");
+            scrollDiv.appendChild(slot);
+            slot.classList.add("slot");
             
             
-            let t = `<b><u>${isProjectMenu ? "Project" : "Electrical Circuit"} Name:</u></b> <br> ${name} <br> `
+            let t = `<b><u>${isProjectMenu ? "Project" : "Electrical Circuit"} Name:</u></b> <br> ${names[i]} <br> `;
 
             if (data.description) {
-                t += `<b><u>Description:</u></b> <br> ${data.description}`
+                t += `<b><u>Description:</u></b> <br> ${data.description}`;
             }
 
-            const p = document.createElement("p")
-            p.innerHTML = t
-            slot.appendChild(p)
+            const p = document.createElement("p");
+            p.innerHTML = t;
+            slot.appendChild(p);
 
-            const deleteButton = document.createElement("button")
-            deleteButton.classList.add("delete")
-            slot.appendChild(deleteButton)
+            const deleteButton = document.createElement("button");
+            deleteButton.classList.add("delete");
+            slot.appendChild(deleteButton);
 
-            deleteButton.dataset.name = name;
+            deleteButton.dataset.name = names[i];
 
-            const load = document.createElement("button")
-            slot.appendChild(load)
-            load.innerHTML = "LOAD"
+            const load = document.createElement("button");
+            slot.appendChild(load);
+            load.innerHTML = "LOAD";
 
             if (!isProjectMenu) {
-                const copy = document.createElement("button")
-                slot.appendChild(copy)
-                copy.innerHTML = "COPY"
+                const copy = document.createElement("button");
+                slot.appendChild(copy);
+                copy.innerHTML = "COPY";
             } else {
                 load.classList.add("projectButton");
-            }
-        })
+            }            
+        }
     } else {
         const alertP = document.createElement("p")
         alertP.innerHTML = `<b>NO ${isProjectMenu ? "PROJECTS" : "CIRCUITS"} HAVE BEEN SAVED</b>`

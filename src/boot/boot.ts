@@ -1,5 +1,6 @@
 import { bootApp } from "./utilities";
 import { openProjectMenu } from "./open";
+import { continueProject } from "./continue";
 
 const bootDiv = document.getElementById('boot');
 
@@ -67,12 +68,14 @@ if (bootDiv) {
     btnContinue.textContent = 'Continue Latest Project';
     btnContinue.classList.add('splash-btn', 'splash-btn-primary');
 
+    btnContinue.addEventListener("click", () => continueProject());
+
     const btnNew = document.createElement('button');
     btnNew.id = 'btn-new-project';
     btnNew.textContent = 'New Project';
     btnNew.classList.add('splash-btn');
 
-    btnNew.addEventListener("click", () => bootApp)
+    btnNew.addEventListener("click", () => bootApp());
 
     const btnOpen = document.createElement('button');
     btnOpen.id = 'btn-open-project';

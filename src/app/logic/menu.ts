@@ -12,6 +12,7 @@ import { addZoom, removeZoom} from "../camera/zoom.js";
 import { adjustMenu } from "../save/saveMenu.js";
 import { addScreen, addClickLogic } from "../save/toggleScreens.js";
 import { pasteCircuit } from "../save/paste.js";
+import { addBackButton } from "./backButton.js";
 
 import calculate from "../../calculation/calculate.js";
 
@@ -30,11 +31,12 @@ const IDs = new Set(["save", "currentFlow", "paste", "run"]);
 
 const root = document.documentElement;
 const body = document.body;
+const app = document.getElementById("app");
 //const screen = document.getElementById("screen");
 
 //creates the menu
 const menu = document.createElement("div");
-body.appendChild(menu);
+app.appendChild(menu);
 menu.classList.add("menu");
 
 //Adds changing screen capabilities
@@ -79,6 +81,7 @@ const topText = document.createElement("p");
 topPart.appendChild(topText);
 topText.innerHTML = "Start Creating Your Own Electrical Circuit";
 topText.style.marginLeft = (topPart.clientWidth - topText.clientWidth) / 2 - showMenu.clientWidth + "px"
+addBackButton(topPart);
 
 //creates the menu options
 const numberOfSubmenus = 2;
@@ -91,7 +94,6 @@ for (let i = 0; i < numberOfSubmenus; i++) {
     const div = document.createElement("div")
     menu.appendChild(div)
     div.classList.add("subMenu")
-    div.style.height = (menu.clientHeight - topPart.clientHeight) / numberOfSubmenus + "px"
 
     subMenus.push(div)
     //creates the different options

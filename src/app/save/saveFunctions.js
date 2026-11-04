@@ -136,17 +136,19 @@ export function saveData(name, description, boolean = false, isProjectMenu = fal
     }
 }
 
-function updateNames(newEntry, isProjectMenu = false) {
+function updateNames(newEntry, isProjectMenu = false) { //both "names" and "projects" should always be read backwards
     const key = isProjectMenu ? "projects" : "names";
     const savedData = localStorage.getItem(key);
 
     const usableData = savedData ? JSON.parse(savedData) : [];
+    const index = usableData.indexOf(newEntry);
 
-    if (!usableData.includes(newEntry)) {
-        usableData.push(newEntry);
+    if (index !== -1) {
+        usableData.splice(index, 1);
+    } 
 
-        localStorage.setItem(key, JSON.stringify(usableData));
-    }
+    usableData.push(newEntry); //push to the back (shows up first when read backwards)
+    localStorage.setItem(key, JSON.stringify(usableData));
 }
 
 export function prepareData(screenToPrepare = screen) {

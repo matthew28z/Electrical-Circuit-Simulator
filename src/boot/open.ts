@@ -67,26 +67,24 @@ export function openProjectMenu() {
             }
         })
 
-        parsedNames.forEach(name => {
+        for (let i = parsedNames.length - 1; i >= 0; i--) {
             const projectBtn = document.createElement('button');
             projectBtn.classList.add('project-item-btn');
-            projectBtn.dataset.projectName = name; //to help with the event listeners
+            projectBtn.dataset.projectName = parsedNames[i]; //to help with the event listeners
 
             const projectName = document.createElement('span');
-            projectName.textContent = name;
+            projectName.textContent = parsedNames[i];
             projectName.classList.add('project-name');
 
             const projectDate = document.createElement('span');
-            projectDate.textContent = new Date(parsedData[name]!.date).toLocaleDateString("en-GB");
+            projectDate.textContent = new Date(parsedData[parsedNames[i]]!.date).toLocaleDateString("en-GB");
             projectDate.classList.add('project-date');
 
             projectBtn.appendChild(projectName);
             projectBtn.appendChild(projectDate);
 
-            // Note: Functionality to actually open the project is omitted per task instructions
-
             projectsList.appendChild(projectBtn);
-        });
+        }
     }
 
     submenuContainer.appendChild(submenuHeader);

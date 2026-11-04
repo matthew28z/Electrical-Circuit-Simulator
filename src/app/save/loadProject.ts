@@ -128,13 +128,15 @@ This function aims to load a saved project, the second parameter allows for the 
 in the boot menu as it skips the cleaning part of the previous data
 */
 export function loadProject(name: string, justBooted: boolean = false): void {
-    //check with the user before deleting anything
-    const response: string | null = window.prompt(`This action will permenantly deleted all the 
-                                            unsaved circuitry currently shown on the screen, are you certain
-                                            you want to proceed with this request?`, "Yes");
-    
-    if (response?.toLowerCase() !== "yes")
-        return;
+    if (!justBooted) {
+        //check with the user before deleting anything
+        const response: string | null = window.prompt(`This action will permenantly deleted all the 
+                                                unsaved circuitry currently shown on the screen, are you certain
+                                                you want to proceed with this request?`, "Yes");
+        
+        if (response?.toLowerCase() !== "yes")
+            return;
+    }
     
     //Gets all the projects from localStorage
     const allProjectSavedData: string | null = localStorage.getItem("projectData");
@@ -151,7 +153,7 @@ export function loadProject(name: string, justBooted: boolean = false): void {
     console.log(data)
     prepareForLoad(data);
 
-    if (!justBooted) {
+    if (!justBooted) { //there could be a way to avoid the second if check
         emptyScreens();
     }
 
